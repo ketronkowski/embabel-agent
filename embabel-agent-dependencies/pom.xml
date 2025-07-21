@@ -89,7 +89,7 @@
     <repositories>
         <repository>
             <id>embabel-snapshots</id>
-            <url>https://repo.embabel.com/artifactory/libs-snapshot</url>
+            <url>https://hpeartifacts.jfrog.io/artifactory/sd-dependencies</url>
             <snapshots>
                 <enabled>true</enabled>
             </snapshots>
@@ -99,8 +99,8 @@
     <distributionManagement>
         <repository>
             <id>embabel-snapshots</id>
-            <url>https://repo.embabel.com/artifactory/libs-snapshot</url>
+            <url>https://hpeartifacts.jfrog.io/artifactory/sd-dependencies</url>
         </repository>
     </distributionManagement>
-    
+
 </project>
