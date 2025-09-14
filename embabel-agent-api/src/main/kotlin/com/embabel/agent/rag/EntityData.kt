@@ -22,7 +22,13 @@ import io.swagger.v3.oas.annotations.media.Schema
 /**
  * Any retrievable entity, whether mapped or generic.
  */
-interface RetrievableEntity : Retrievable
+interface RetrievableEntity : Retrievable {
+
+    override fun labels(): Set<String> {
+        return super.labels() + setOf("Entity")
+    }
+
+}
 
 /**
  * Generic retrieved entity

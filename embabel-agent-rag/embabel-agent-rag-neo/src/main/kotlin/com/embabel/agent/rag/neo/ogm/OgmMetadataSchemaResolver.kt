@@ -15,13 +15,16 @@
  */
 package com.embabel.agent.rag.neo.ogm
 
+import com.embabel.agent.core.PropertyDefinition
 import com.embabel.agent.rag.EntitySearch
 import com.embabel.agent.rag.NamedEntityData
 import com.embabel.agent.rag.Retrievable
 import com.embabel.agent.rag.schema.*
+import com.fasterxml.jackson.annotation.JsonClassDescription
 import org.neo4j.ogm.session.SessionFactory
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+
 
 /**
  * Infers schema from OGM metadata
@@ -43,11 +46,18 @@ class OgmMetadataSchemaResolver(
         val entityDefinitions = metadata.persistentEntities()
             .filter { it.hasPrimaryIndexField() }
             .map { entity ->
+                val classDescription = entity.underlyingClass.getAnnotation(JsonClassDescription::class.java)?.value
                 val labels = entity.staticLabels().toSet()
                 val entityDefinition = EntityDefinition(
                     labels = labels,
-                    properties = emptyList(),
-                    description = labels.joinToString(","),
+                    properties = entity.propertyFields().map { property ->
+                        PropertyDefinition(
+                            name = property.name,
+                            type = property.typeDescriptor,
+                            description = property.name, // TODO get from annotation
+                        )
+                    },
+                    description = classDescription ?: labels.joinToString(","),
                 )
                 entity.relationshipFields().forEach { relationshipField ->
                     val targetEntity = relationshipField.typeDescriptor.split(".").last()

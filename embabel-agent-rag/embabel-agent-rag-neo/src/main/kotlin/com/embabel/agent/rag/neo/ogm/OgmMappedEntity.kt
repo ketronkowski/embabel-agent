@@ -47,7 +47,8 @@ abstract class OgmMappedEntity(
 abstract class OgmMappedNamedAndDescribedEntity(
     override val name: String,
     id: String,
-) : OgmMappedEntity(id), NamedAndDescribed {
+    uri: String? = null,
+) : OgmMappedEntity(id = id, uri = uri), NamedAndDescribed {
 
     override fun infoString(
         verbose: Boolean?,

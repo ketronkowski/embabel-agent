@@ -106,7 +106,7 @@ class OgmRagFacetProvider(
             emptyMap<String, Any?>(),
             true,
         )
-        return rows.map(::rowToContentElement)
+        return rows.mapNotNull(::rowToContentElement)
     }
 
     override fun count(): Int {
@@ -116,7 +116,7 @@ class OgmRagFacetProvider(
     private fun cypherContentElementQuery(whereClause: String): String =
         "MATCH (c:ContentElement) $whereClause RETURN c.id AS id, c.uri as uri, c.text AS text, c.parentId as parentId, c.metadata.source as metadata_source, labels(c) as labels"
 
-    private fun rowToContentElement(row: Map<String, Any?>): ContentElement {
+    private fun rowToContentElement(row: Map<String, Any?>): ContentElement? {
         val metadata = mutableMapOf<String, Any>()
         metadata["source"] = row["metadata_source"] ?: "unknown"
         val labels = row["labels"] as? Array<String> ?: error("Must have labels")
@@ -154,7 +154,8 @@ class OgmRagFacetProvider(
                 metadata = metadata,
                 uri = row["uri"] as String?,
             )
-        error("Unknown ContentElement type with labels: ${labels.joinToString(",")}")
+        logger.warn("Unknown ContentElement type with labels: {}", labels.joinToString(","))
+        return null
     }
 
     override fun commit() {
