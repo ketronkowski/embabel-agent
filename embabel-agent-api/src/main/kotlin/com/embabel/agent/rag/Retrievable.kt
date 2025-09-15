@@ -30,9 +30,9 @@ interface Embedded {
 }
 
 /**
- * Root of a hierarchy of content elements.
+ * Data object instance, whether structural or not.
  */
-interface ContentElement {
+sealed interface Datum {
 
     /**
      * Embabel id. Will be synthetic.
@@ -70,11 +70,19 @@ interface ContentElement {
 }
 
 /**
- * A Retrievable object instance is a ContentElement
+ * Structural content element that may have a parent and children.
+ * Textual.
+ */
+interface ContentElement : Datum {
+
+}
+
+/**
+ * A Retrievable object instance is a Datum
  * (normally a chunk or an entity) that can be retrieved by RAG.
  * It has a stable id.
  */
-interface Retrievable : HasInfoString, ContentElement {
+interface Retrievable : HasInfoString, Datum {
 
     /**
      * Embedding value of this retrievable object.

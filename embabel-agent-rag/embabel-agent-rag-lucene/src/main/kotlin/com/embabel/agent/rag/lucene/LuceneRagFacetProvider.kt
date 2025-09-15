@@ -230,7 +230,7 @@ class LuceneRagFacetProvider @JvmOverloads constructor(
                     "service" to name
                 )
             )
-            onNewChunk(chunk)
+            onNewRetrievable(chunk)
         }
         commit()
         logger.info(
@@ -240,12 +240,16 @@ class LuceneRagFacetProvider @JvmOverloads constructor(
     }
 
     override fun onNewRetrievables(retrievables: List<Retrievable>) {
-        retrievables.forEach { onNewChunk(it) }
+        retrievables.forEach { onNewRetrievable(it) }
     }
 
-    private fun onNewChunk(
+    private fun onNewRetrievable(
         retrievable: Retrievable,
     ) {
+        if (retrievable !is Chunk) {
+            logger.warn("Only Chunk retrievables are supported; skipping retrievable with id='{}'", retrievable.id)
+            return
+        }
         contentElementStorage[retrievable.id] = retrievable
         // Create Lucene document for indexing
         val luceneDoc = Document().apply {
