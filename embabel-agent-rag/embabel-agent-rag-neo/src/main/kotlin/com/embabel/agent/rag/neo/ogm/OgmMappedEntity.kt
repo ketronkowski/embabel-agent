@@ -18,10 +18,12 @@ package com.embabel.agent.rag.neo.ogm
 import com.embabel.agent.rag.MappedEntity
 import com.embabel.common.core.types.NamedAndDescribed
 import org.neo4j.ogm.annotation.Id
+import org.neo4j.ogm.annotation.NodeEntity
 
 /**
  * Superclass for all entities that are mapped using Neo4j OGM.
  */
+@NodeEntity
 abstract class OgmMappedEntity(
     @Id
     override val id: String,
@@ -44,6 +46,7 @@ abstract class OgmMappedEntity(
     }
 }
 
+@NodeEntity
 abstract class OgmMappedNamedAndDescribedEntity(
     override val name: String,
     id: String,
