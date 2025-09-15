@@ -81,6 +81,12 @@ data class KnowledgeGraphSchema(
     val relationships: List<RelationshipDefinition>,
 ) : HasInfoString {
 
+    fun resolveEntityDefinition(labels: Set<String>): EntityDefinition? {
+        return entities.maxByOrNull { entity ->
+            entity.labels.intersect(labels).size
+        }
+    }
+
     /**
      * Give these entities, return a list of relationships that can exist between them.
      */

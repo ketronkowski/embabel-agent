@@ -47,6 +47,8 @@ class OgmMetadataSchemaResolver(
             .filter { it.hasPrimaryIndexField() }
             .map { entity ->
                 val classDescription = entity.underlyingClass.getAnnotation(JsonClassDescription::class.java)?.value
+                val creationPermitted =
+                    entity.underlyingClass.getAnnotation(CreationPermitted::class.java)?.value != false
                 val labels = entity.staticLabels().toSet()
                 val entityDefinition = EntityDefinition(
                     labels = labels,
@@ -58,6 +60,7 @@ class OgmMetadataSchemaResolver(
                         )
                     },
                     description = classDescription ?: labels.joinToString(","),
+                    creationPermitted = creationPermitted,
                 )
                 entity.relationshipFields().forEach { relationshipField ->
                     val targetEntity = relationshipField.typeDescriptor.split(".").last()
