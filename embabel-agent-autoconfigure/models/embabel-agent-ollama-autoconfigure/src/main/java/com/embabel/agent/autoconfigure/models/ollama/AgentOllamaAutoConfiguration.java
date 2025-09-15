@@ -13,11 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.embabel.agent.autoconfigure.models.anthropic;
+package com.embabel.agent.autoconfigure.models.ollama;
 
-import com.embabel.agent.config.models.anthropic.AnthropicModelsConfig;
+import com.embabel.agent.config.models.ollama.OllamaModelsConfig;
+import jakarta.annotation.PostConstruct;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
+import org.springframework.boot.autoconfigure.AutoConfigureOrder;
+import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Import;
 
 /**
@@ -25,13 +32,18 @@ import org.springframework.context.annotation.Import;
  * <p>
  * This class serves as a Spring Boot autoconfiguration entry point that:
  * - Scans for configuration properties in the "com.embabel.agent" package
- * - Imports the [AnthropicModels] configuration to register Anthropic model beans
+ * - Imports the [Ollama] configuration to register  model beans
  * <p>
- * The configuration is automatically activated when the Anthropic models
- * dependencies are present on the classpath.
+ * The configuration is automatically activated
  */
 @AutoConfiguration
 @AutoConfigureBefore(name = {"com.embabel.agent.autoconfigure.platform.AgentPlatformAutoConfiguration"})
-@Import(AnthropicModelsConfig.class)
-public class AgentAnthropicAutoConfiguration {
+@Import(OllamaModelsConfig.class)
+public class AgentOllamaAutoConfiguration {
+    final private static Logger logger = LoggerFactory.getLogger(AgentOllamaAutoConfiguration.class);
+
+    @PostConstruct
+    public void logEvent() {
+        logger.info("AgentOllamaAutoConfiguration about to proceed...");
+    }
 }
