@@ -36,8 +36,10 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import org.slf4j.LoggerFactory
 import org.springframework.context.support.StaticApplicationContext
 import org.springframework.stereotype.Service
+import org.springframework.util.ClassUtils
 import org.springframework.util.ReflectionUtils
 import java.lang.reflect.Method
+import java.lang.reflect.Proxy
 import com.embabel.agent.core.Action as CoreAction
 import com.embabel.agent.core.Agent as CoreAgent
 import com.embabel.agent.core.Condition as CoreCondition
@@ -50,8 +52,16 @@ data class AgenticInfo(
     val type: Class<*>,
 ) {
 
-    val agentCapabilitiesAnnotation: AgentCapabilities? = type.getAnnotation(AgentCapabilities::class.java)
-    val agentAnnotation: Agent? = type.getAnnotation(Agent::class.java)
+    // Unwrap proxy to get target class for annotation lookups
+    private val targetType: Class<*> = if (ClassUtils.isCglibProxyClass(type) ||
+                                           Proxy.isProxyClass(type)) {
+        ClassUtils.getUserClass(type)
+    } else {
+        type
+    }
+
+    val agentCapabilitiesAnnotation: AgentCapabilities? = targetType.getAnnotation(AgentCapabilities::class.java)
+    val agentAnnotation: Agent? = targetType.getAnnotation(Agent::class.java)
 
     /**
      * Is this type agentic at all?
@@ -61,10 +71,10 @@ data class AgenticInfo(
     fun validationErrors(): Collection<String> {
         val errors = mutableListOf<String>()
         if (agentCapabilitiesAnnotation != null && agentAnnotation != null) {
-            errors += "Both @Agentic and @Agent annotations found on ${type.name}. Treating class as Agent, but both should not be used"
+            errors += "Both @Agentic and @Agent annotations found on ${targetType.name}. Treating class as Agent, but both should not be used"
         }
         if (agentAnnotation != null && agentAnnotation.description.isBlank()) {
-            errors + "No description provided for @${Agent::class.java.simpleName} on ${type.name}"
+            errors + "No description provided for @${Agent::class.java.simpleName} on ${targetType.name}"
         }
         return errors
     }
@@ -74,7 +84,12 @@ data class AgenticInfo(
     /**
      * Name for this agent. Valid only if agentic() is true.
      */
-    fun agentName(): String = (agentAnnotation?.name ?: "").ifBlank { type.simpleName }
+    fun agentName(): String = (agentAnnotation?.name ?: "").ifBlank { targetType.simpleName }
+
+    /**
+     * Gets the target class, unwrapping proxies for method discovery.
+     */
+    fun getTargetType(): Class<*> = targetType
 }
 
 /**
@@ -130,12 +145,14 @@ class AgentMetadataReader(
         }
 
         val agenticInfo = AgenticInfo(instance.javaClass)
+        val targetType = agenticInfo.getTargetType()
+
         if (!agenticInfo.agentic()) {
             logger.debug(
                 "No @{} or @{} annotation found on {}",
                 AgentCapabilities::class.simpleName,
                 Agent::class.simpleName,
-                agenticInfo.type.name,
+                targetType.name,
             )
             return null
         }
@@ -145,14 +162,13 @@ class AgentMetadataReader(
                 agenticInfo.validationErrors().joinToString("\n"),
                 AgentCapabilities::class.simpleName,
                 Agent::class.simpleName,
-                agenticInfo.type.name,
+                targetType.name,
             )
             return null
         }
-
-        val getterGoals = findGoalGetters(agenticInfo.type).map { getGoal(it, instance) }
-        val actionMethods = findActionMethods(agenticInfo.type)
-        val conditionMethods = findConditionMethods(agenticInfo.type)
+        val getterGoals = findGoalGetters(targetType).map { getGoal(it, instance) }
+        val actionMethods = findActionMethods(targetType)
+        val conditionMethods = findConditionMethods(targetType)
 
         val toolCallbacksOnInstance = safelyGetToolCallbacksFrom(ToolObject.from(instance))
 
@@ -169,7 +185,7 @@ class AgentMetadataReader(
                 "❓No methods annotated with @{} or @{} and no goals defined on {}",
                 Action::class.simpleName,
                 Condition::class.simpleName,
-                agenticInfo.type.name,
+                targetType.name,
             )
             return null
         }
