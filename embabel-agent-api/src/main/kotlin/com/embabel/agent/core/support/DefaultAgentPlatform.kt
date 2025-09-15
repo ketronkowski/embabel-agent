@@ -26,7 +26,6 @@ import com.embabel.agent.spi.*
 import com.embabel.agent.spi.support.InMemoryAgentProcessRepository
 import com.embabel.agent.spi.support.InMemoryContextRepository
 import com.embabel.agent.spi.support.SpringContextPlatformServices
-import com.embabel.agent.testing.integration.DummyObjectCreatingLlmOperations
 import com.embabel.common.textio.template.TemplateRenderer
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
@@ -186,16 +185,10 @@ internal class DefaultAgentPlatform(
         val id = agentProcessIdGenerator.createProcessId(agent, processOptions)
         val blackboard = createBlackboard(processOptions, id)
         blackboard.bindAll(bindings)
-        val platformServicesToUse = if (processOptions.test) {
-            logger.warn("Using test LLM operations: {}", processOptions)
-            platformServices.copy(llmOperations = DummyObjectCreatingLlmOperations.LoremIpsum)
-        } else {
-            platformServices
-        }
 
         val agentProcess = SimpleAgentProcess(
             agent = agent,
-            platformServices = platformServicesToUse,
+            platformServices = platformServices,
             blackboard = blackboard,
             id = id,
             parentId = null,

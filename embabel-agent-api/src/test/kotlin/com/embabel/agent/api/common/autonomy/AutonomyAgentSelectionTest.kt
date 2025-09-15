@@ -22,7 +22,6 @@ import com.embabel.agent.event.AgenticEventListener
 import com.embabel.agent.spi.Ranking
 import com.embabel.agent.spi.Rankings
 import com.embabel.agent.testing.integration.FakeRanker
-import com.embabel.agent.config.AgentPlatformProperties
 import com.embabel.agent.testing.integration.forAutonomyTesting
 import com.embabel.common.core.types.Described
 import com.embabel.common.core.types.Named
@@ -159,7 +158,7 @@ class AutonomyAgentSelectionTest {
         // Execute the real method - no mocking of chooseAndRunAgent
         val result = autonomy.chooseAndRunAgent(
             intent = userInput,
-            processOptions = ProcessOptions(test = false)
+            processOptions = ProcessOptions()
         )
 
         assertNotNull(result, "Result should not be null")
@@ -267,7 +266,7 @@ class AutonomyAgentSelectionTest {
         val exception = assertThrows<NoAgentFound> {
             autonomy.chooseAndRunAgent(
                 intent = userInput,
-                processOptions = ProcessOptions(test = false)
+                processOptions = ProcessOptions()
             )
         }
 

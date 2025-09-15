@@ -30,8 +30,10 @@ import com.embabel.agent.core.AgentProcessStatusCode
 import com.embabel.agent.core.ProcessOptions
 import com.embabel.agent.domain.io.UserInput
 import com.embabel.agent.domain.library.HasContent
+import com.embabel.agent.spi.LlmOperations
 import com.embabel.agent.spi.Ranking
 import com.embabel.agent.spi.Rankings
+import com.embabel.agent.testing.integration.DummyObjectCreatingLlmOperations
 import com.embabel.agent.testing.integration.FakeRanker
 import com.embabel.common.core.types.Described
 import com.embabel.common.core.types.Named
@@ -89,6 +91,11 @@ class FakeConfig {
                 else -> throw IllegalArgumentException("Unknown description $description")
             }
         }
+    }
+
+    @Bean
+    fun llmOperations(): LlmOperations {
+        return DummyObjectCreatingLlmOperations.LoremIpsum
     }
 
 }
@@ -166,7 +173,7 @@ class AgentPlatformIntegrationTest(
                 agentName = "JavaTestStarNewsFinder",
             ).apply(
                 UserInput("Lynda is a Scorpio, find some news for her"),
-                ProcessOptions(test = true),
+                ProcessOptions(),
             )
             assertNotNull(writeup)
             assertNotNull(writeup.content)
@@ -179,7 +186,7 @@ class AgentPlatformIntegrationTest(
                 agentName = "TestStarNewsFinder",
             ).apply(
                 UserInput("Lynda is a Scorpio, find some news for her"),
-                ProcessOptions(test = true),
+                ProcessOptions(),
             )
             assertNotNull(writeup)
             assertNotNull(writeup.content)
@@ -201,7 +208,7 @@ class AgentPlatformIntegrationTest(
             val frog = typedOps.asFunction<UserInput, Frog>(
             ).apply(
                 UserInput("Hamish a poor boy"),
-                ProcessOptions(test = true),
+                ProcessOptions(),
             )
             assertNotNull(frog)
         }
@@ -214,7 +221,7 @@ class AgentPlatformIntegrationTest(
         fun `choose and run star finder agent`() {
             val dynamicExecutionResult = autonomy.chooseAndRunAgent(
                 "Lynda is a Scorpio, find some news for her",
-                ProcessOptions(test = true),
+                ProcessOptions(),
             )
             assertNotNull(dynamicExecutionResult.output)
             assertTrue(
@@ -230,7 +237,7 @@ class AgentPlatformIntegrationTest(
         @Test
         fun `run star finder agent`() {
             val dynamicExecutionResult = autonomy.chooseAndAccomplishGoal(
-                processOptions = ProcessOptions(test = true),
+                processOptions = ProcessOptions(),
                 goalChoiceApprover = GoalChoiceApprover.APPROVE_ALL,
                 agentScope = agentPlatform,
                 bindings = mapOf(

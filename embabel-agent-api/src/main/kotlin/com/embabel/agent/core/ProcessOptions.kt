@@ -309,8 +309,6 @@ data class Identities(
  * By default, it will be modified as the process runs.
  * Whether this is an independent copy is up to the caller, who can call spawn()
  * before passing this argument.
- * @param test whether to run in test mode. In test mode, the agent platform
- * will not use any external resources such as LLMs, and will not persist any state.
  * @param verbosity detailed verbosity settings for logging etc.
  * @param prune whether to prune the agent to only relevant actions
  * @param listeners additional listeners (beyond platform event listeners) to receive events from this process.
@@ -319,7 +317,6 @@ data class ProcessOptions(
     val contextId: ContextId? = null,
     val identities: Identities = Identities(),
     val blackboard: Blackboard? = null,
-    val test: Boolean = false,
     val verbosity: Verbosity = Verbosity(),
     val allowGoalChange: Boolean = true,
     val budget: Budget = Budget(),
@@ -388,18 +385,6 @@ data class ProcessOptions(
          */
         fun blackboard(blackboard: Blackboard): Builder {
             this.processOptions = processOptions.copy(blackboard = blackboard)
-            return this
-        }
-
-        /**
-         * Enable or disable test mode for this invocation.
-         * In test mode, the agent platform will not use any external resources such as LLMs,
-         * and will not persist any state.
-         * @param test true to run in test mode, false otherwise
-         * @return this [Builder]
-         */
-        fun test(test: Boolean): Builder {
-            this.processOptions = processOptions.copy(test = test)
             return this
         }
 

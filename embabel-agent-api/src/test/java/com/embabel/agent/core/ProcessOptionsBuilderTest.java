@@ -21,9 +21,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class ProcessOptionsBuilderTest {
 
@@ -31,13 +29,12 @@ class ProcessOptionsBuilderTest {
     void builder() {
         var identities = new Identities();
         var blackboard = new InMemoryBlackboard();
-        var listener  = AgenticEventListener.Companion.getDevNull();
+        var listener = AgenticEventListener.Companion.getDevNull();
 
         var po = ProcessOptions.builder()
                 .contextId("42")
                 .identities(identities)
                 .blackboard(blackboard)
-                .test(true)
                 .verbosity(vb -> vb
                         .showPrompts(true)
                         .showLlmResponses(true)
@@ -61,7 +58,6 @@ class ProcessOptionsBuilderTest {
 
         assertEquals(identities, po.getIdentities());
         assertEquals(blackboard, po.getBlackboard());
-        assertTrue(po.getTest());
 
         assertTrue(po.getVerbosity().getShowPrompts());
         assertTrue(po.getVerbosity().getShowLlmResponses());

@@ -315,7 +315,6 @@ class ShellCommands(
             showPlanning = showPlanning,
         )
         this.defaultProcessOptions = ProcessOptions(
-            test = test,
             blackboard = if (state) blackboard else null,
             verbosity = verbosity,
             allowGoalChange = true,
@@ -338,7 +337,6 @@ class ShellCommands(
             value = ["-o", "--open"],
             help = "run in open mode, choosing a goal and using all actions that can help achieve it",
         ) open: Boolean = false,
-        @ShellOption(value = ["-t", "--test"], help = "run in help mode") test: Boolean = false,
         @ShellOption(value = ["-p", "--showPrompts"], help = "show prompts to LLMs") showPrompts: Boolean,
         @ShellOption(value = ["-r", "--showResponses"], help = "show LLM responses") showLlmResponses: Boolean = false,
         @ShellOption(value = ["-d", "--debug"], help = "show debug info") debug: Boolean = false,
@@ -354,7 +352,6 @@ class ShellCommands(
         // Override any options
         setOptions(
             open = open,
-            test = test,
             showPrompts = showPrompts,
             showLlmResponses = showLlmResponses,
             debug = debug,

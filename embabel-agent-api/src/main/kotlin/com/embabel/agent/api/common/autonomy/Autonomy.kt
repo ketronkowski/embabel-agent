@@ -17,6 +17,7 @@ package com.embabel.agent.api.common.autonomy
 
 import com.embabel.agent.api.common.support.destructureAndBindIfNecessary
 import com.embabel.agent.common.Constants
+import com.embabel.agent.config.AgentPlatformProperties
 import com.embabel.agent.core.*
 import com.embabel.agent.domain.io.UserInput
 import com.embabel.agent.event.DynamicAgentCreationEvent
@@ -24,15 +25,12 @@ import com.embabel.agent.event.RankingChoiceRequestEvent
 import com.embabel.agent.spi.Ranker
 import com.embabel.agent.spi.Ranking
 import com.embabel.agent.spi.Rankings
-import com.embabel.agent.testing.integration.FakeRanker
-import com.embabel.agent.testing.integration.RandomRanker
 import com.embabel.common.core.types.ZeroToOne
 import com.embabel.common.util.indent
 import com.embabel.common.util.loggerFor
 import com.embabel.plan.goap.AStarGoapPlanner
 import com.embabel.plan.goap.ConditionDetermination
 import com.embabel.plan.goap.WorldStateDeterminer
-import com.embabel.agent.config.AgentPlatformProperties
 import org.springframework.stereotype.Component
 import org.springframework.stereotype.Service
 
@@ -142,14 +140,6 @@ class Autonomy(
     ): AgentProcessExecution {
         val userInput = UserInput(intent)
 
-        // Use a fake ranker if we are in test mode and don't already have a fake one
-        // Enables running under integration tests and in test mode otherwise with production config
-        val rankerToUse = if (processOptions.test && ranker !is FakeRanker) {
-            RandomRanker()
-        } else {
-            ranker
-        }
-
         val agentChoiceEvent = RankingChoiceRequestEvent(
             agentPlatform = agentPlatform,
             type = Agent::class.java,
@@ -157,7 +147,7 @@ class Autonomy(
             choices = agentPlatform.agents(),
         )
         eventListener.onPlatformEvent(agentChoiceEvent)
-        val agentRankings = rankerToUse
+        val agentRankings = ranker
             .rank(
                 description = "agent",
                 userInput = userInput.content,
@@ -254,13 +244,6 @@ class Autonomy(
         agentScope: AgentScope,
         goalSelectionOptions: GoalSelectionOptions,
     ): GoalSeeker {
-        // Use a fake goal ranker if we are in test mode and don't already have a fake one
-        // Enables running under integration tests and in test mode otherwise with production config
-        val rankerToUse = if (processOptions.test && ranker !is FakeRanker) {
-            RandomRanker()
-        } else {
-            ranker
-        }
         val userInput = bindings.values.firstOrNull { it is UserInput } as? UserInput
             ?: throw IllegalArgumentException("No UserInput found in bindings: $bindings")
 
@@ -271,7 +254,7 @@ class Autonomy(
             choices = agentScope.goals,
         )
         if (emitEvents) eventListener.onPlatformEvent(goalChoiceEvent)
-        val goalRankings = rankerToUse
+        val goalRankings = ranker
             .rank(
                 description = "goal",
                 userInput = userInput.content,

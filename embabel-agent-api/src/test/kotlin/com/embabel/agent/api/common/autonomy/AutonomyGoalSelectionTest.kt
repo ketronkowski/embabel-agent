@@ -22,7 +22,6 @@ import com.embabel.agent.event.AgenticEventListener
 import com.embabel.agent.spi.Ranking
 import com.embabel.agent.spi.Rankings
 import com.embabel.agent.testing.integration.FakeRanker
-import com.embabel.agent.config.AgentPlatformProperties
 import com.embabel.agent.testing.integration.forAutonomyTesting
 import com.embabel.common.core.types.Described
 import com.embabel.common.core.types.Named
@@ -182,7 +181,7 @@ class AutonomyGoalSelectionTest {
 
         // Execute the real method - no mocking of chooseAndAccomplishGoal
         val result = autonomy.chooseAndAccomplishGoal(
-            processOptions = ProcessOptions(test = false),
+            processOptions = ProcessOptions(),
             goalChoiceApprover = GoalChoiceApprover.APPROVE_ALL,
             agentScope = agentScope,
             bindings = mapOf(IoBinding.DEFAULT_BINDING to UserInput(userInput))
@@ -337,7 +336,7 @@ class AutonomyGoalSelectionTest {
         val exception = assertThrows<NoGoalFound> {
             // IMPORTANT: Use test=false to prevent RandomRanker creation
             autonomy.chooseAndAccomplishGoal(
-                processOptions = ProcessOptions(test = false),
+                processOptions = ProcessOptions(),
                 goalChoiceApprover = GoalChoiceApprover.APPROVE_ALL,
                 agentScope = agentScope,
                 bindings = mapOf(IoBinding.DEFAULT_BINDING to UserInput("test input"))
