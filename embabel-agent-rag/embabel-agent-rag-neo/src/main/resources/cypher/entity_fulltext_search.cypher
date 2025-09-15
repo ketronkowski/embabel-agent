@@ -1,6 +1,20 @@
 CALL db.index.fulltext.queryNodes($fulltextIndex, $searchText)
 YIELD node AS m, score
+WHERE score IS NOT NULL
+WITH collect({node: m, score: score}) AS results, max(score) AS maxScore
+  WHERE maxScore IS NOT NULL AND maxScore > 0
+UNWIND results AS result
+WITH result.node AS match,
+     COALESCE(result.score / maxScore, 0.0) AS score,
+result.node.name as name,
+result.node.description as description,
+result.node.id AS id,
+labels(result.node) AS labels
 WHERE score >= $similarityThreshold
-RETURN m AS match, m.name as name, m.description as description, m.id AS id, labels(m) AS labels,
+RETURN match,
+       COALESCE(name, '') as name,
+       COALESCE(description, '') as description,
+       COALESCE(id, '') as id,
+       labels,
        score
 ORDER BY score DESC
