@@ -43,6 +43,8 @@ class SchemaDrivenCypherRagQueryGenerator(
             Generate a Cypher query for the following RAG request:
             Request: ${request.query}
             Use only entities and relationships defined in the schema.
+            Use only properties defined in the schema.
+            Be willing to use relationships, paths and ordering to get the best insights.
             Schema: ${schema.infoString(verbose = true)}
 
             You must return entities named as `n`.

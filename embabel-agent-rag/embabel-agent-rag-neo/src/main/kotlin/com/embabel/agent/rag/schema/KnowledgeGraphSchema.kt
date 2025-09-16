@@ -41,8 +41,13 @@ data class EntityDefinition(
         verbose: Boolean?,
         indent: Int,
     ): String {
+        val propString = if (verbose == true) {
+            properties.joinToString(", ", "[", "]") { it.name }
+        } else {
+            properties.size.toString()
+        }
         return """
-            EntityDefinition(type='$type', description='$description', labels=$labels, properties=${properties.size})
+            EntityDefinition(type='$type', description='$description', labels=$labels, properties=$propString)
         """.trimIndent()
     }
 }

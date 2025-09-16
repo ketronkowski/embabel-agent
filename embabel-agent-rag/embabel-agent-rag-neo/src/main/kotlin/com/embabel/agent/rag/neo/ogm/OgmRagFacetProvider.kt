@@ -320,15 +320,24 @@ class OgmRagFacetProvider(
     fun entityVectorSearch(
         request: SimilarityCutoff,
         embedding: FloatArray,
-    ): List<SimilarityResult<OgmMappedNamedAndDescribedEntity>> = ogmCypherSearch.mappedEntitySimilaritySearch(
-        purpose = "Mapped entity search",
-        query = "entity_vector_search",
-        params = commonParameters(request) + mapOf(
-            "index" to properties.entityIndex,
-            "queryVector" to embedding,
-        ),
-        logger,
-    )
+    ): List<SimilarityResult<OgmMappedNamedAndDescribedEntity>> {
+        val entities = ogmCypherSearch.mappedEntitySimilaritySearch(
+            purpose = "Mapped entity search",
+            query = "entity_vector_search",
+            params = commonParameters(request) + mapOf(
+                "index" to properties.entityIndex,
+                "queryVector" to embedding,
+            ),
+            logger,
+        )
+        return entities.map {
+            val loaded = ogmCypherSearch.currentSession().load(it.match.javaClass, it.match.id, 3)
+            SimpleSimilaritySearchResult(
+                match = loaded,
+                score = it.score ?: 0.0,
+            )
+        }
+    }
 
     private fun generateAndExecuteCypher(
         request: RagRequest,

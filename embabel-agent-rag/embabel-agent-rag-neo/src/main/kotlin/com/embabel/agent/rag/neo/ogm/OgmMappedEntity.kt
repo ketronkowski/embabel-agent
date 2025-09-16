@@ -15,19 +15,33 @@
  */
 package com.embabel.agent.rag.neo.ogm
 
+import com.embabel.agent.rag.Chunk
 import com.embabel.agent.rag.MappedEntity
 import com.embabel.common.core.types.NamedAndDescribed
 import org.neo4j.ogm.annotation.Id
 import org.neo4j.ogm.annotation.NodeEntity
+import org.neo4j.ogm.annotation.Relationship
+
+@NodeEntity(label = "Chunk")
+class MappedChunk(
+    @Id
+    override val id: String,
+    override val uri: String? = null,
+    override val text: String,
+    override val parentId: String? = null,
+    override val metadata: Map<String, Any?> = emptyMap(),
+) : Chunk
 
 /**
  * Superclass for all entities that are mapped using Neo4j OGM.
  */
-@NodeEntity
+//@NodeEntity
 abstract class OgmMappedEntity(
     @Id
     override val id: String,
     override val uri: String? = null,
+    @Relationship(type = "HAS_ENTITY", direction = Relationship.Direction.INCOMING)
+    val chunks: List<MappedChunk> = emptyList(),
 ) : MappedEntity {
 
     override fun labels() =
@@ -46,7 +60,7 @@ abstract class OgmMappedEntity(
     }
 }
 
-@NodeEntity
+//@NodeEntity
 abstract class OgmMappedNamedAndDescribedEntity(
     override val name: String,
     id: String,
