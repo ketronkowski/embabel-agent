@@ -15,14 +15,14 @@
  */
 package com.embabel.agent.rag.neo.ogm
 
-import com.embabel.agent.rag.Chunk
-import com.embabel.agent.rag.NamedEntityData
-import com.embabel.agent.rag.SimpleNamedEntityData
+import com.embabel.agent.rag.*
 import com.embabel.agent.rag.neo.common.CypherSearch
 import com.embabel.agent.rag.neo.common.LogicalQueryResolver
 import com.embabel.common.core.types.SimilarityResult
 import com.embabel.common.core.types.SimpleSimilaritySearchResult
 import com.embabel.common.util.time
+import org.neo4j.driver.internal.InternalNode
+import org.neo4j.driver.internal.value.StringValue
 import org.neo4j.ogm.model.Result
 import org.neo4j.ogm.session.Session
 import org.neo4j.ogm.session.SessionFactory
@@ -30,13 +30,14 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.data.neo4j.transaction.SessionFactoryUtils
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 
 
 @Service
 class OgmCypherSearch(
     private val sessionFactory: SessionFactory,
     private val queryResolver: LogicalQueryResolver,
-) : CypherSearch {
+) : CypherSearch, ClusterFinder {
 
     private val ogmCypherSearchLogger = LoggerFactory.getLogger(OgmCypherSearch::class.java)
 
@@ -48,6 +49,37 @@ class OgmCypherSearch(
     ): List<NamedEntityData> {
         val result = query(purpose = purpose, query = query, params = params, logger = logger)
         return rowsToNamedEntityData(result)
+    }
+
+    @Transactional(readOnly = true)
+    override fun <E : Embeddable> findClusters(opts: ClusterOpts<E>): List<Cluster<E>> {
+        val result = query(
+            purpose = "cluster",
+            query = "vector_cluster",
+            params = mapOf(
+                // TODO dubious
+                "labels" to opts.type.simpleName,
+                "vectorIndex" to opts.vectorIndex,
+                "similarityThreshold" to opts.similarityThreshold,
+                "topK" to opts.topK,
+            ),
+        )
+        return result.map { row ->
+            val anchor = row["anchor"] as E
+            val similar = (row["similar"]) as Array<Map<String, Any>>
+            val similarityResults = similar.mapNotNull { similarEntityMap ->
+                val inode = similarEntityMap["match"] as InternalNode
+                val matchId = (inode.get("id") as StringValue).asString()
+                val score = similarEntityMap["score"] as Double
+                val match = currentSession().load(opts.type, matchId)
+                    ?: run {
+                        ogmCypherSearchLogger.info("could not load match for $similarEntityMap, type=${opts.type}, id=$matchId")
+                        null
+                    }
+                match?.let { SimpleSimilaritySearchResult(match, score) }
+            }
+            Cluster(anchor, similarityResults)
+        }
     }
 
     override fun queryForMappedEntities(

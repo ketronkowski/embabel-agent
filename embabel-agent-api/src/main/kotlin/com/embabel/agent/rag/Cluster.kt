@@ -15,12 +15,29 @@
  */
 package com.embabel.agent.rag
 
+import com.embabel.common.core.types.SimilarityCutoff
 import com.embabel.common.core.types.SimilarityResult
+import com.embabel.common.core.types.ZeroToOne
 
 /**
- * Cluster of similar entities
+ * Cluster of similar things
  */
-data class EntityCluster<E>(
+data class Cluster<E : Embeddable>(
     val anchor: E,
     val similar: List<SimilarityResult<E>>,
 )
+
+data class ClusterOpts<E : Embeddable> @JvmOverloads constructor(
+    val type: Class<E>,
+    override val similarityThreshold: ZeroToOne = 0.6,
+    override val topK: Int = 8,
+    val vectorIndex: String = "embabel-entity-index",
+) : SimilarityCutoff
+
+interface ClusterFinder {
+
+    /**
+     * Find all clusters
+     */
+    fun <E : Embeddable> findClusters(opts: ClusterOpts<E>): List<Cluster<E>>
+}

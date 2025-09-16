@@ -77,17 +77,21 @@ interface ContentElement : Datum {
 
 }
 
-/**
- * A Retrievable object instance is a Datum
- * (normally a chunk or an entity) that can be retrieved by RAG.
- * It has a stable id.
- */
-interface Retrievable : HasInfoString, Datum {
+interface Embeddable {
 
     /**
      * Embedding value of this retrievable object.
      */
     fun embeddableValue(): String
+
+}
+
+/**
+ * A Retrievable object instance is a Datum
+ * (normally a chunk or an entity) that can be retrieved by RAG.
+ * It has a stable id.
+ */
+interface Retrievable : HasInfoString, Datum, Embeddable {
 
     /**
      * Neighbors of this retrievable object.

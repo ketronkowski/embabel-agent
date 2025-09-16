@@ -15,9 +15,7 @@
  */
 package com.embabel.agent.rag.neo.ogm
 
-import com.embabel.agent.rag.Chunk
-import com.embabel.agent.rag.LeafSection
-import com.embabel.agent.rag.RagRequest
+import com.embabel.agent.rag.*
 import com.embabel.agent.rag.ingestion.DefaultMaterializedContainerSection
 import com.embabel.agent.rag.ingestion.MaterializedDocument
 import com.embabel.common.ai.model.Llm
@@ -28,6 +26,8 @@ import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable
+import org.neo4j.ogm.annotation.Id
+import org.neo4j.ogm.annotation.NodeEntity
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import kotlin.test.assertEquals
@@ -69,6 +69,30 @@ class OgmRagServiceTest(
             )
         }
     }
+
+    @NodeEntity
+    data class Dog(
+        @Id val id: String,
+        val name: String,
+    ) : Embeddable {
+        override fun embeddableValue(): String {
+            return name
+        }
+    }
+
+    @Nested
+    inner class VectorClusteringTest {
+
+        @Test
+        fun `clustering empty `() {
+
+            val entityClusters = ogmCypherSearch.findClusters(
+                ClusterOpts(Dog::class.java)
+            )
+            assertTrue(entityClusters.isEmpty(), "Expected no entity clusters")
+        }
+    }
+
 
     @Nested
     inner class FullTextSearchTest {
