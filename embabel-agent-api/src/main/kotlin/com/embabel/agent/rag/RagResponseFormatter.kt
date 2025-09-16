@@ -42,22 +42,24 @@ object SimpleRagResponseFormatter : RagResponseFormatter {
             NO_RESULTS_FOUND
         } else {
             results.joinToString(separator = "\n\n") { result ->
+                val formattedScore = "%.2f".format(result.score)
+
                 when (val match = result.match) {
                     is EntityData -> {
                         val properties = match.properties.entries.joinToString(", ") { "${it.key}=${it.value}" }
-                        "${result.score}: ${match.infoString(verbose = true)} ($properties)"
+                        "$formattedScore: ${match.infoString(verbose = true)} ($properties)"
                     }
 
                     is Chunk -> {
-                        "${result.score}: ${match.text}"
+                        "$formattedScore: ${match.text}"
                     }
 
                     is Fact -> {
-                        "${result.score}: fact - ${match.assertion}"
+                        "$formattedScore: fact - ${match.assertion}"
                     }
 
                     else -> {
-                        "${result.score}: ${result.match.javaClass.simpleName} - ${match.infoString(verbose = true)}"
+                        "$formattedScore: ${result.match.javaClass.simpleName} - ${match.infoString(verbose = true)}"
                     }
                 }
             }
