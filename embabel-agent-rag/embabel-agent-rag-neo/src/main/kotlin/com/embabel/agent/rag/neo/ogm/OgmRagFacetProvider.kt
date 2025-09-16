@@ -251,29 +251,31 @@ class OgmRagFacetProvider(
 
         return readonlyTransactionTemplate.execute {
 
-            val chunkResults = ogmCypherSearch.chunkSimilaritySearch(
-                "Chunk similarity search",
-                query = "chunk_vector_search",
-                params = commonParameters + mapOf(
-                    "vectorIndex" to properties.contentElementIndex,
-                    "queryVector" to embedding,
-                ),
-                logger = logger,
-            )
-            logger.info("{} chunk similarity results for query '{}'", chunkResults.size, ragRequest.query)
-            allResults += chunkResults
+            if (ragRequest.contentElementSearch?.types?.contains(Chunk::class.java) == true) {
+                val chunkResults = ogmCypherSearch.chunkSimilaritySearch(
+                    "Chunk similarity search",
+                    query = "chunk_vector_search",
+                    params = commonParameters + mapOf(
+                        "vectorIndex" to properties.contentElementIndex,
+                        "queryVector" to embedding,
+                    ),
+                    logger = logger,
+                )
+                logger.info("{} chunk similarity results for query '{}'", chunkResults.size, ragRequest.query)
+                allResults += chunkResults
 
-            val chunkFullTextResults = ogmCypherSearch.chunkFullTextSearch(
-                purpose = "Chunk full text search",
-                query = "chunk_fulltext_search",
-                params = commonParameters + mapOf(
-                    "fulltextIndex" to properties.contentElementFullTextIndex,
-                    "searchText" to "\"${ragRequest.query}\"",
-                ),
-                logger = logger,
-            )
-            logger.info("{} chunk full-text results for query '{}'", chunkFullTextResults.size, ragRequest.query)
-            allResults += chunkFullTextResults
+                val chunkFullTextResults = ogmCypherSearch.chunkFullTextSearch(
+                    purpose = "Chunk full text search",
+                    query = "chunk_fulltext_search",
+                    params = commonParameters + mapOf(
+                        "fulltextIndex" to properties.contentElementFullTextIndex,
+                        "searchText" to "\"${ragRequest.query}\"",
+                    ),
+                    logger = logger,
+                )
+                logger.info("{} chunk full-text results for query '{}'", chunkFullTextResults.size, ragRequest.query)
+                allResults += chunkFullTextResults
+            }
 
             if (ragRequest.entitySearch != null) {
                 val entityResults = ogmCypherSearch.mappedEntitySimilaritySearch(

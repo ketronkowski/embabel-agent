@@ -41,6 +41,7 @@ data class RagOptions @JvmOverloads constructor(
     override val desiredMaxLatency: Duration = Duration.ofMillis(5000),
     override val compressionConfig: CompressionConfig = CompressionConfig(),
     val llm: LlmOptions = LlmOptions.withAutoLlm(),
+    override val contentElementSearch: ContentElementSearch = ContentElementSearch.CHUNKS_ONLY,
     override val entitySearch: EntitySearch? = null,
     val ragResponseFormatter: RagResponseFormatter = SimpleRagResponseFormatter,
     val service: String? = null,
@@ -62,6 +63,10 @@ data class RagOptions @JvmOverloads constructor(
 
     override fun withCompression(compressionConfig: CompressionConfig): RagOptions {
         return copy(compressionConfig = compressionConfig)
+    }
+
+    override fun withContentElementSearch(contentElementSearch: ContentElementSearch): RagOptions {
+        return copy(contentElementSearch = contentElementSearch)
     }
 
     override fun withEntitySearch(entitySearch: EntitySearch): RagOptions {

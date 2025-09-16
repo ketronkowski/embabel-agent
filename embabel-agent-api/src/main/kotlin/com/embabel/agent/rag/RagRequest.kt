@@ -33,6 +33,8 @@ interface RagRequestRefinement<T : RagRequestRefinement<T>> : SimilarityCutoff {
     @get:ApiStatus.Experimental
     val entitySearch: EntitySearch?
 
+    val contentElementSearch: ContentElementSearch
+
     val desiredMaxLatency: Duration
 
     /**
@@ -43,6 +45,7 @@ interface RagRequestRefinement<T : RagRequestRefinement<T>> : SimilarityCutoff {
             query = query,
             similarityThreshold = similarityThreshold,
             topK = topK,
+            contentElementSearch = contentElementSearch,
             entitySearch = entitySearch,
             compressionConfig = compressionConfig,
             desiredMaxLatency = desiredMaxLatency,
@@ -61,7 +64,25 @@ interface RagRequestRefinement<T : RagRequestRefinement<T>> : SimilarityCutoff {
 
     fun withEntitySearch(entitySearch: EntitySearch): T
 
+    fun withContentElementSearch(contentElementSearch: ContentElementSearch): T
+
 }
+
+data class ContentElementSearch(
+    val types: List<Class<out ContentElement>>,
+) {
+    companion object {
+
+        @JvmStatic
+        val NONE = ContentElementSearch(emptyList())
+
+        @JvmStatic
+        val CHUNKS_ONLY: ContentElementSearch = ContentElementSearch(
+            types = listOf(Chunk::class.java),
+        )
+    }
+}
+
 
 /**
  * Controls entity search
@@ -100,6 +121,7 @@ data class RagRequest(
     override val topK: Int = 8,
     override val desiredMaxLatency: Duration = Duration.ofMillis(5000),
     override val compressionConfig: CompressionConfig = CompressionConfig(),
+    override val contentElementSearch: ContentElementSearch = ContentElementSearch.CHUNKS_ONLY,
     override val entitySearch: EntitySearch? = null,
     override val timestamp: Instant = Instant.now(),
 ) : TextSimilaritySearchRequest, RagRequestRefinement<RagRequest>, Timestamped {
@@ -119,6 +141,10 @@ data class RagRequest(
     @ApiStatus.Experimental
     override fun withEntitySearch(entitySearch: EntitySearch): RagRequest {
         return this.copy(entitySearch = entitySearch)
+    }
+
+    override fun withContentElementSearch(contentElementSearch: ContentElementSearch): RagRequest {
+        return this.copy(contentElementSearch = contentElementSearch)
     }
 
     override fun withDesiredMaxLatency(desiredMaxLatency: Duration): RagRequest {
