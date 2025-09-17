@@ -23,17 +23,29 @@ import org.jetbrains.annotations.ApiStatus
 import java.time.Duration
 import java.time.Instant
 
-/**
- * Narrowing of RagRequest
- */
-interface RagRequestRefinement<T : RagRequestRefinement<T>> : SimilarityCutoff {
-
-    val compressionConfig: CompressionConfig
+interface RetrievalFilters<T : RetrievalFilters<T>> : SimilarityCutoff {
 
     @get:ApiStatus.Experimental
     val entitySearch: EntitySearch?
 
     val contentElementSearch: ContentElementSearch
+
+    fun withSimilarityThreshold(similarityThreshold: ZeroToOne): T
+
+    fun withTopK(topK: Int): T
+
+    fun withEntitySearch(entitySearch: EntitySearch): T
+
+    fun withContentElementSearch(contentElementSearch: ContentElementSearch): T
+
+}
+
+/**
+ * Narrowing of RagRequest
+ */
+interface RagRequestRefinement<T : RagRequestRefinement<T>> : RetrievalFilters<T> {
+
+    val compressionConfig: CompressionConfig
 
     val desiredMaxLatency: Duration
 
@@ -54,17 +66,9 @@ interface RagRequestRefinement<T : RagRequestRefinement<T>> : SimilarityCutoff {
 
     // Java-friendly builders
 
-    fun withSimilarityThreshold(similarityThreshold: ZeroToOne): T
-
-    fun withTopK(topK: Int): T
-
     fun withDesiredMaxLatency(desiredMaxLatency: Duration): T
 
     fun withCompression(compressionConfig: CompressionConfig): T
-
-    fun withEntitySearch(entitySearch: EntitySearch): T
-
-    fun withContentElementSearch(contentElementSearch: ContentElementSearch): T
 
 }
 
@@ -93,7 +97,10 @@ sealed interface EntitySearch
 
 open class TypedEntitySearch(
     val entities: List<Class<*>>,
-) : EntitySearch
+) : EntitySearch {
+
+    constructor (vararg entities: Class<*>) : this(entities.toList())
+}
 
 open class LabeledEntitySearch(
     val labels: Set<String>,

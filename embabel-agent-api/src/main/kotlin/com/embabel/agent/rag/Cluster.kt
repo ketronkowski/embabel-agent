@@ -15,7 +15,6 @@
  */
 package com.embabel.agent.rag
 
-import com.embabel.common.core.types.SimilarityCutoff
 import com.embabel.common.core.types.SimilarityResult
 import com.embabel.common.core.types.ZeroToOne
 
@@ -27,17 +26,30 @@ data class Cluster<E : Embeddable>(
     val similar: List<SimilarityResult<E>>,
 )
 
-data class ClusterOpts<E : Embeddable> @JvmOverloads constructor(
-    val type: Class<E>,
-    override val similarityThreshold: ZeroToOne = 0.6,
-    override val topK: Int = 8,
+data class ClusterRetrievalRequest<E : Embeddable> @JvmOverloads constructor(
+    override val entitySearch: EntitySearch? = null,
+    override val contentElementSearch: ContentElementSearch = ContentElementSearch.NONE,
+    override val similarityThreshold: ZeroToOne = 0.7,
+    override val topK: Int = 10,
     val vectorIndex: String = "embabel-entity-index",
-) : SimilarityCutoff
+) : RetrievalFilters<ClusterRetrievalRequest<E>> {
+
+    override fun withSimilarityThreshold(similarityThreshold: ZeroToOne): ClusterRetrievalRequest<E> =
+        copy(similarityThreshold = similarityThreshold)
+
+    override fun withTopK(topK: Int): ClusterRetrievalRequest<E> = copy(topK = topK)
+
+    override fun withEntitySearch(entitySearch: EntitySearch): ClusterRetrievalRequest<E> =
+        copy(entitySearch = entitySearch)
+
+    override fun withContentElementSearch(contentElementSearch: ContentElementSearch): ClusterRetrievalRequest<E> =
+        copy(contentElementSearch = contentElementSearch)
+}
 
 interface ClusterFinder {
 
     /**
      * Find all clusters
      */
-    fun <E : Embeddable> findClusters(opts: ClusterOpts<E>): List<Cluster<E>>
+    fun <E : Embeddable> findClusters(opts: ClusterRetrievalRequest<E>): List<Cluster<E>>
 }

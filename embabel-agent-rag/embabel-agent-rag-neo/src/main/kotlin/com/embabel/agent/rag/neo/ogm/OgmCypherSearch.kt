@@ -52,9 +52,17 @@ class OgmCypherSearch(
     }
 
     @Transactional(readOnly = true)
-    override fun <E : Embeddable> findClusters(opts: ClusterOpts<E>): List<Cluster<E>> {
+    override fun <E : Embeddable> findClusters(opts: ClusterRetrievalRequest<E>): List<Cluster<E>> {
+        // TODO fragile
+        opts.entitySearch as TypedEntitySearch
+        val labels = when {
+            // TODO incorrectly assumes only one entity type
+            opts.entitySearch is TypedEntitySearch -> listOf((opts.entitySearch as TypedEntitySearch).entities.first().simpleName)
+            else -> TODO("Handle other  search types: $opts")
+        }
+        val desiredType = (opts.entitySearch as TypedEntitySearch).entities.first()
         val params = mapOf(
-            "labels" to setOf(opts.type.simpleName),
+            "labels" to labels,
             "vectorIndex" to opts.vectorIndex,
             "similarityThreshold" to opts.similarityThreshold,
             "topK" to opts.topK,
@@ -71,14 +79,14 @@ class OgmCypherSearch(
                 val inode = similarEntityMap["match"] as InternalNode
                 val matchId = (inode.get("id") as StringValue).asString()
                 val score = similarEntityMap["score"] as Double
-                val match = currentSession().load(opts.type, matchId)
+                val match = currentSession().load(desiredType, matchId)
                 if (match == null) {
                     // Shouldn't happen...query is likely incorrect
-                    ogmCypherSearchLogger.warn("Could not load match for $similarEntityMap, type=${opts.type}, id=$matchId")
+                    ogmCypherSearchLogger.warn("Could not load match for $similarEntityMap, type=${desiredType}, id=$matchId")
                     null
                 } else {
                     ogmCypherSearchLogger.debug("Found match: {} with score {}", match, "%.2f".format(score))
-                    SimpleSimilaritySearchResult(match, score)
+                    SimpleSimilaritySearchResult(match, score) as SimilarityResult<E>
                 }
             }
             Cluster(anchor, similarityResults)
