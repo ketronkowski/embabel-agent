@@ -35,7 +35,7 @@ class MappedChunk(
 /**
  * Superclass for all entities that are mapped using Neo4j OGM.
  */
-//@NodeEntity
+@NodeEntity("Entity")
 abstract class OgmMappedEntity(
     @Id
     override val id: String,
@@ -60,7 +60,7 @@ abstract class OgmMappedEntity(
     }
 }
 
-//@NodeEntity
+@NodeEntity
 abstract class OgmMappedNamedAndDescribedEntity(
     override val name: String,
     id: String,

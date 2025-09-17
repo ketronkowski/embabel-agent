@@ -29,4 +29,12 @@ interface WritableContentElementRepository : WritableStore, ContentElementReposi
         // Default no-op
     }
 
+    /**
+     * The Retrievables have been saved to the store,
+     * but Retrievables are special, and we probably want to embed them
+     */
+    fun onNewRetrievables(
+        retrievables: List<Retrievable>,
+    )
+
 }

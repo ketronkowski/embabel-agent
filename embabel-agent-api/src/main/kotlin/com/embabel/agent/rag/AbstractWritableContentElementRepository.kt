@@ -51,11 +51,4 @@ abstract class AbstractWritableContentElementRepository(
 
     protected abstract fun commit()
 
-    /**
-     * The chunks have been saved to the store,
-     * but chunks are special and we probably want to embed them
-     */
-    protected abstract fun onNewRetrievables(
-        retrievables: List<Retrievable>,
-    )
 }
