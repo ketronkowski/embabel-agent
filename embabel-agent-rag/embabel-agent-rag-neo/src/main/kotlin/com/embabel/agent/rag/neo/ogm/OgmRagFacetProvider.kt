@@ -193,10 +193,9 @@ class OgmRagFacetProvider(
             params = params,
         )
         val propertiesSet = result.queryStatistics().propertiesSet
-        if (propertiesSet != 1) {
+        if (propertiesSet == 0) {
             logger.warn(
-                "Expected to set 1 embedding property, but set: {}. chunkId={}, cypher={}",
-                propertiesSet,
+                "Expected to set embedding properties, but set 0. chunkId={}, cypher={}",
                 retrievable.id,
                 cypher,
             )
