@@ -53,16 +53,16 @@ class OgmCypherSearch(
 
     @Transactional(readOnly = true)
     override fun <E : Embeddable> findClusters(opts: ClusterOpts<E>): List<Cluster<E>> {
+        val params = mapOf(
+            "labels" to setOf(opts.type.simpleName),
+            "vectorIndex" to opts.vectorIndex,
+            "similarityThreshold" to opts.similarityThreshold,
+            "topK" to opts.topK,
+        )
         val result = query(
             purpose = "cluster",
             query = "vector_cluster",
-            params = mapOf(
-                // TODO dubious
-                "labels" to opts.type.simpleName,
-                "vectorIndex" to opts.vectorIndex,
-                "similarityThreshold" to opts.similarityThreshold,
-                "topK" to opts.topK,
-            ),
+            params = params,
         )
         return result.map { row ->
             val anchor = row["anchor"] as E
@@ -72,11 +72,14 @@ class OgmCypherSearch(
                 val matchId = (inode.get("id") as StringValue).asString()
                 val score = similarEntityMap["score"] as Double
                 val match = currentSession().load(opts.type, matchId)
-                    ?: run {
-                        ogmCypherSearchLogger.info("could not load match for $similarEntityMap, type=${opts.type}, id=$matchId")
-                        null
-                    }
-                match?.let { SimpleSimilaritySearchResult(match, score) }
+                if (match == null) {
+                    // Shouldn't happen...query is likely incorrect
+                    ogmCypherSearchLogger.warn("Could not load match for $similarEntityMap, type=${opts.type}, id=$matchId")
+                    null
+                } else {
+                    ogmCypherSearchLogger.debug("Found match: {} with score {}", match, "%.2f".format(score))
+                    SimpleSimilaritySearchResult(match, score)
+                }
             }
             Cluster(anchor, similarityResults)
         }

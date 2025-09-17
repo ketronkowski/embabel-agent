@@ -6,6 +6,7 @@ CALL apoc.cypher.parallel(
  YIELD node AS m, score
  WHERE m <> seedNode AND score > $similarityThreshold
    AND id(seedNode) < id(m)
+   AND any(label IN labels(m) WHERE label IN $labels)
  RETURN seedNode as anchorNode,
         collect({match: m, score: score}) as similar",
 {
