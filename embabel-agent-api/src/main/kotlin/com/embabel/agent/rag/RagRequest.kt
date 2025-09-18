@@ -124,6 +124,15 @@ open class CompressionConfig(
 )
 
 /**
+ * Hypothetical Document Embedding
+ * Used to generate a synthetic document for embedding from the query.
+ * @param wordCount the number of words to generate for the synthetic document (default is 50)
+ */
+data class HyDE @JvmOverloads constructor(
+    val wordCount: Int = 50,
+)
+
+/**
  * RAG request.
  * Contains a query and parameters for similarity search.
  * @param query the query string to search for
@@ -135,12 +144,17 @@ data class RagRequest(
     override val query: String,
     override val similarityThreshold: ZeroToOne = .8,
     override val topK: Int = 8,
+    val hyDE: HyDE? = null,
     override val desiredMaxLatency: Duration = Duration.ofMillis(5000),
     override val compressionConfig: CompressionConfig = CompressionConfig(),
     override val contentElementSearch: ContentElementSearch = ContentElementSearch.CHUNKS_ONLY,
     override val entitySearch: EntitySearch? = null,
     override val timestamp: Instant = Instant.now(),
 ) : TextSimilaritySearchRequest, RagRequestRefinement<RagRequest>, Timestamped {
+
+    fun withHyDE(hyDE: HyDE): RagRequest {
+        return this.copy(hyDE = hyDE)
+    }
 
     override fun withSimilarityThreshold(similarityThreshold: ZeroToOne): RagRequest {
         return this.copy(similarityThreshold = similarityThreshold)
