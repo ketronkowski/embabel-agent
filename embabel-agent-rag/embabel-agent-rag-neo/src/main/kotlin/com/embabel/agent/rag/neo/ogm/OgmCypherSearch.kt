@@ -238,14 +238,14 @@ class OgmCypherSearch(
     ): Result {
         val loggerToUse = logger ?: ogmCypherSearchLogger
         val cypher = if (query.contains(" ")) query else queryResolver.resolve(query)!!
-        loggerToUse.info("Executing query for purpose {} with params {}\n{}", purpose, params, cypher)
+        loggerToUse.info("[{}] query with params {}\n{}", purpose, params, cypher)
         val (result, millis) = time {
             currentSession().query(
                 cypher,
                 params,
             )
         }
-        loggerToUse.info("Query for purpose {} took {} ms", purpose, millis)
+        loggerToUse.info("[{}] query took {} ms", purpose, millis)
         return result
     }
 
