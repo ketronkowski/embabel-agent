@@ -1,6 +1,6 @@
 CALL db.index.fulltext.queryNodes($fulltextIndex, $searchText)
 YIELD node AS m, score
-WHERE score IS NOT NULL
+WHERE score IS NOT NULL AND any(label IN labels(m) WHERE label IN $labels)
 WITH collect({node: m, score: score}) AS results, max(score) AS maxScore
   WHERE maxScore IS NOT NULL AND maxScore > 0
 UNWIND results AS result

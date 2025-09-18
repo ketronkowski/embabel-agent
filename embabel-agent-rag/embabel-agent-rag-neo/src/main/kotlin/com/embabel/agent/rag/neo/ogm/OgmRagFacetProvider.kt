@@ -282,7 +282,13 @@ class OgmRagFacetProvider(
             }
 
             if (ragRequest.entitySearch != null) {
-                val entityResults = entityVectorSearch(ragRequest, embedding)
+                val labels =
+                    (ragRequest.entitySearch as LabeledEntitySearch).labels
+                val entityResults = entityVectorSearch(
+                    ragRequest,
+                    embedding,
+                    labels,
+                )
                 allResults += entityResults
                 logger.info("{} mapped entity results for query '{}'", entityResults.size, ragRequest.query)
                 val entityFullTextResults = ogmCypherSearch.entityFullTextSearch(
@@ -291,6 +297,7 @@ class OgmRagFacetProvider(
                     params = commonParameters(ragRequest) + mapOf(
                         "fulltextIndex" to properties.entityFullTextIndex,
                         "searchText" to ragRequest.query,
+                        "labels" to labels,
                     ),
                     logger = logger,
                 )
@@ -319,6 +326,7 @@ class OgmRagFacetProvider(
     fun entityVectorSearch(
         request: SimilarityCutoff,
         embedding: FloatArray,
+        labels: Set<String>,
     ): List<SimilarityResult<OgmMappedEntity>> {
         val entities = ogmCypherSearch.mappedEntitySimilaritySearch(
             purpose = "Mapped entity search",
@@ -326,6 +334,7 @@ class OgmRagFacetProvider(
             params = commonParameters(request) + mapOf(
                 "index" to properties.entityIndex,
                 "queryVector" to embedding,
+                "labels" to labels,
             ),
             logger,
         )

@@ -53,11 +53,10 @@ class OgmCypherSearch(
 
     @Transactional(readOnly = true)
     override fun <E : Embeddable> findClusters(opts: ClusterRetrievalRequest<E>): List<Cluster<E>> {
-        // TODO fragile
-        opts.entitySearch as TypedEntitySearch
+
         val labels = when {
             // TODO incorrectly assumes only one entity type
-            opts.entitySearch is TypedEntitySearch -> listOf((opts.entitySearch as TypedEntitySearch).entities.first().simpleName)
+            opts.entitySearch is LabeledEntitySearch -> (opts.entitySearch as LabeledEntitySearch).labels.toList()
             else -> TODO("Handle other  search types: $opts")
         }
         val desiredType = (opts.entitySearch as TypedEntitySearch).entities.first()

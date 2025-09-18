@@ -95,16 +95,19 @@ data class ContentElementSearch(
  */
 sealed interface EntitySearch
 
-open class TypedEntitySearch(
-    val entities: List<Class<*>>,
-) : EntitySearch {
-
-    constructor (vararg entities: Class<*>) : this(entities.toList())
-}
 
 open class LabeledEntitySearch(
     val labels: Set<String>,
 ) : EntitySearch
+
+open class TypedEntitySearch(
+    val entities: List<Class<*>>,
+) : LabeledEntitySearch(
+    labels = entities.map { it.simpleName }.toSet(),
+) {
+
+    constructor (vararg entities: Class<*>) : this(entities.toList())
+}
 
 open class SchemaEntitySearch(
     val schema: String,
