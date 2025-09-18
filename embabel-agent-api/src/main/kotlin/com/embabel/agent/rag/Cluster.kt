@@ -21,12 +21,12 @@ import com.embabel.common.core.types.ZeroToOne
 /**
  * Cluster of similar things
  */
-data class Cluster<E : Embeddable>(
+data class Cluster<E>(
     val anchor: E,
     val similar: List<SimilarityResult<E>>,
 )
 
-data class ClusterRetrievalRequest<E : Embeddable> @JvmOverloads constructor(
+data class ClusterRetrievalRequest<E> @JvmOverloads constructor(
     override val entitySearch: EntitySearch? = null,
     override val contentElementSearch: ContentElementSearch = ContentElementSearch.NONE,
     override val similarityThreshold: ZeroToOne = 0.7,
@@ -51,5 +51,5 @@ interface ClusterFinder {
     /**
      * Find all clusters
      */
-    fun <E : Embeddable> findClusters(opts: ClusterRetrievalRequest<E>): List<Cluster<E>>
+    fun <E> findClusters(opts: ClusterRetrievalRequest<E>): List<Cluster<E>>
 }

@@ -86,7 +86,7 @@ class OgmRagServiceTest(
         @Test
         fun `clustering empty `() {
 
-            val entityClusters = ogmCypherSearch.findClusters(
+            val entityClusters = ogmCypherSearch.findClusters<Dog>(
                 ClusterRetrievalRequest(TypedEntitySearch(listOf(Dog::class.java)))
             )
             assertTrue(entityClusters.isEmpty(), "Expected no entity clusters")

@@ -36,7 +36,7 @@ class MappedChunk(
  * Superclass for all entities that are mapped using Neo4j OGM.
  */
 @NodeEntity("Entity")
-abstract class OgmMappedEntity(
+open class OgmMappedEntity(
     @Id
     override val id: String,
     override val uri: String? = null,
@@ -58,6 +58,8 @@ abstract class OgmMappedEntity(
     ): String {
         return "${javaClass.simpleName}:(${labels().joinToString(":")} id='$id')"
     }
+
+    override fun embeddableValue(): String = error("Should not be called on this implementation")
 }
 
 @NodeEntity
