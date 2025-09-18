@@ -93,17 +93,22 @@ data class ContentElementSearch(
  * Open to allow specializations
  *
  */
-sealed interface EntitySearch
+sealed interface EntitySearch {
+    val generateQueries: Boolean
+}
 
 
 open class LabeledEntitySearch(
     val labels: Set<String>,
+    override val generateQueries: Boolean = false,
 ) : EntitySearch
 
 open class TypedEntitySearch(
     val entities: List<Class<*>>,
+    generateQueries: Boolean = false,
 ) : LabeledEntitySearch(
     labels = entities.map { it.simpleName }.toSet(),
+    generateQueries = generateQueries,
 ) {
 
     constructor (vararg entities: Class<*>) : this(entities.toList())
@@ -111,6 +116,7 @@ open class TypedEntitySearch(
 
 open class SchemaEntitySearch(
     val schema: String,
+    override val generateQueries: Boolean = false,
 ) : EntitySearch
 
 open class CompressionConfig(
