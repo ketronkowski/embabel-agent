@@ -66,7 +66,7 @@ sealed interface Datum {
         example = "[\"Person\", \"Customer\"]",
         required = true,
     )
-    fun labels(): Set<String> = setOf("ContentElement")
+    fun labels(): Set<String> = emptySet()
 }
 
 /**
@@ -75,6 +75,7 @@ sealed interface Datum {
  */
 interface ContentElement : Datum {
 
+    override fun labels(): Set<String> = super.labels() + setOf("ContentElement")
 }
 
 interface Embeddable {
