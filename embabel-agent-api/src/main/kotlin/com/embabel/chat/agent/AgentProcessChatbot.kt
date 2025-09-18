@@ -21,6 +21,8 @@ import com.embabel.agent.core.Agent
 import com.embabel.agent.core.AgentPlatform
 import com.embabel.agent.core.AgentProcess
 import com.embabel.agent.core.ProcessOptions
+import com.embabel.agent.event.AgenticEventListener
+import com.embabel.agent.event.progress.OutputChannelHighlightingEventListener
 import com.embabel.agent.identity.User
 import com.embabel.chat.ChatSession
 import com.embabel.chat.Chatbot
@@ -33,6 +35,14 @@ fun interface AgentSource {
     fun resolveAgent(user: User?): Agent
 }
 
+fun interface ListenerProvider {
+
+    fun listenersFor(
+        user: User?,
+        outputChannel: OutputChannel,
+    ): List<AgenticEventListener>
+}
+
 /**
  * Chatbot implementation backed by an AgentProcess
  * The AgentProcess must react to messages and respond on its output channel
@@ -43,6 +53,7 @@ fun interface AgentSource {
 class AgentProcessChatbot(
     private val agentPlatform: AgentPlatform,
     private val agentSource: AgentSource,
+    private val listenerProvider: ListenerProvider = ListenerProvider { user, outputChannel -> emptyList() },
 ) : Chatbot {
 
     override fun createSession(
@@ -50,14 +61,16 @@ class AgentProcessChatbot(
         outputChannel: OutputChannel,
         systemMessage: String?,
     ): ChatSession {
+        val listeners = listenerProvider.listenersFor(user, outputChannel)
         val agentProcess = agentPlatform.createAgentProcess(
             agent = agentSource.resolveAgent(user),
             processOptions = ProcessOptions(
                 outputChannel = outputChannel,
+                listeners = listeners,
             ),
             bindings = emptyMap(),
         )
-        // We don't yet start the process, it will be started when the first message is received
+        // We don't yet start the process. It will be started when the first message is received
         return AgentProcessChatSession(agentProcess)
     }
 
@@ -73,15 +86,20 @@ class AgentProcessChatbot(
          * Create a chatbot with the given agent. The agent is looked up by name from the agent platform.
          * @param agentPlatform the agent platform to create and manage agent processes
          * @param agentName the name of the agent to
+         * @param listenerProvider provider for contextual event listeners
          */
         @JvmStatic
+        @JvmOverloads
         fun withAgentByName(
             agentPlatform: AgentPlatform,
             agentName: String,
+            listenerProvider: ListenerProvider = ListenerProvider { _, outputChannel ->
+                listOf(OutputChannelHighlightingEventListener(outputChannel))
+            },
         ): Chatbot = AgentProcessChatbot(agentPlatform, {
             agentPlatform.agents().find { it.name == agentName }
                 ?: throw IllegalArgumentException("No agent found with name $agentName")
-        })
+        }, listenerProvider)
     }
 
 }
@@ -109,7 +127,7 @@ private class AgentProcessChatSession(
                     agentProcess.processContext.outputChannel.send(
                         LoggingOutputChannelEvent(
                             processId = agentProcess.id,
-                            message = "Chat session started: conversation <${conversation.id}>",
+                            message = "Started chat session `${conversation.id}`",
                             level = LoggingOutputChannelEvent.Level.DEBUG,
                         )
                     )
