@@ -62,7 +62,7 @@ class ConsensusBuilderTest {
         var ap = dummyAgentPlatform();
         var result = ap.runAgentFrom(
                 agent,
-                ProcessOptions.getDEFAULT(),
+                ProcessOptions.DEFAULT,
                 Map.of("it", new UserInput("input"))
         );
         assertEquals(AgentProcessStatusCode.COMPLETED, result.getStatus());
@@ -83,7 +83,7 @@ class ConsensusBuilderTest {
         var ap = dummyAgentPlatform();
         var result = ap.runAgentFrom(
                 agent,
-                ProcessOptions.getDEFAULT(),
+                ProcessOptions.DEFAULT,
                 Map.of("it", new UserInput("input"))
         );
         assertEquals(AgentProcessStatusCode.COMPLETED, result.getStatus());
@@ -111,7 +111,7 @@ class ConsensusBuilderTest {
         var ap = dummyAgentPlatform();
         var result = ap.runAgentFrom(
                 agent,
-                ProcessOptions.getDEFAULT(),
+                ProcessOptions.DEFAULT,
                 Map.of("it", new UserInput("input"))
         );
         assertEquals(AgentProcessStatusCode.COMPLETED, result.getStatus());

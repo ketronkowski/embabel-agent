@@ -51,7 +51,7 @@ class SimpleAgentBuilderTest {
             var ap = IntegrationTestUtils.dummyAgentPlatform();
             var result = ap.runAgentFrom(
                     agent,
-                    ProcessOptions.getDEFAULT(),
+                    ProcessOptions.DEFAULT,
                     Map.of("it", new UserInput("input"))
             );
             assertEquals(AgentProcessStatusCode.COMPLETED, result.getStatus());
@@ -87,7 +87,7 @@ class SimpleAgentBuilderTest {
             var ap = IntegrationTestUtils.dummyAgentPlatform();
             var result = ap.runAgentFrom(
                     agent,
-                    ProcessOptions.getDEFAULT(),
+                    ProcessOptions.DEFAULT,
                     Map.of("it", new Combined("James", 55))
             );
             assertEquals(AgentProcessStatusCode.COMPLETED, result.getStatus());

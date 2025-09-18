@@ -95,7 +95,7 @@ class RepeatUntilBuilderTest {
             var ap = IntegrationTestUtils.dummyAgentPlatform();
             var result = ap.runAgentFrom(
                     agent,
-                    ProcessOptions.getDEFAULT(),
+                    ProcessOptions.DEFAULT,
                     Map.of("it", new UserInput("input"))
             );
             assertEquals(AgentProcessStatusCode.COMPLETED, result.getStatus());
@@ -113,7 +113,7 @@ class RepeatUntilBuilderTest {
             var ap = IntegrationTestUtils.dummyAgentPlatform();
             var result = ap.runAgentFrom(
                     agent,
-                    ProcessOptions.getDEFAULT(),
+                    ProcessOptions.DEFAULT,
                     Map.of("it", new UserInput("input"))
             );
             assertEquals(AgentProcessStatusCode.COMPLETED, result.getStatus());
@@ -217,7 +217,7 @@ class RepeatUntilBuilderTest {
             var ap = IntegrationTestUtils.dummyAgentPlatform();
             assertThrows(IllegalStateException.class, () -> ap.runAgentFrom(
                     agent,
-                    ProcessOptions.getDEFAULT(),
+                    ProcessOptions.DEFAULT,
                     Map.of("it", new UserInput("input"))
             ));
         }
@@ -229,7 +229,7 @@ class RepeatUntilBuilderTest {
             var ap = IntegrationTestUtils.dummyAgentPlatform();
             var result = ap.runAgentFrom(
                     agent,
-                    ProcessOptions.getDEFAULT(),
+                    ProcessOptions.DEFAULT,
                     Map.of("it", new UserInput("input"), "person", new Person("John Doe", 30))
             );
             assertEquals(AgentProcessStatusCode.COMPLETED, result.getStatus());
@@ -255,7 +255,7 @@ class RepeatUntilBuilderTest {
             var ap = IntegrationTestUtils.dummyAgentPlatform();
             var result = ap.runAgentFrom(
                     agent,
-                    ProcessOptions.getDEFAULT(),
+                    ProcessOptions.DEFAULT,
                     Map.of("it", new UserInput("input"), "person", new Person("John Doe", 30))
             );
             assertEquals(AgentProcessStatusCode.COMPLETED, result.getStatus());

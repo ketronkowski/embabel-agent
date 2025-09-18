@@ -332,7 +332,7 @@ data class ProcessOptions(
 
     companion object {
 
-        @JvmStatic
+        @JvmField
         val DEFAULT = ProcessOptions()
 
         /**

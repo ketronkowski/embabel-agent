@@ -56,14 +56,14 @@ interface CypherSearch {
         query: String,
         params: Map<String, *>,
         logger: Logger?,
-    ): List<SimilarityResult<Chunk>>
+    ): List<SimilarityResult<out Chunk>>
 
     fun entityDataSimilaritySearch(
         purpose: String,
         query: String,
         params: Map<String, *> = emptyMap<String, String>(),
         logger: Logger? = null,
-    ): List<SimilarityResult<NamedEntityData>>
+    ): List<SimilarityResult<out NamedEntityData>>
 
     fun mappedEntitySimilaritySearch(
         purpose: String,
@@ -77,7 +77,7 @@ interface CypherSearch {
         query: String,
         params: Map<String, *>,
         logger: Logger?,
-    ): List<SimilarityResult<Chunk>>
+    ): List<SimilarityResult<out Chunk>>
 
     fun entityFullTextSearch(
         purpose: String,

@@ -64,7 +64,7 @@ class PackageVisibleTests {
                 Set.of()
         );
         PlatformServices platformServices = dummyPlatformServices();
-        var processOptions = ProcessOptions.getDEFAULT();
+        var processOptions = ProcessOptions.DEFAULT;
 
         var pc = new ProcessContext(
                 processOptions,
@@ -96,7 +96,7 @@ class PackageVisibleTests {
 
         var agent = (com.embabel.agent.core.Agent) metadata;
         PlatformServices platformServices = dummyPlatformServices();
-        var processOptions = ProcessOptions.getDEFAULT();
+        var processOptions = ProcessOptions.DEFAULT;
 
         var pc = new ProcessContext(
                 processOptions,

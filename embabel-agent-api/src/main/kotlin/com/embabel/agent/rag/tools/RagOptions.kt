@@ -38,6 +38,7 @@ data class DualShotConfig(
 data class RagOptions @JvmOverloads constructor(
     override val similarityThreshold: ZeroToOne = 0.7,
     override val topK: Int = 8,
+    override val hyDE: HyDE? = null,
     override val desiredMaxLatency: Duration = Duration.ofMillis(5000),
     override val compressionConfig: CompressionConfig = CompressionConfig(),
     val llm: LlmOptions = LlmOptions.withAutoLlm(),
@@ -48,6 +49,10 @@ data class RagOptions @JvmOverloads constructor(
     val listener: RagEventListener = RagEventListener.NOOP,
     val dualShot: DualShotConfig? = null,
 ) : RagRequestRefinement<RagOptions> {
+
+    override fun withHyDE(hyDE: HyDE): RagOptions {
+        return this.copy(hyDE = hyDE)
+    }
 
     override fun withSimilarityThreshold(similarityThreshold: ZeroToOne): RagOptions {
         return copy(similarityThreshold = similarityThreshold)

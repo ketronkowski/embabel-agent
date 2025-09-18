@@ -49,6 +49,9 @@ interface RagRequestRefinement<T : RagRequestRefinement<T>> : RetrievalFilters<T
 
     val desiredMaxLatency: Duration
 
+    val hyDE: HyDE?
+
+
     /**
      * Create a RagRequest from this refinement and a query.
      */
@@ -70,6 +73,8 @@ interface RagRequestRefinement<T : RagRequestRefinement<T>> : RetrievalFilters<T
 
     fun withCompression(compressionConfig: CompressionConfig): T
 
+    fun withHyDE(hyDE: HyDE): T
+
 }
 
 data class ContentElementSearch(
@@ -77,10 +82,10 @@ data class ContentElementSearch(
 ) {
     companion object {
 
-        @JvmStatic
+        @JvmField
         val NONE = ContentElementSearch(emptyList())
 
-        @JvmStatic
+        @JvmField
         val CHUNKS_ONLY: ContentElementSearch = ContentElementSearch(
             types = listOf(Chunk::class.java),
         )
@@ -144,7 +149,7 @@ data class RagRequest(
     override val query: String,
     override val similarityThreshold: ZeroToOne = .8,
     override val topK: Int = 8,
-    val hyDE: HyDE? = null,
+    override val hyDE: HyDE? = null,
     override val desiredMaxLatency: Duration = Duration.ofMillis(5000),
     override val compressionConfig: CompressionConfig = CompressionConfig(),
     override val contentElementSearch: ContentElementSearch = ContentElementSearch.CHUNKS_ONLY,
@@ -152,7 +157,7 @@ data class RagRequest(
     override val timestamp: Instant = Instant.now(),
 ) : TextSimilaritySearchRequest, RagRequestRefinement<RagRequest>, Timestamped {
 
-    fun withHyDE(hyDE: HyDE): RagRequest {
+    override fun withHyDE(hyDE: HyDE): RagRequest {
         return this.copy(hyDE = hyDE)
     }
 
