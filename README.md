@@ -719,8 +719,8 @@ The milestones and issues in this repository are a good reference.
 Our key goals:
 
 - **Become the natural way to Gen AI-enable Java applications**, and especially those built on Spring.
-- **Prove the power of the model**. Demonstrate that this model is the most capable agent
-  model. See the [Dunnart milestone](https://github.com/embabel/embabel-agent/milestone/4) for details.
+- **Prove the power of the approach**. Demonstrate that this approach is the best way to build safe, dependable, Gen AI
+  applications.
   In particular:
     - Demonstrate the power of extensibility without modification, by adding goals and actions
     - Demonstrate the potential to become the PaaS for natural language
@@ -1044,6 +1044,7 @@ Binary Packages are located in Embabel Maven Repository.
 You would need to add Embabel Snapshot Repository to your pom.xml or configure in settings.xml
 
 ```xml
+
 <repositories>
     <repository>
         <id>embabel-releases</id>
@@ -1088,7 +1089,8 @@ This file also informs coding agent behavior.
   not be implemented.
 - README badges come from [here](https://github.com/Ileriayo/markdown-badges)
   and [here](https://home.aveek.io/GitHub-Profile-Badges/).
-- Don't forget to join [Discord](https://discord.gg/t6bjkyj93q) to collaborate with the Embabel community. It is a good place to receive support, showcase your work, discuss ideas and connect with like-minded people. 
+- Don't forget to join [Discord](https://discord.gg/t6bjkyj93q) to collaborate with the Embabel community. It is a good
+  place to receive support, showcase your work, discuss ideas and connect with like-minded people.
 
 ## Star history
 
