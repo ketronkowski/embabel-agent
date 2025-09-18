@@ -73,6 +73,7 @@ class PipelinedRagServiceEnhancer(
             logger.info("Performing initial rag search for {} using RagService {}", ragRequest, delegate.name)
             val initialRequest = ragRequest.copy(
                 topK = ragRequest.topK * 2,
+                similarityThreshold = ragRequest.similarityThreshold / 2,
             )
             listener.onRagEvent(InitialRequestRagPipelineEvent(initialRequest, delegate.name))
             val initialResponse = delegate.search(initialRequest)
