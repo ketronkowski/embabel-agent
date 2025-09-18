@@ -3,7 +3,7 @@
 
 Agents can be invoked programmatically or via user input.
 
-See <<Invoking Embabel Agents>> for details on programmatic invocation.
+See <<reference.invoking, Invoking Embabel Agents>> for details on programmatic     invocation.
 Programmatic invocation typically involves structured types other than user input.
 
 In the case of user input, an LLM will choose the appropriate agent via the `Autonomy` class.
@@ -121,7 +121,7 @@ The blackboard enables:
 - **State Persistence**: Complete execution history is maintained
 - **Debugging Support**: Full visibility into state evolution for troubleshooting
 
-[[reference.binding]]
+[[reference.flow__binding]]
 ==== Binding
 
 By default items in the blackboard are matched by type. When there are multiple candidates the most recent one is provided.
