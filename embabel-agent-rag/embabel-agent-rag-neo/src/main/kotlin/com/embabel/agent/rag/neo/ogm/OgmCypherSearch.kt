@@ -79,7 +79,12 @@ class OgmCypherSearch(
                 val inode = similarEntityMap["match"] as InternalNode
                 val matchId = (inode.get("id") as StringValue).asString()
                 val score = similarEntityMap["score"] as Double
-                val match = currentSession().load(desiredType, matchId)
+                val match = try {
+                    currentSession().load(desiredType, matchId)
+                } catch (e: Exception) {
+                    ogmCypherSearchLogger.warn("Could not load entity of type $desiredType with id $matchId", e)
+                    null
+                }
                 if (match == null) {
                     // Shouldn't happen...query is likely incorrect
                     ogmCypherSearchLogger.warn("Could not load match for $similarEntityMap, type=${desiredType}, id=$matchId")
@@ -144,7 +149,7 @@ class OgmCypherSearch(
         query: String,
         params: Map<String, *>,
         logger: Logger?,
-    ): List<SimilarityResult<OgmMappedNamedAndDescribedEntity>> {
+    ): List<SimilarityResult<OgmMappedEntity>> {
         val result = query(purpose = purpose, query = query, params = params, logger = logger)
         return rowsToMappedEntitySimilarityResult(result)
     }
@@ -174,7 +179,7 @@ class OgmCypherSearch(
         query: String,
         params: Map<String, *>,
         logger: Logger?,
-    ): List<SimilarityResult<OgmMappedNamedAndDescribedEntity>> {
+    ): List<SimilarityResult<OgmMappedEntity>> {
         val result = query(purpose = purpose, query = query, params = params, logger = logger)
         return rowsToMappedEntitySimilarityResult(result)
     }
@@ -185,7 +190,7 @@ class OgmCypherSearch(
         SimpleNamedEntityData(
             id = row["id"] as String,
             name = row["name"] as String,
-            description = row["description"] as String,
+            description = row["description"] as String? ?: "",
             labels = (row["labels"] as Array<String>).toSet(),
             properties = emptyMap(), // TODO: handle properties
         )
@@ -193,8 +198,8 @@ class OgmCypherSearch(
 
     private fun rowsToMappedEntitySimilarityResult(
         result: Result,
-    ): List<SimilarityResult<OgmMappedNamedAndDescribedEntity>> = result.mapNotNull { row ->
-        val match = row["match"] as? OgmMappedNamedAndDescribedEntity
+    ): List<SimilarityResult<OgmMappedEntity>> = result.mapNotNull { row ->
+        val match = row["match"] as? OgmMappedEntity
         if (match == null) {
             ogmCypherSearchLogger.warn("Match is null for row: $row")
             return@mapNotNull null

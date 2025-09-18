@@ -319,7 +319,7 @@ class OgmRagFacetProvider(
     fun entityVectorSearch(
         request: SimilarityCutoff,
         embedding: FloatArray,
-    ): List<SimilarityResult<OgmMappedNamedAndDescribedEntity>> {
+    ): List<SimilarityResult<OgmMappedEntity>> {
         val entities = ogmCypherSearch.mappedEntitySimilaritySearch(
             purpose = "Mapped entity search",
             query = "entity_vector_search",
@@ -333,7 +333,7 @@ class OgmRagFacetProvider(
             val loaded = ogmCypherSearch.currentSession().load(it.match.javaClass, it.match.id, 3)
             SimpleSimilaritySearchResult(
                 match = loaded,
-                score = it.score ?: 0.0,
+                score = it.score,
             )
         }
     }
