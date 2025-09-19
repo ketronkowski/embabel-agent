@@ -42,10 +42,17 @@ data class SimpleNamedEntityData(
     override val metadata: Map<String, Any?> = emptyMap(),
 ) : NamedEntityData {
 
-    override fun embeddableValue(): String {
-        return "Entity {${labels()}}: name=$name: description=$description"
-    }
-
     override fun labels() = labels + super.labels()
+
+    override fun embeddableValue(): String {
+        var sup = super.embeddableValue()
+        if (!sup.contains("name")) {
+            sup += ", name=$name"
+        }
+        if (!sup.contains("description")) {
+            sup += ", description=$description"
+        }
+        return sup
+    }
 
 }

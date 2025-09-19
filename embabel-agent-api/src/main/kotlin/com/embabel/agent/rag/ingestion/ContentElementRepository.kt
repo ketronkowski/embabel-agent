@@ -19,7 +19,7 @@ import com.embabel.agent.rag.Chunk
 import com.embabel.agent.rag.ContentElement
 
 /**
- * Implemented by services that can retrieve Chunks by id.
+ * Implemented by services that can retrieve Chunks and other ContentElements by id.
  */
 interface ContentElementRepository {
 
@@ -29,6 +29,9 @@ interface ContentElementRepository {
 
     fun save(element: ContentElement): ContentElement
 
+    /**
+     * Return the total number of content elements in the repository
+     */
     fun count(): Int
 
     fun findChunksForEntity(

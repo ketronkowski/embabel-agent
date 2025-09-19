@@ -49,6 +49,16 @@ interface EntityData : RetrievableEntity {
         return "(${labelsString} id='$id')".indent(indent)
     }
 
+    override fun embeddableValue(): String {
+        val props = properties.entries
+            .filterNot { DEFAULT_EXCLUDED_PROPERTIES.contains(it.key) }
+            .joinToString { (k, v) -> "$k=$v" }
+        return "Entity {${labels()}}: properties=[$props]"
+    }
+
+    companion object {
+        val DEFAULT_EXCLUDED_PROPERTIES = setOf("embedding", "id")
+    }
 }
 
 data class SimpleEntityData(
@@ -59,10 +69,6 @@ data class SimpleEntityData(
     override val metadata: Map<String, Any?> = emptyMap(),
 ) : EntityData {
 
-    override fun embeddableValue() =
-        "Entity of type ${labels.joinToString(", ")} with id $id and properties ${properties.entries.joinToString(", ") { "${it.key}=${it.value}" }}"
-
     override fun labels() = labels + super.labels()
-
 
 }

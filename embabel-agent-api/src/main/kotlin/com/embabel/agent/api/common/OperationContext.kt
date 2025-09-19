@@ -21,6 +21,7 @@ import com.embabel.agent.api.dsl.AgentScopeBuilder
 import com.embabel.agent.core.*
 import com.embabel.agent.event.AgenticEventListener
 import com.embabel.agent.event.RagEventListener
+import com.embabel.agent.identity.User
 import com.embabel.agent.prompt.element.ContextualPromptElement
 import com.embabel.agent.rag.RagService
 import com.embabel.common.ai.model.LlmOptions
@@ -42,6 +43,11 @@ interface OperationContext : Blackboard, ToolGroupConsumer {
         get() = processContext.agentProcess
 
     fun agentPlatform() = processContext.platformServices.agentPlatform
+
+    /**
+     * Convenient way to get the user on whose behalf this operation is being executed, if any.
+     */
+    fun user(): User? = processContext.processOptions.identities.forUser
 
     /**
      * Action or operation that is being executed.

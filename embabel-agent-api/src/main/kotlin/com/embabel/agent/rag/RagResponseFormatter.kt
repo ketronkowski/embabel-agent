@@ -46,8 +46,7 @@ object SimpleRagResponseFormatter : RagResponseFormatter {
 
                 when (val match = result.match) {
                     is EntityData -> {
-                        val properties = match.properties.entries.joinToString(", ") { "${it.key}=${it.value}" }
-                        "$formattedScore: ${match.infoString(verbose = true)} ($properties)"
+                        "$formattedScore: ${match.embeddableValue()}"
                     }
 
                     is Chunk -> {
