@@ -15,6 +15,7 @@
  */
 package com.embabel.chat.agent
 
+import com.embabel.agent.api.common.SomeOf
 import com.embabel.agent.channel.LoggingOutputChannelEvent
 import com.embabel.agent.channel.OutputChannel
 import com.embabel.agent.core.Agent
@@ -24,11 +25,9 @@ import com.embabel.agent.core.ProcessOptions
 import com.embabel.agent.event.AgenticEventListener
 import com.embabel.agent.event.progress.OutputChannelHighlightingEventListener
 import com.embabel.agent.identity.User
-import com.embabel.chat.ChatSession
-import com.embabel.chat.Chatbot
-import com.embabel.chat.Conversation
-import com.embabel.chat.UserMessage
+import com.embabel.chat.*
 import com.embabel.chat.support.InMemoryConversation
+import com.fasterxml.jackson.annotation.JsonPropertyDescription
 
 fun interface AgentSource {
 
@@ -43,9 +42,27 @@ fun interface ListenerProvider {
     ): List<AgenticEventListener>
 }
 
+data class ConversationTermination(
+    @get:JsonPropertyDescription("Reason for conversation termination, e.g. 'user requested end of conversation', or 'conversation unsafe'")
+    val reason: String,
+)
+
+/**
+ * Return from a chatbot agent action method
+ */
+data class ChatbotReturn(
+    val assistantMessage: AssistantMessage? = null,
+    val conversationTermination: ConversationTermination? = null,
+) : SomeOf
+
 /**
  * Chatbot implementation backed by an AgentProcess
  * The AgentProcess must react to messages and respond on its output channel
+ * The AgentProcess can assume that the Conversation will be available in the blackboard,
+ * and the latest UserMessage.
+ * Action methods will often take precondition being that the last event
+ * was a UserMessage. A convenient approach is for the core action methods to return ChatbotReturn, and handle ConversationOver,
+ * although that is not required.
  * @param agentPlatform the agent platform to create and manage agent processes
  * @param agentSource factory for agents. The factory is called for each new session.
  * This allows lazy loading and more flexible usage patterns
