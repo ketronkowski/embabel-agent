@@ -17,8 +17,6 @@ package com.embabel.agent.rag.neo.ogm
 
 import com.embabel.agent.core.PropertyDefinition
 import com.embabel.agent.rag.EntitySearch
-import com.embabel.agent.rag.NamedEntityData
-import com.embabel.agent.rag.Retrievable
 import com.embabel.agent.rag.schema.*
 import com.fasterxml.jackson.annotation.JsonClassDescription
 import org.neo4j.ogm.session.SessionFactory
@@ -88,34 +86,6 @@ class OgmMetadataSchemaResolver(
             entities = entityDefinitions,
             relationships = relationships,
         )
-    }
-
-    private fun createEntity(
-        entity: NamedEntityData,
-        basis: Retrievable,
-    ) {
-        val params = mapOf(
-            "id" to entity.id,
-            "name" to entity.name,
-            "description" to entity.description,
-            "basisId" to basis.id,
-            "properties" to entity.properties,
-            "chunkNodeName" to properties.chunkNodeName,
-            "entityLabels" to entity.labels() + properties.entityNodeName,
-        )
-        val result = ogmCypherSearch.query(
-            purpose = "Merge entity",
-            query = "create_entity",
-            params = params,
-            logger = logger,
-        )
-        if (result.queryStatistics().nodesCreated != 1) {
-            logger.warn(
-                "Expected to create 1 node, but created: {}. params={}",
-                result.queryStatistics().nodesCreated,
-                params
-            )
-        }
     }
 
 }

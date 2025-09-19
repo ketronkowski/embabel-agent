@@ -17,6 +17,8 @@ package com.embabel.agent.rag.neo.common
 
 import com.embabel.agent.rag.Chunk
 import com.embabel.agent.rag.EntityData
+import com.embabel.agent.rag.NamedEntityData
+import com.embabel.agent.rag.Retrievable
 import com.embabel.agent.rag.neo.ogm.OgmMappedEntity
 import com.embabel.common.core.types.SimilarityResult
 import org.neo4j.ogm.model.Result
@@ -27,6 +29,11 @@ import org.slf4j.Logger
  * Must work within Spring's transaction management
  */
 interface CypherSearch {
+
+    fun createEntity(
+        entity: NamedEntityData,
+        basis: Retrievable,
+    ): String
 
     /**
      * Load a mapped entity with OGM.

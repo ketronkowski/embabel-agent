@@ -41,6 +41,38 @@ class OgmCypherSearch(
 
     private val ogmCypherSearchLogger = LoggerFactory.getLogger(OgmCypherSearch::class.java)
 
+    override fun createEntity(
+        entity: NamedEntityData,
+        basis: Retrievable,
+    ): String {
+        val params = mapOf(
+            "id" to entity.id,
+            "name" to entity.name,
+            "description" to entity.description,
+            "basisId" to basis.id,
+            "properties" to entity.properties,
+            "chunkNodeName" to "Chunk",
+            "entityLabels" to entity.labels(),
+        )
+        val result = query(
+            purpose = "Create entity",
+            query = "create_entity",
+            params = params,
+            logger = ogmCypherSearchLogger,
+        )
+        if (result.queryStatistics().nodesCreated != 1) {
+            ogmCypherSearchLogger.warn(
+                "Expected to create 1 node, but created: {}. params={}",
+                result.queryStatistics().nodesCreated,
+                params
+            )
+        }
+        val singleRow = result.singleOrNull() ?: error("No result returned from create_entity")
+        val id = singleRow["id"] as? String ?: error("No id returned from create_entity")
+        ogmCypherSearchLogger.info("Created entity {} with id: {}", entity.labels(), id)
+        return id
+    }
+
     override fun <T> loadEntity(
         type: Class<T>,
         id: String,
@@ -248,7 +280,7 @@ class OgmCypherSearch(
     ): Result {
         val loggerToUse = logger ?: ogmCypherSearchLogger
         val cypher = if (query.contains(" ")) query else queryResolver.resolve(query)!!
-        loggerToUse.info("[{}] query with params {}\n{}", purpose, params, cypher)
+        loggerToUse.info("[{}] query\n\tparams: {}\n{}", purpose, params, cypher)
         val (result, millis) = time {
             currentSession().query(
                 cypher,

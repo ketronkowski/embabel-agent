@@ -1,6 +1,5 @@
 MATCH (chunk:$($chunkNodeName) {id: $basisId})
-CREATE (e:$($entityLabels) {id: $id, name: $name, description: $description, createdDate: timestamp()})
-<-[:HAS_ENTITY]-(chunk)
+CREATE (chunk)-[:HAS_ENTITY]->(e:$($entityLabels) {id: $id, name: $name, description: $description, createdDate: timestamp()})
 SET e += $properties,
- e.lastModifiedDate = timestamp()
-RETURN COUNT(e) as nodesCreated
+e.lastModifiedDate = timestamp()
+RETURN e.id as id, COUNT(e) as nodesCreated
