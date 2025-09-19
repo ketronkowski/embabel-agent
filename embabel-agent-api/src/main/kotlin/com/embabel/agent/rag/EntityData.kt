@@ -15,7 +15,6 @@
  */
 package com.embabel.agent.rag
 
-import com.embabel.common.core.types.Described
 import com.embabel.common.util.indent
 import io.swagger.v3.oas.annotations.media.Schema
 
@@ -33,14 +32,7 @@ interface RetrievableEntity : Retrievable {
 /**
  * Generic retrieved entity
  */
-interface EntityData : RetrievableEntity, Described {
-
-    @get:Schema(
-        description = "description of this entity",
-        example = "A customer of Acme Industries named Melissa Bell",
-        required = true,
-    )
-    override val description: String
+interface EntityData : RetrievableEntity {
 
     @get:Schema(
         description = "Properties of this object. Arbitrary key-value pairs, although likely specified in schema. Must filter out embedding",
@@ -59,10 +51,17 @@ interface EntityData : RetrievableEntity, Described {
 
 }
 
-/**
- * Entity mapped with JPA, Neo OGM or another persistence tool. Will be a JVM object.
- * What it exposes beyond RetrievableEntity methods is a matter for the RagService in the application.
- * MappedEntity objects have their own distinct types and can expose
- * @Tool methods for LLMs.
- */
-interface MappedEntity : RetrievableEntity
+data class SimpleEntityData(
+    override val id: String,
+    override val uri: String? = null,
+    val labels: Set<String>,
+    override val properties: Map<String, Any>,
+    override val metadata: Map<String, Any?> = emptyMap(),
+) : EntityData {
+
+    override fun embeddableValue() = error("Subclass and implement embeddableValue()")
+
+    override fun labels() = labels + super.labels()
+
+
+}

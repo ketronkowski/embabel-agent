@@ -15,20 +15,20 @@
  */
 package com.embabel.agent.rag
 
-import com.embabel.common.core.types.Named
+import com.embabel.common.core.types.NamedAndDescribed
 import com.embabel.common.util.indent
 
 /**
  * Adds a name to the well known entity data.
  */
-interface NamedEntityData : EntityData, Named {
+interface NamedEntityData : EntityData, NamedAndDescribed {
 
     override fun infoString(
         verbose: Boolean?,
         indent: Int,
     ): String {
         val labelsString = labels().joinToString(":")
-        return "(${labelsString} id='$id', name=$name)".indent(indent)
+        return "(${labelsString} id='$id', name=$name, description=$description)".indent(indent)
     }
 }
 

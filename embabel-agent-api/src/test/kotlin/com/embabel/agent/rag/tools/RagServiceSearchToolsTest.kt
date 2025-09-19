@@ -80,7 +80,7 @@ class RagServiceSearchToolsTest {
 
     @Test
     fun `should pass correct parameters to RagService search`() {
-        val entitySearch = LabeledEntitySearch(setOf("label1", "label2"))
+        val entitySearch = EntitySearch(setOf("label1", "label2"))
         val mockRagService = mockk<RagService>()
         val options = RagOptions(
             similarityThreshold = 0.8,
@@ -116,7 +116,7 @@ class RagServiceSearchToolsTest {
 
     @Test
     fun `should create RagServiceToolsOptions with custom values`() {
-        val entitySearch = LabeledEntitySearch(setOf("custom-label"))
+        val entitySearch = EntitySearch(setOf("custom-label"))
         val customFormatter = mockk<RagResponseFormatter>()
         val options = RagOptions(
             similarityThreshold = 0.9,
@@ -223,7 +223,7 @@ class RagServiceSearchToolsTest {
         val options = RagOptions(
             similarityThreshold = 0.85,
             topK = 12,
-            entitySearch = LabeledEntitySearch(setOf("test-label"))
+            entitySearch = EntitySearch(setOf("test-label"))
 
         )
 
@@ -233,6 +233,6 @@ class RagServiceSearchToolsTest {
         assertEquals("test query", request.query)
         assertEquals(0.85, request.similarityThreshold)
         assertEquals(12, request.topK)
-        assertEquals(setOf("test-label"), (request.entitySearch as? LabeledEntitySearch)?.labels)
+        assertEquals(setOf("test-label"), request.entitySearch?.labels)
     }
 }

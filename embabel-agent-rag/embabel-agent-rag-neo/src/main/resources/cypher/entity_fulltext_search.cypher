@@ -15,6 +15,7 @@ RETURN match,
        COALESCE(name, '') as name,
        COALESCE(description, '') as description,
        COALESCE(id, '') as id,
+       properties(match) AS properties,
        labels,
        score
 ORDER BY score DESC

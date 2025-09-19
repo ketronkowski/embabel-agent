@@ -20,7 +20,7 @@ import com.embabel.agent.api.common.support.OperationContextPromptRunner
 import com.embabel.agent.core.AgentPlatform
 import com.embabel.agent.core.Operation
 import com.embabel.agent.experimental.primitive.Determination
-import com.embabel.agent.rag.LabeledEntitySearch
+import com.embabel.agent.rag.EntitySearch
 import com.embabel.agent.rag.RagRequest
 import com.embabel.agent.rag.RagResponse
 import com.embabel.agent.rag.RagService
@@ -419,7 +419,7 @@ class OperationContextPromptRunnerTest {
             val customRagOptions = RagOptions(
                 similarityThreshold = 0.9,
                 topK = 5,
-                entitySearch = LabeledEntitySearch(setOf("test-label"))
+                entitySearch = EntitySearch(setOf("test-label"))
             )
 
             val ocpr = createOperationContextPromptRunnerWithDefaults(mockContext)
@@ -439,7 +439,7 @@ class OperationContextPromptRunnerTest {
             assertEquals(5, ragTools.options.topK, "TopK not set correctly")
             assertEquals(
                 setOf("test-label"),
-                (ragTools.options.entitySearch as? LabeledEntitySearch)?.labels,
+                ragTools.options.entitySearch?.labels,
                 "Labels not set correctly"
             )
         }
@@ -614,7 +614,7 @@ class OperationContextPromptRunnerTest {
             val mockRagResponse = RagResponse(RagRequest("test"), "test-service", emptyList())
             every { mockRagService.search(any()) } returns mockRagResponse
 
-            val entitySearch = LabeledEntitySearch(setOf("custom-label", "another-label"))
+            val entitySearch = EntitySearch(setOf("custom-label", "another-label"))
             val customRagOptions = RagOptions(
                 similarityThreshold = 0.85,
                 topK = 12,

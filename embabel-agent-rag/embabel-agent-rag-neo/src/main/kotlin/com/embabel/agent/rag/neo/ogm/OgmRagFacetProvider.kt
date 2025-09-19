@@ -233,18 +233,6 @@ class OgmRagFacetProvider(
     fun search(ragRequest: RagRequest): RagFacetResults<Retrievable> {
         val embedding = embeddingService.model.embed(ragRequest.query)
         val allResults = mutableListOf<SimilarityResult<out Retrievable>>()
-
-//        val genericEntityResults = queryRunner.entityDataSimilaritySearch(
-//            "searchEntities",
-//            query = "entity_vector_search",
-//            params = mapOf(
-//                "queryVector" to embedding,
-//                "topK" to ragRequest.topK,
-//                "similarityThreshold" to ragRequest.similarityThreshold,
-//            ),
-//        )
-
-
         if (ragRequest.contentElementSearch.types.contains(Chunk::class.java)) {
             allResults += safelyExecuteInTransaction { chunkSearch(ragRequest, embedding) }
         } else {
@@ -310,15 +298,14 @@ class OgmRagFacetProvider(
         embedding: FloatArray,
     ): List<SimilarityResult<out Retrievable>> {
         val allEntityResults = mutableListOf<SimilarityResult<out Retrievable>>()
-        val labels =
-            (ragRequest.entitySearch as LabeledEntitySearch).labels
+        val labels = ragRequest.entitySearch?.labels ?: error("No entity search specified")
         val entityResults = entityVectorSearch(
             ragRequest,
             embedding,
             labels,
         )
         allEntityResults += entityResults
-        logger.info("{} mapped entity results for query '{}'", entityResults.size, ragRequest.query)
+        logger.info("{} entity vector results for query '{}'", entityResults.size, ragRequest.query)
         val entityFullTextResults = ogmCypherSearch.entityFullTextSearch(
             purpose = "Entity full text search",
             query = "entity_fulltext_search",
@@ -341,6 +328,7 @@ class OgmRagFacetProvider(
         } else {
             logger.info("No query generation specified, skipping Cypher generation and execution")
         }
+        logger.info("{} total entity results for query '{}'", entityFullTextResults.size, ragRequest.query)
         return allEntityResults
     }
 
@@ -348,8 +336,8 @@ class OgmRagFacetProvider(
         request: SimilarityCutoff,
         embedding: FloatArray,
         labels: Set<String>,
-    ): List<SimilarityResult<OgmMappedEntity>> {
-        val entities = ogmCypherSearch.mappedEntitySimilaritySearch(
+    ): List<SimilarityResult<EntityData>> {
+        return ogmCypherSearch.entityDataSimilaritySearch(
             purpose = "Mapped entity search",
             query = "entity_vector_search",
             params = commonParameters(request) + mapOf(
@@ -359,13 +347,6 @@ class OgmRagFacetProvider(
             ),
             logger,
         )
-        return entities.map {
-            val loaded = ogmCypherSearch.currentSession().load(it.match.javaClass, it.match.id, 3)
-            SimpleSimilaritySearchResult(
-                match = loaded,
-                score = it.score,
-            )
-        }
     }
 
     private fun generateAndExecuteCypher(
@@ -411,10 +392,10 @@ class OgmRagFacetProvider(
      */
     private fun executeGeneratedCypher(
         query: CypherQuery,
-    ): Result<List<OgmMappedNamedAndDescribedEntity>> {
+    ): Result<List<EntityData>> {
         try {
             return Result.success(
-                ogmCypherSearch.queryForMappedEntities(
+                ogmCypherSearch.queryForEntities(
                     purpose = "cypherGeneratedQuery",
                     query = query.query
                 )

@@ -16,8 +16,8 @@
 package com.embabel.agent.rag.neo.common
 
 import com.embabel.agent.rag.Chunk
-import com.embabel.agent.rag.MappedEntity
-import com.embabel.agent.rag.NamedEntityData
+import com.embabel.agent.rag.EntityData
+import com.embabel.agent.rag.neo.ogm.OgmMappedEntity
 import com.embabel.common.core.types.SimilarityResult
 import org.neo4j.ogm.model.Result
 import org.slf4j.Logger
@@ -29,6 +29,15 @@ import org.slf4j.Logger
 interface CypherSearch {
 
     /**
+     * Load a mapped entity with OGM.
+     * @return null if not found
+     */
+    fun <T> loadEntity(
+        type: Class<T>,
+        id: String,
+    ): T?
+
+    /**
      * Query for all entities in the knowledge graph.
      * Includes both generic entities and mapped entities.
      * The query must return entities as n.
@@ -38,7 +47,7 @@ interface CypherSearch {
         query: String,
         params: Map<String, *> = emptyMap<String, String>(),
         logger: Logger? = null,
-    ): List<NamedEntityData>
+    ): List<EntityData>
 
     /**
      * Query for mapped entities in the knowledge graph.
@@ -49,7 +58,7 @@ interface CypherSearch {
         query: String,
         params: Map<String, Any> = emptyMap(),
         logger: Logger? = null,
-    ): List<MappedEntity>
+    ): List<OgmMappedEntity>
 
     fun chunkSimilaritySearch(
         purpose: String,
@@ -63,14 +72,7 @@ interface CypherSearch {
         query: String,
         params: Map<String, *> = emptyMap<String, String>(),
         logger: Logger? = null,
-    ): List<SimilarityResult<out NamedEntityData>>
-
-    fun mappedEntitySimilaritySearch(
-        purpose: String,
-        query: String,
-        params: Map<String, *>,
-        logger: Logger?,
-    ): List<SimilarityResult<out MappedEntity>>
+    ): List<SimilarityResult<out EntityData>>
 
     fun chunkFullTextSearch(
         purpose: String,
@@ -84,7 +86,7 @@ interface CypherSearch {
         query: String,
         params: Map<String, *>,
         logger: Logger?,
-    ): List<SimilarityResult<out MappedEntity>>
+    ): List<SimilarityResult<out EntityData>>
 
     fun queryForInt(
         query: String,

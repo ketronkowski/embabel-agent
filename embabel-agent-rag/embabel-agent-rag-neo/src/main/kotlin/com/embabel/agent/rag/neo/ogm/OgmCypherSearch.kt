@@ -41,24 +41,26 @@ class OgmCypherSearch(
 
     private val ogmCypherSearchLogger = LoggerFactory.getLogger(OgmCypherSearch::class.java)
 
+    override fun <T> loadEntity(
+        type: Class<T>,
+        id: String,
+    ): T? {
+        return currentSession().load(type, id)
+    }
+
     override fun queryForEntities(
         purpose: String,
         query: String,
         params: Map<String, *>,
         logger: Logger?,
-    ): List<NamedEntityData> {
+    ): List<EntityData> {
         val result = query(purpose = purpose, query = query, params = params, logger = logger)
-        return rowsToNamedEntityData(result)
+        return rowsToEntityData(result)
     }
 
     @Transactional(readOnly = true)
     override fun <E> findClusters(opts: ClusterRetrievalRequest<E>): List<Cluster<E>> {
-
-        val labels = when {
-            // TODO incorrectly assumes only one entity type
-            opts.entitySearch is LabeledEntitySearch -> (opts.entitySearch as LabeledEntitySearch).labels.toList()
-            else -> TODO("Handle other  search types: $opts")
-        }
+        val labels = opts.entitySearch?.labels?.toList() ?: error("Must specify labels in entity search for clustering")
         val desiredType = (opts.entitySearch as? TypedEntitySearch)?.entities?.first() ?: OgmMappedEntity::class.java
         val params = mapOf(
             "labels" to labels,
@@ -102,7 +104,7 @@ class OgmCypherSearch(
         query: String,
         params: Map<String, Any>,
         logger: Logger?,
-    ): List<OgmMappedNamedAndDescribedEntity> {
+    ): List<OgmMappedEntity> {
         val result = query(purpose = purpose, query = query, params = params, logger = logger)
         return result.mapNotNull { row ->
             val match = row["n"] as? OgmMappedNamedAndDescribedEntity
@@ -119,7 +121,7 @@ class OgmCypherSearch(
         query: String,
         params: Map<String, *>,
         logger: Logger?,
-    ): List<SimilarityResult<NamedEntityData>> {
+    ): List<SimilarityResult<EntityData>> {
         val result = query(purpose = purpose, query = query, params = params, logger = logger)
         return rowsToSimilarityResult(result)
     }
@@ -143,15 +145,6 @@ class OgmCypherSearch(
         }
     }
 
-    override fun mappedEntitySimilaritySearch(
-        purpose: String,
-        query: String,
-        params: Map<String, *>,
-        logger: Logger?,
-    ): List<SimilarityResult<OgmMappedEntity>> {
-        val result = query(purpose = purpose, query = query, params = params, logger = logger)
-        return rowsToMappedEntitySimilarityResult(result)
-    }
 
     override fun chunkFullTextSearch(
         purpose: String,
@@ -178,14 +171,14 @@ class OgmCypherSearch(
         query: String,
         params: Map<String, *>,
         logger: Logger?,
-    ): List<SimilarityResult<OgmMappedEntity>> {
+    ): List<SimilarityResult<EntityData>> {
         val result = query(purpose = purpose, query = query, params = params, logger = logger)
-        return rowsToMappedEntitySimilarityResult(result)
+        return rowsToSimilarityResult(result)
     }
 
-    private fun rowsToNamedEntityData(
+    private fun rowsToEntityData(
         result: Result,
-    ): List<SimpleNamedEntityData> = result.map { row ->
+    ): List<EntityData> = result.map { row ->
         SimpleNamedEntityData(
             id = row["id"] as String,
             name = row["name"] as String,
@@ -211,15 +204,28 @@ class OgmCypherSearch(
 
     private fun rowsToSimilarityResult(
         result: Result,
-    ): List<SimilarityResult<NamedEntityData>> = result.map { row ->
-        SimpleSimilaritySearchResult(
-            match = SimpleNamedEntityData(
+    ): List<SimilarityResult<EntityData>> = result.map { row ->
+        val name = row["name"] as? String
+        val description = row["description"] as? String
+        val labels = (row["labels"] as Array<String>).toSet()
+        val properties = row["properties"] as? Map<String, Any> ?: emptyMap()
+        val match = if (name != null && description != null) {
+            SimpleNamedEntityData(
                 id = row["id"] as String,
                 name = row["name"] as String,
                 description = row["description"] as String,
-                labels = (row["labels"] as Array<String>).toSet(),
-                properties = emptyMap(), // TODO: handle properties
-            ),
+                labels = labels,
+                properties = properties,
+            )
+        } else {
+            SimpleEntityData(
+                id = row["id"] as String,
+                labels = labels,
+                properties = properties,
+            )
+        }
+        SimpleSimilaritySearchResult(
+            match = match,
             score = row["score"] as Double,
         )
     }

@@ -16,7 +16,7 @@
 package com.embabel.agent.rag.neo.ogm
 
 import com.embabel.agent.rag.Chunk
-import com.embabel.agent.rag.MappedEntity
+import com.embabel.agent.rag.RetrievableEntity
 import com.embabel.common.core.types.NamedAndDescribed
 import org.neo4j.ogm.annotation.Id
 import org.neo4j.ogm.annotation.NodeEntity
@@ -42,7 +42,7 @@ open class OgmMappedEntity(
     override val uri: String? = null,
     @Relationship(type = "HAS_ENTITY", direction = Relationship.Direction.INCOMING)
     val chunks: List<MappedChunk> = emptyList(),
-) : MappedEntity {
+) : RetrievableEntity {
 
     override fun labels() =
         setOf(javaClass.simpleName) + super.labels()
