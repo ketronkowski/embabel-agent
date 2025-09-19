@@ -18,10 +18,7 @@ package com.embabel.chat.agent
 import com.embabel.agent.api.common.SomeOf
 import com.embabel.agent.channel.LoggingOutputChannelEvent
 import com.embabel.agent.channel.OutputChannel
-import com.embabel.agent.core.Agent
-import com.embabel.agent.core.AgentPlatform
-import com.embabel.agent.core.AgentProcess
-import com.embabel.agent.core.ProcessOptions
+import com.embabel.agent.core.*
 import com.embabel.agent.event.AgenticEventListener
 import com.embabel.agent.event.progress.OutputChannelHighlightingEventListener
 import com.embabel.agent.identity.User
@@ -84,6 +81,9 @@ class AgentProcessChatbot(
             processOptions = ProcessOptions(
                 outputChannel = outputChannel,
                 listeners = listeners,
+                identities = Identities(
+                    forUser = user,
+                )
             ),
             bindings = emptyMap(),
         )
