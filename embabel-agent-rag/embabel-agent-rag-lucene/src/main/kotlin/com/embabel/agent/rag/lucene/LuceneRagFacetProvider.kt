@@ -93,6 +93,10 @@ class LuceneRagFacetProvider @JvmOverloads constructor(
         return foundChunks
     }
 
+    override fun findChunksForEntity(entityId: String): List<Chunk> {
+        TODO("Entities not supported in LuceneRagService")
+    }
+
     override fun count(): Int =
         contentElementStorage.size
 

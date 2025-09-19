@@ -123,6 +123,13 @@ class PipelinedRagServiceEnhancer(
             )
             val enhancedRagResponse = pipeline.enhance(initialResponse)
             listener.onRagEvent(RagResponseEvent(enhancedRagResponse))
+            logger.info(
+                "Final enhanced rag response has {} results: {} chunks, {} other content elements, {} entities",
+                enhancedRagResponse.results.size,
+                enhancedRagResponse.results.count { it.match is Chunk },
+                enhancedRagResponse.results.count { it.match is ContentElement && it.match !is Chunk },
+                enhancedRagResponse.results.count { it.match is RetrievableEntity },
+            )
             return enhancedRagResponse
         }
 

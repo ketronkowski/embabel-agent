@@ -30,4 +30,8 @@ interface ContentElementRepository {
     fun save(element: ContentElement): ContentElement
 
     fun count(): Int
+
+    fun findChunksForEntity(
+        entityId: String,
+    ): List<Chunk>
 }

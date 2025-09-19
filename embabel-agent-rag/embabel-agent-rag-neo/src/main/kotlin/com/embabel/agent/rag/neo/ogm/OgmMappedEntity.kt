@@ -30,7 +30,10 @@ class MappedChunk(
     override val text: String,
     override val parentId: String? = null,
     override val metadata: Map<String, Any?> = emptyMap(),
-) : Chunk
+) : Chunk {
+
+    private constructor() : this(id = "", text = "")
+}
 
 /**
  * Superclass for all entities that are mapped using Neo4j OGM.

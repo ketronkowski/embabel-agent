@@ -30,14 +30,15 @@ class PromptRunnerRagResponseSummarizer(
     override fun summarize(ragResponse: RagResponse): String {
         return promptRunner
             .generateText(
-                """
+                prompt = """
                 Summarize the following information provided as context to answer a question.
                 Limit the summary to approximately ${options.dualShot?.summaryWords ?: 100} words.
                 <query>${ragResponse.request.query}</query>
                 <context>
                 ${options.ragResponseFormatter.format(ragResponse)}
                 </context>
-            """.trimIndent()
+            """.trimIndent(),
+                interactionId = "summarize",
             )
     }
 }

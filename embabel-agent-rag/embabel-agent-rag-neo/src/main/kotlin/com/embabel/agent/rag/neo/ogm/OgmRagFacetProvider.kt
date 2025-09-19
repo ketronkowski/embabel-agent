@@ -85,6 +85,17 @@ class OgmRagFacetProvider(
         return rows.map(::rowToContentElement).filterIsInstance<Chunk>()
     }
 
+    override fun findChunksForEntity(entityId: String): List<Chunk> {
+        return ogmCypherSearch.currentSession().query(
+            MappedChunk::class.java,
+            """
+            MATCH (e:Entity {id: ${'$'}entityId})<-[:HAS_ENTITY]-(chunk:Chunk)
+            RETURN chunk
+            """.trimIndent(),
+            mapOf("entityId" to entityId),
+        ).toList()
+    }
+
     override fun findById(id: String): ContentElement? {
         return findChunksById(listOf(id)).firstOrNull()
     }

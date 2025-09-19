@@ -11,7 +11,7 @@ result.node.description as description,
 result.node.id AS id,
 labels(result.node) AS labels
 WHERE score >= $similarityThreshold
-RETURN match,
+RETURN
        COALESCE(name, '') as name,
        COALESCE(description, '') as description,
        COALESCE(id, '') as id,

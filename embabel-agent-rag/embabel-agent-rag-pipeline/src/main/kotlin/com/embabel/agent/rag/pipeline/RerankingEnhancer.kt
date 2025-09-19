@@ -20,13 +20,14 @@ import com.embabel.agent.rag.*
 import com.embabel.common.ai.model.LlmOptions
 import com.embabel.common.core.types.SimilarityResult
 import com.embabel.common.core.types.SimpleSimilaritySearchResult
+import com.embabel.common.core.types.ZeroToOne
 import org.slf4j.LoggerFactory
 
 /**
  * Response from LLM for reranking request
  */
 private data class RerankingResponse(
-    val scores: List<Double>
+    val scores: List<Double>,
 )
 
 /**
@@ -36,8 +37,9 @@ private data class RerankingResponse(
 class RerankingEnhancer(
     private val operationContext: OperationContext,
     private val llm: LlmOptions,
-    private val maxResults: Int = 10,
+    private val maxResults: Int = 20,
     private val rerankingThreshold: Int = 3,
+    private val rerankingWeight: ZeroToOne = .5,
 ) : RagResponseEnhancer {
 
     private val logger = LoggerFactory.getLogger(javaClass)
@@ -59,6 +61,12 @@ class RerankingEnhancer(
 
         try {
             val rerankedResults = performLlmReranking(query, resultsToRerank)
+            logger.info(
+                "Reranking {} results to {} for query: {}",
+                resultsToRerank.size,
+                rerankedResults.size,
+                query,
+            )
             return response.copy(results = rerankedResults)
         } catch (e: Exception) {
             logger.warn("Failed to rerank results, returning original response", e)
@@ -68,47 +76,48 @@ class RerankingEnhancer(
 
     private fun performLlmReranking(
         query: String,
-        results: List<SimilarityResult<out Retrievable>>
+        results: List<SimilarityResult<out Retrievable>>,
     ): List<SimilarityResult<out Retrievable>> {
 
         // Build prompt for LLM-based reranking
-        val prompt = buildRerankingPrompt(query, results)
+        val prompt = buildRerankingChoicesText(query, results)
 
         // Use the operation context to get structured LLM response
-        val rerankingResponse = operationContext.ai()
+        val rerankingResponse = operationContext
+            .ai()
             .withLlm(llm)
             .createObject(
-                """
+                prompt = """
                 You are a relevance scoring expert. You evaluate how well search results match a query.
 
                 $prompt
 
                 Return a JSON object with a "scores" array containing relevance scores from 0.0 to 1.0 for each result in order.
                 """.trimIndent(),
-                RerankingResponse::class.java
+                outputClass = RerankingResponse::class.java,
+                interactionId = "reranking",
             )
 
-        val relevanceScores = rerankingResponse.scores.take(results.size)
+        val relevanceScores = rerankingResponse.scores
 
         // Combine original similarity scores with LLM relevance scores
         val rerankedResults = results.mapIndexed { index, result ->
             val llmScore = relevanceScores.getOrElse(index) { 0.5 }
-            val combinedScore = (result.score * 0.3 + llmScore * 0.7).coerceIn(0.0, 1.0)
-
+            val combinedScore = (result.score * (1.0 - rerankingWeight) + llmScore * rerankingWeight).coerceIn(0.0, 1.0)
             SimpleSimilaritySearchResult(result.match, combinedScore)
-        }.sortedByDescending { it.score }
-
+        }
+            .sortedByDescending { it.score }
         logger.debug("Reranked {} results with LLM relevance scoring", rerankedResults.size)
         return rerankedResults
     }
 
-    private fun buildRerankingPrompt(
+    private fun buildRerankingChoicesText(
         query: String,
-        results: List<SimilarityResult<out Retrievable>>
+        results: List<SimilarityResult<out Retrievable>>,
     ): String {
         val resultsText = results.mapIndexed { index, result ->
-            "${index + 1}. ${result.match.embeddableValue().take(200)}..."
-        }.joinToString("\n")
+            "<index>$index</index>\n<result>${result.match.embeddableValue()}</result>"
+        }.joinToString("\n${"".repeat(10)}\n")
 
         return """
             Query: "$query"
@@ -116,7 +125,7 @@ class RerankingEnhancer(
             Search Results:
             $resultsText
 
-            Please score each result from 0.0 to 1.0 based on how relevant it is to the query.
+            Score each result from 0.0 to 1.0 based on how relevant it is to the query.
             Consider semantic meaning, context, and how well each result would help answer the query.
         """.trimIndent()
     }

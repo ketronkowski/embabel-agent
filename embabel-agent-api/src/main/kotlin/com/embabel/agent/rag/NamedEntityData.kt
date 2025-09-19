@@ -43,7 +43,7 @@ data class SimpleNamedEntityData(
 ) : NamedEntityData {
 
     override fun embeddableValue(): String {
-        return "$name: $description"
+        return "Entity {${labels()}}: name=$name: description=$description"
     }
 
     override fun labels() = labels + super.labels()

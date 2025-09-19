@@ -59,7 +59,8 @@ data class SimpleEntityData(
     override val metadata: Map<String, Any?> = emptyMap(),
 ) : EntityData {
 
-    override fun embeddableValue() = error("Subclass and implement embeddableValue()")
+    override fun embeddableValue() =
+        "Entity of type ${labels.joinToString(", ")} with id $id and properties ${properties.entries.joinToString(", ") { "${it.key}=${it.value}" }}"
 
     override fun labels() = labels + super.labels()
 
