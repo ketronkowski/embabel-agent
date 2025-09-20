@@ -17,9 +17,23 @@ package com.embabel.agent.identity
 
 /**
  * Superinterface for all users in the system.
+ * displayName and username properties can default to id
+ * if an implementation doesn't know how to populate them,
+ * but they allow consistent experience.
  */
 interface User {
+
+    /**
+     * User's id in this system. Embabel-owned, stable.
+     * Additional keys will be added for other systems like Discord
+     */
     val id: String
+
+    val displayName: String
+
+    val username: String
+
+    val email: String?
 }
 
 interface UserService<U : User> {
