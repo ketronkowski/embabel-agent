@@ -40,6 +40,7 @@ import java.nio.file.attribute.BasicFileAttributes
  */
 class ClonedRepositoryReference(
     val url: String,
+    override val description: String,
     val localPath: Path,
     val shouldDeleteOnClose: Boolean = true,
     val fileFormatLimits: FileFormatLimits = FileFormatLimits(),
@@ -47,9 +48,6 @@ class ClonedRepositoryReference(
 
     override val name: String
         get() = url.substringAfterLast('/')
-
-    override val description: String
-        get() = "Git repo: $url"
 
     override val fileContentTransformers: List<StringTransformer>
         get() = listOf(WellKnownFileContentTransformers.removeApacheLicenseHeader)

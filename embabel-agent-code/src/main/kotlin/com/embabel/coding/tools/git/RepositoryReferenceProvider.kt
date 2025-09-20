@@ -19,6 +19,7 @@ import com.embabel.agent.core.AgentProcess
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.errors.GitAPIException
 import org.springframework.ai.tool.annotation.Tool
+import org.springframework.ai.tool.annotation.ToolParam
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -52,12 +53,16 @@ data class RepositoryReferenceProvider(
      * Will add a reference to the blackboard
      */
     @Tool(description = "Clone a Git repository from the given URL to a temporary directory")
-    fun clone(url: String): String {
+    fun clone(
+        url: String,
+        @ToolParam(description = "Description of the repository")
+        description: String,
+    ): String {
         val agentProcess = AgentProcess.get()
         if (agentProcess == null) {
             error("No agent process: Cannot add cloned repository to agent process")
         } else {
-            val clonedRepositoryReference = cloneRepository(url)
+            val clonedRepositoryReference = cloneRepository(url, description = "Different description")
             agentProcess += clonedRepositoryReference
             return "Cloned repository from $url to ${clonedRepositoryReference.localPath} and added to agent process ${agentProcess.id}"
         }
@@ -76,6 +81,7 @@ data class RepositoryReferenceProvider(
     @JvmOverloads
     fun cloneRepository(
         url: String,
+        description: String,
         branch: String? = null,
         depth: Int? = null,
     ): ClonedRepositoryReference {
@@ -99,6 +105,7 @@ data class RepositoryReferenceProvider(
 
             return ClonedRepositoryReference(
                 url = url,
+                description = description,
                 localPath = tempDir,
                 shouldDeleteOnClose = true,
                 fileFormatLimits = fileFormatLimits,
@@ -121,8 +128,10 @@ data class RepositoryReferenceProvider(
      * Clone a repository to a specific directory (not temporary).
      * The returned ClonedRepository will not auto-delete on close.
      */
+    @JvmOverloads
     fun cloneRepositoryTo(
         url: String,
+        description: String,
         targetDirectory: Path,
         branch: String? = null,
         depth: Int? = null,
@@ -150,6 +159,7 @@ data class RepositoryReferenceProvider(
 
         return ClonedRepositoryReference(
             url = url,
+            description = description,
             localPath = targetDirectory,
             shouldDeleteOnClose = false,
             fileFormatLimits = fileFormatLimits,

@@ -45,7 +45,7 @@ class GitReferenceTest {
     fun `clone public repository to temporary directory`() {
         val url = "https://github.com/octocat/Hello-World.git"
 
-        repositoryReferenceProvider.cloneRepository(url).use { clonedRepo ->
+        repositoryReferenceProvider.cloneRepository(url, description = "Different description").use { clonedRepo ->
             // Verify the repository was cloned
             assertTrue(Files.exists(clonedRepo.localPath))
             assertTrue(Files.isDirectory(clonedRepo.localPath))
@@ -67,22 +67,24 @@ class GitReferenceTest {
     fun `clone repository with specific branch`() {
         val url = "https://github.com/octocat/Hello-World.git"
 
-        repositoryReferenceProvider.cloneRepository(url, branch = "master").use { clonedRepo ->
-            assertTrue(Files.exists(clonedRepo.localPath))
-            assertTrue(Files.exists(clonedRepo.localPath.resolve(".git")))
-            assertTrue(Files.exists(clonedRepo.localPath.resolve("README")))
-        }
+        repositoryReferenceProvider.cloneRepository(url, description = "Different description", branch = "master")
+            .use { clonedRepo ->
+                assertTrue(Files.exists(clonedRepo.localPath))
+                assertTrue(Files.exists(clonedRepo.localPath.resolve(".git")))
+                assertTrue(Files.exists(clonedRepo.localPath.resolve("README")))
+            }
     }
 
     @Test
     fun `clone repository with shallow depth`() {
         val url = "https://github.com/octocat/Hello-World.git"
 
-        repositoryReferenceProvider.cloneRepository(url, depth = 1).use { clonedRepo ->
-            assertTrue(Files.exists(clonedRepo.localPath))
-            assertTrue(Files.exists(clonedRepo.localPath.resolve(".git")))
-            assertTrue(Files.exists(clonedRepo.localPath.resolve("README")))
-        }
+        repositoryReferenceProvider.cloneRepository(url, description = "Different description", depth = 1)
+            .use { clonedRepo ->
+                assertTrue(Files.exists(clonedRepo.localPath))
+                assertTrue(Files.exists(clonedRepo.localPath.resolve(".git")))
+                assertTrue(Files.exists(clonedRepo.localPath.resolve("README")))
+            }
     }
 
     @Test
@@ -90,15 +92,16 @@ class GitReferenceTest {
         val url = "https://github.com/octocat/Hello-World.git"
         val targetDir = tempDir.resolve("hello-world")
 
-        repositoryReferenceProvider.cloneRepositoryTo(url, targetDir).use { clonedRepo ->
-            assertEquals(targetDir, clonedRepo.localPath)
-            assertTrue(Files.exists(targetDir))
-            assertTrue(Files.exists(targetDir.resolve(".git")))
-            assertTrue(Files.exists(targetDir.resolve("README")))
+        repositoryReferenceProvider.cloneRepositoryTo(url, description = "Different description", targetDir)
+            .use { clonedRepo ->
+                assertEquals(targetDir, clonedRepo.localPath)
+                assertTrue(Files.exists(targetDir))
+                assertTrue(Files.exists(targetDir.resolve(".git")))
+                assertTrue(Files.exists(targetDir.resolve("README")))
 
-            // This should not auto-delete on close
-            assertFalse(clonedRepo.shouldDeleteOnClose)
-        }
+                // This should not auto-delete on close
+                assertFalse(clonedRepo.shouldDeleteOnClose)
+            }
         loggerFor<GitReferenceTest>().info("Cloned repository at: ${targetDir.toAbsolutePath()}")
 
         // Directory should still exist after close since shouldDeleteOnClose is false
@@ -113,7 +116,7 @@ class GitReferenceTest {
         Files.write(targetDir.resolve("existing-file.txt"), "content".toByteArray())
 
         assertThrows(IllegalArgumentException::class.java) {
-            repositoryReferenceProvider.cloneRepositoryTo(url, targetDir)
+            repositoryReferenceProvider.cloneRepositoryTo(url, description = "Different description", targetDir)
         }
     }
 
@@ -122,7 +125,7 @@ class GitReferenceTest {
         val invalidUrl = "https://github.com/nonexistent/nonexistent.git"
 
         assertThrows(Exception::class.java) {
-            repositoryReferenceProvider.cloneRepository(invalidUrl).use { }
+            repositoryReferenceProvider.cloneRepository(invalidUrl, description = "Different description").use { }
         }
     }
 
@@ -131,9 +134,9 @@ class GitReferenceTest {
         val url = "https://github.com/octocat/Hello-World.git"
         var localPath: Path? = null
 
-        repositoryReferenceProvider.cloneRepository(url).use { clonedRepo ->
+        repositoryReferenceProvider.cloneRepository(url, description = "Different description").use { clonedRepo ->
             localPath = clonedRepo.localPath
-            assertTrue(Files.exists(localPath!!))
+            assertTrue(Files.exists(localPath))
         }
 
         // Note: We can't reliably test cleanup in unit tests since it happens in close()
@@ -144,7 +147,7 @@ class GitReferenceTest {
     fun `fileCount returns number of files excluding git directory`() {
         val url = "https://github.com/octocat/Hello-World.git"
 
-        repositoryReferenceProvider.cloneRepository(url).use { clonedRepo ->
+        repositoryReferenceProvider.cloneRepository(url, description = "Different description").use { clonedRepo ->
             val fileCount = clonedRepo.fileCount()
             assertTrue(fileCount > 0, "Repository should contain at least one file")
             // Hello-World repo typically has README file
@@ -156,7 +159,7 @@ class GitReferenceTest {
     fun `writeAllFilesToString returns repository content as string`() {
         val url = "https://github.com/octocat/Hello-World.git"
 
-        repositoryReferenceProvider.cloneRepository(url).use { clonedRepo ->
+        repositoryReferenceProvider.cloneRepository(url, description = "Different description").use { clonedRepo ->
             val allContent = clonedRepo.writeAllFilesToString()
 
             assertFalse(allContent.isEmpty(), "Content should not be empty")
@@ -185,7 +188,13 @@ class GitReferenceTest {
                 .call()
         }
 
-        val clonedRepo = ClonedRepositoryReference(url = "1", localPath = emptyRepo, shouldDeleteOnClose = false)
+        val clonedRepo = ClonedRepositoryReference(
+            url = "1",
+            description = "Different description",
+            localPath = emptyRepo,
+
+            shouldDeleteOnClose = false,
+        )
 
         val content = clonedRepo.writeAllFilesToString()
         // Should handle empty repository without errors
@@ -200,6 +209,7 @@ class GitReferenceTest {
 
         val clonedRepo = ClonedRepositoryReference(
             url = "x",
+            description = "Different description",
             localPath = testDir,
             shouldDeleteOnClose = true
         )
@@ -226,6 +236,7 @@ class GitReferenceTest {
 
         val clonedRepo = ClonedRepositoryReference(
             url = "y",
+            description = "Different description",
             localPath = testDir,
             shouldDeleteOnClose = false
         )
@@ -244,10 +255,25 @@ class GitReferenceTest {
         val testDir = tempDir.resolve("test-repo")
         Files.createDirectories(testDir)
 
-        val repo1 = ClonedRepositoryReference(url = "foo1", testDir, shouldDeleteOnClose = false)
+        val repo1 = ClonedRepositoryReference(
+            url = "foo1",
+            description = "Different description",
+            testDir,
+            shouldDeleteOnClose = false
+        )
         val repo2 =
-            ClonedRepositoryReference(url = "foo2", testDir, shouldDeleteOnClose = true)  // Different cleanup behavior
-        val repo3 = ClonedRepositoryReference(url = "foo3", tempDir.resolve("other-repo"), shouldDeleteOnClose = false)
+            ClonedRepositoryReference(
+                url = "foo2",
+                description = "Different description",
+                localPath = testDir,
+                shouldDeleteOnClose = true
+            )  // Different cleanup behavior
+        val repo3 = ClonedRepositoryReference(
+            url = "foo3",
+            description = "Different description",
+            tempDir.resolve("other-repo"),
+            shouldDeleteOnClose = false
+        )
 
         // Same path should be equal regardless of other properties
         assertEquals(repo1, repo2)
