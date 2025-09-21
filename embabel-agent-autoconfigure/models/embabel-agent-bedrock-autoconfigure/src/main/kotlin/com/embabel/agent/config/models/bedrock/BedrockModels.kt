@@ -53,14 +53,14 @@ import software.amazon.awssdk.services.bedrockruntime.BedrockRuntimeClient
 
 @ConfigurationProperties(prefix = "embabel.models.bedrock")
 data class BedrockProperties(
-    val models: List<BedrockModelProperties> = emptyList()
+    val models: List<BedrockModelProperties> = emptyList(),
 )
 
 data class BedrockModelProperties(
     val name: String = "",
     val knowledgeCutoff: String = "",
     val inputPrice: Double = 0.0,
-    val outputPrice: Double = 0.0
+    val outputPrice: Double = 0.0,
 )
 
 @ConditionalOnClass(
@@ -156,13 +156,19 @@ class BedrockModels(
     fun titanEmbedTextV2(): EmbeddingService = embeddingServiceOf(TitanEmbeddingModel.TITAN_EMBED_TEXT_V2)
 
     @Bean("bedrockModel-cohere.embed-multilingual-v3")
-    fun cohereEmbedMultilingualV3(): EmbeddingService = embeddingServiceOf(CohereEmbeddingModel.COHERE_EMBED_MULTILINGUAL_V3)
+    fun cohereEmbedMultilingualV3(): EmbeddingService =
+        embeddingServiceOf(CohereEmbeddingModel.COHERE_EMBED_MULTILINGUAL_V3)
 
     @Bean("bedrockModel-cohere.embed-english-v3")
     fun cohereEmbedEnglishV3(): EmbeddingService = embeddingServiceOf(CohereEmbeddingModel.COHERE_EMBED_ENGLISH_V3)
 
     private fun bedrockModelProperties(string: String): BedrockModelProperties =
-        bedrockProperties.models.find { it.name == string } ?: throw IllegalArgumentException("No bedrock model named $string")
+        bedrockProperties.models.find { it.name == string }
+            ?: throw IllegalArgumentException(
+                "No bedrock model named $string: Known bedrock models: ${
+                    bedrockProperties.models.map { it.name }.sorted()
+                }"
+            )
 
     private fun llmOf(model: String): Llm = llmOf(bedrockModelProperties(model))
 
