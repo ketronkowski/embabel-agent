@@ -17,9 +17,7 @@ package com.embabel.agent.config.models.bedrock
 
 import io.micrometer.observation.ObservationRegistry
 import io.mockk.mockk
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.ai.bedrock.converse.BedrockProxyChatModel
@@ -40,15 +38,15 @@ import java.time.Duration
 class EmbabelBedrockProxyChatModelBuilderTest {
 
     @Test
-    fun `AWS BedrockProxyChatModel builder does log warn message on init`(output: CapturedOutput) {
+    fun `AWS BedrockProxyChatModel builder logs warn message on init`(output: CapturedOutput) {
         BedrockProxyChatModel.builder()
-        assertFalse { output.isEmpty() }
+        assertFalse({ output.isEmpty() }, "Output should not be empty, had [$output]")
     }
 
     @Test
     fun `Custom BedrockProxyChatModel builder should not log warn message on init`(output: CapturedOutput) {
         EmbabelBedrockProxyChatModelBuilder()
-        assertTrue { output.isEmpty() }
+        assertTrue({ output.isEmpty() }, "Output should be empty, had [$output]")
     }
 
     @Test
