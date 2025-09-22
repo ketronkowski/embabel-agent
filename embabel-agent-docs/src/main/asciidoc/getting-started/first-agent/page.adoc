@@ -25,29 +25,26 @@ public class WriteAndReviewAgent {
 
     @Action
     public Story writeStory(UserInput userInput, OperationContext context) {
-        // High temperature for creativity
-        var writer = LlmOptions.withModel(OpenAiModels.GPT_4O_MINI)
-            .withTemperature(0.8)
-            .withPersona("You are a creative storyteller");
-
         return context.ai()
-            .withLlm(writer)
-            .createObject("Write a story about: " + userInput.getContent(), Story.class);
+            .withAutoLlm()
+            .createObject("""
+                You are a creative writer who aims to delight and surprise.
+                Write a story about %s
+                """.formatted(userInput.getContent()),
+            Story.class);
     }
 
-    @AchievesGoal(description = "Review and improve the story")
+    @AchievesGoal(description = "Review a story")
     @Action  
     public ReviewedStory reviewStory(Story story, OperationContext context) {
-        // Low temperature for analytical review
-        var reviewer = LlmOptions.withModel(OpenAiModels.GPT_4O_MINI)
-            .withTemperature(0.2)
-            .withPersona("You are a careful editor and reviewer");
-
-        String prompt = "Review this story and suggest improvements: " + story.text();
-        
         return context.ai()
-            .withLlm(reviewer)
-            .createObject(prompt, ReviewedStory.class);
+            .withLlmByRole("reviewer")
+            .createObject("""
+                You are a meticulous editor.
+                Carefully review this story:
+                %s
+            """.formatted(story.text),
+            ReviewedStory.class);
     }
 }
 ----
