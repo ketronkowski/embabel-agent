@@ -27,13 +27,13 @@ import com.embabel.agent.event.ToolCallRequestEvent
  */
 class OutputChannelHighlightingEventListener(
     private val outputChannel: OutputChannel,
-    private val verbose: Boolean = false,
+    private val verbose: Boolean = true,
 ) : AgenticEventListener {
 
     override fun onProcessEvent(event: AgentProcessEvent) {
         when (event) {
             is ToolCallRequestEvent -> {
-                var message = "Calling tool `${event.tool}`"
+                var message = "🔧  ${event.tool}"
                 if (verbose) {
                     message += " with input `${event.toolInput}`"
                 }

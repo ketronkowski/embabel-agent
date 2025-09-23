@@ -33,7 +33,6 @@ import org.apache.commons.text.WordUtils
 import org.jline.reader.LineReader
 import org.jline.reader.LineReaderBuilder
 import org.jline.terminal.Terminal
-import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 
 /**
@@ -225,8 +224,6 @@ class TerminalServices(
         private val colorPalette: ColorPalette = DefaultColorPalette(),
     ) : OutputChannel {
 
-        private val logger = LoggerFactory.getLogger(javaClass)
-
         override fun send(event: OutputChannelEvent) {
             when (event) {
                 is MessageOutputChannelEvent -> {
@@ -242,7 +239,11 @@ class TerminalServices(
                 }
 
                 is ProgressOutputChannelEvent -> {
-                    println("Progress update: ${event.message}")
+                    println("▶ ${event.message}")
+                }
+
+                is LoggingOutputChannelEvent -> {
+                    println("🪵 ${event.message}")
                 }
 
                 else -> {

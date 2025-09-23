@@ -63,4 +63,23 @@ interface CiTools : SelfToolCallbackPublisher, DirectoryBased {
         return Ci(root).build(BuildOptions(command, true))
     }
 
+    /**
+     * Builds the project using the specified command with full terminal control.
+     *
+     * This method is intended for interactive applications like Spring Boot that require
+     * user input during execution. It gives complete terminal control to the child process,
+     * allowing for interactive shells, prompts, and real-time user interaction.
+     *
+     * The method returns only when the application exits, making it suitable for
+     * long-running applications that need to stay active until manually terminated.
+     *
+     * @param command The build command to execute in the project root (e.g., "mvn spring-boot:run")
+     * @return A simple status message indicating success or failure
+     * @throws RuntimeException if the build process fails or cannot be executed
+     */
+    @Tool(description = "build the project with full terminal control for interactive applications like Spring Boot")
+    fun buildProjectInteractive(command: String): String {
+        return Ci(root).build(BuildOptions(command, streamOutput = false, interactive = true))
+    }
+
 }

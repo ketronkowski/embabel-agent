@@ -31,10 +31,12 @@ import java.time.Instant
  * Options for build
  * @param buildCommand command to run such as "mvn test"
  * @param streamOutput if true, the output will be streamed to the console
+ * @param interactive if true, gives full terminal control for interactive commands (Spring Boot, etc.)
  */
 data class BuildOptions(
     val buildCommand: String,
     val streamOutput: Boolean = false,
+    val interactive: Boolean = false,
 )
 
 data class BuildStatus(
@@ -77,6 +79,21 @@ class Ci(
 ) : DirectoryBased {
 
     private val logger = LoggerFactory.getLogger(Ci::class.java)
+
+    /**
+     * Detect if running in a CI environment by checking common CI environment variables
+     */
+    private fun detectCIEnvironment(): Boolean {
+        val ciEnvVars = listOf(
+            "CI", "CONTINUOUS_INTEGRATION", "BUILD_NUMBER", "RUN_ID",
+            "GITHUB_ACTIONS", "GITLAB_CI", "JENKINS_URL", "TRAVIS",
+            "CIRCLECI", "BAMBOO_BUILD_NUMBER", "TF_BUILD", "BUILDKITE"
+        )
+
+        return ciEnvVars.any { envVar ->
+            System.getenv(envVar)?.isNotEmpty() == true
+        } || System.console() == null
+    }
 
     /**
      * Build the project with the given command and parse the output
@@ -136,37 +153,73 @@ class Ci(
         val commandParts = buildOptions.buildCommand.split("\\s+".toRegex())
         processBuilder.command(commandParts)
 
-        // Redirect error stream to output stream
-        processBuilder.redirectErrorStream(true)
-
         try {
-            val process = processBuilder.start()
-
+            val process: Process
             val outputBuilder = StringBuilder()
 
-            // Handle the output differently based on streamOutput flag
-            if (buildOptions.streamOutput) {
-                // Stream the output to the console while also capturing it
-                process.inputStream.bufferedReader().use { reader ->
-                    var line: String?
-                    while (reader.readLine().also { line = it } != null) {
-                        println(line)
-                        outputBuilder.append(line).append("\n")
+            if (buildOptions.interactive) {
+                // Check if running in CI environment
+                val isCI = detectCIEnvironment()
+
+                if (isCI) {
+                    // In CI: Use non-interactive mode with output capture
+                    logger.info("CI environment detected, falling back to non-interactive mode")
+                    processBuilder.redirectErrorStream(true)
+                    process = processBuilder.start()
+
+                    // Capture output for CI logs
+                    val output = process.inputStream.bufferedReader().use { it.readText() }
+                    outputBuilder.append(output)
+
+                    val exitCode = process.waitFor()
+
+                    return if (exitCode == 0) {
+                        "Command executed successfully in CI mode:\n$output"
+                    } else {
+                        "Command failed with exit code $exitCode in CI mode:\n$output"
+                    }
+                } else {
+                    // Interactive mode: give full terminal control
+                    processBuilder.inheritIO()
+                    process = processBuilder.start()
+
+                    val exitCode = process.waitFor()
+
+                    return if (exitCode == 0) {
+                        "Interactive command executed successfully"
+                    } else {
+                        "Interactive command failed with exit code $exitCode"
                     }
                 }
             } else {
-                // Original behavior - just capture the output
-                val output = process.inputStream.bufferedReader().use { it.readText() }
-                outputBuilder.append(output)
-            }
+                // Non-interactive mode: capture output
+                processBuilder.redirectErrorStream(true)
+                process = processBuilder.start()
 
-            val exitCode = process.waitFor()
-            val output = outputBuilder.toString()
+                // Handle the output differently based on streamOutput flag
+                if (buildOptions.streamOutput) {
+                    // Stream the output to the console while also capturing it
+                    process.inputStream.bufferedReader().use { reader ->
+                        var line: String?
+                        while (reader.readLine().also { line = it } != null) {
+                            println(line)
+                            outputBuilder.append(line).append("\n")
+                        }
+                    }
+                } else {
+                    // Original behavior - just capture the output
+                    val output = process.inputStream.bufferedReader().use { it.readText() }
+                    outputBuilder.append(output)
+                }
 
-            return if (exitCode == 0) {
-                "Command executed successfully:\n$output"
-            } else {
-                "Command failed with exit code $exitCode:\n$output"
+                val exitCode = process.waitFor()
+                val output = outputBuilder.toString()
+
+                return if (exitCode == 0) {
+                    "Command executed successfully:\n$output"
+                } else {
+                    "Command failed with exit code $exitCode:\n$output"
+                }
             }
         } catch (e: Exception) {
             loggerFor<CiTools>().error("Error executing command: ${buildOptions.buildCommand}", e)
