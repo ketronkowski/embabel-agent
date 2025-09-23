@@ -35,38 +35,67 @@ import org.apache.lucene.search.IndexSearcher
 import org.apache.lucene.search.Query
 import org.apache.lucene.search.TopDocs
 import org.apache.lucene.store.ByteBuffersDirectory
+import org.apache.lucene.store.Directory
+import org.apache.lucene.store.FSDirectory
 import org.slf4j.LoggerFactory
 import org.springframework.ai.embedding.EmbeddingModel
 import java.io.Closeable
+import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.sqrt
 import org.springframework.ai.document.Document as SpringAiDocument
 
 /**
  * LuceneRagService with optional vector search support via an EmbeddingModel.
- * Works in memory. Be careful if loading excessive content!
+ * Supports both in-memory and disk-based persistence.
  */
 class LuceneRagFacetProvider @JvmOverloads constructor(
     override val name: String,
     private val embeddingModel: EmbeddingModel? = null,
     private val vectorWeight: Double = 0.5, // Balance between text and vector similarity
     chunkerConfig: ContentChunker.Config = ContentChunker.DefaultConfig(),
+    private val indexPath: Path? = null, // If null, uses in-memory storage
 ) : RagFacetProvider, AbstractWritableContentElementRepository(chunkerConfig), HasInfoString, Closeable {
 
     private val logger = LoggerFactory.getLogger(LuceneRagFacetProvider::class.java)
 
-    init {
+    private val analyzer = StandardAnalyzer()
+    private val directory: Directory = indexPath?.let { FSDirectory.open(it) } ?: ByteBuffersDirectory()
+    private val indexWriterConfig = IndexWriterConfig(analyzer)
+    private var indexWriter = IndexWriter(directory, indexWriterConfig)
+    private val queryParser = QueryParser("content", analyzer)
 
+    init {
         if (embeddingModel == null) {
             logger.warn("No embedding model configured; only text search will be supported.")
         }
+
+        if (indexPath != null) {
+            logger.info("Using disk-based Lucene index at: {}", indexPath)
+            // Defer chunk loading until after object is fully constructed
+        } else {
+            logger.info("Using in-memory Lucene index")
+        }
     }
 
-    private val analyzer = StandardAnalyzer()
-    private val directory = ByteBuffersDirectory()
-    private val indexWriterConfig = IndexWriterConfig(analyzer)
-    private val indexWriter = IndexWriter(directory, indexWriterConfig)
-    private val queryParser = QueryParser("content", analyzer)
+    // Lazy initialization of existing chunks - called on first access
+    private var chunksLoaded = false
+    private fun ensureChunksLoaded() {
+        if (!chunksLoaded && indexPath != null) {
+            logger.info("Triggering lazy loading of existing chunks...")
+            loadExistingChunks()
+            chunksLoaded = true
+        }
+    }
+
+    /**
+     * Manually trigger loading of existing chunks from disk.
+     * Useful for ensuring chunks are loaded immediately after startup.
+     */
+    fun loadExistingChunksFromDisk() {
+        logger.info("Manually triggering chunk loading from disk...")
+        ensureChunksLoaded()
+    }
 
     @Volatile
     private var directoryReader: DirectoryReader? = null
@@ -115,6 +144,7 @@ class LuceneRagFacetProvider @JvmOverloads constructor(
     }
 
     fun findAll(): List<Chunk> {
+        ensureChunksLoaded()
         logger.debug("Retrieving all chunks from storage")
         val allChunks = contentElementStorage.values.filterIsInstance<Chunk>()
         logger.debug("Retrieved {} chunks from storage", allChunks.size)
@@ -122,6 +152,7 @@ class LuceneRagFacetProvider @JvmOverloads constructor(
     }
 
     fun search(ragRequest: RagRequest): RagFacetResults<Chunk> {
+        ensureChunksLoaded()
         refreshReaderIfNeeded()
 
         val reader = directoryReader ?: return RagFacetResults(
@@ -279,8 +310,9 @@ class LuceneRagFacetProvider @JvmOverloads constructor(
     }
 
     override fun commit() {
-        indexWriter.commit()
-        invalidateReader()
+        indexWriter.flush()  // Ensure all changes are written to storage
+        indexWriter.commit() // Commit the transaction
+        invalidateReader()   // Force reader refresh on next access
     }
 
     // Vector similarity utility functions
@@ -329,14 +361,52 @@ class LuceneRagFacetProvider @JvmOverloads constructor(
         return floats
     }
 
+    private fun loadExistingChunks() {
+        logger.info("Starting to load existing chunks from disk index...")
+        try {
+            // Use a separate directory instance for reading to avoid writer conflicts
+            val readDirectory = FSDirectory.open(indexPath!!)
+
+            try {
+                // Open a reader on the separate directory
+                logger.info("Opening DirectoryReader to read from disk")
+                val reader = DirectoryReader.open(readDirectory)
+
+                logger.info("Successfully opened reader. Index has {} documents (maxDoc: {})", reader.numDocs(), reader.maxDoc())
+
+                // Load all existing documents from the index
+                for (i in 0 until reader.maxDoc()) {
+                    try {
+                        val doc = reader.storedFields().document(i)
+                        logger.info("Loading document {}: id={}, content preview={}", i, doc.get("id"), doc.get("content")?.take(50))
+                        val chunk = createChunkFromDocument(doc)
+                        contentElementStorage[chunk.id] = chunk
+                        logger.info("Successfully loaded chunk with id: {}", chunk.id)
+                    } catch (e: Exception) {
+                        logger.error("Failed to load document {}: {}", i, e.message, e)
+                    }
+                }
+
+                reader.close()
+                logger.info("Successfully loaded {} existing chunks from disk index", contentElementStorage.size)
+
+            } finally {
+                readDirectory.close()
+            }
+
+        } catch (e: Exception) {
+            logger.error("Error loading existing chunks from disk index: {}", e.message, e)
+        }
+    }
+
     private fun refreshReaderIfNeeded() {
         synchronized(this) {
-            if (directoryReader == null) {
-                try {
-                    directoryReader = DirectoryReader.open(directory)
-                } catch (e: Exception) {
-                    // Index might be empty, which is fine
-                }
+            try {
+                // Always try to open a fresh reader to ensure we see latest changes
+                directoryReader?.close()
+                directoryReader = DirectoryReader.open(directory)
+            } catch (_: Exception) {
+                // Index might be empty, which is fine
             }
         }
     }
@@ -355,23 +425,32 @@ class LuceneRagFacetProvider @JvmOverloads constructor(
         val docCount = try {
             refreshReaderIfNeeded()
             directoryReader?.numDocs() ?: 0
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             0
         }
 
         val chunkCount = contentElementStorage.size
-        val basicInfo = "LuceneRagService: $name ($docCount documents, $chunkCount chunks)"
+        val storageType = if (indexPath != null) "disk" else "memory"
+        val basicInfo = "LuceneRagService: $name ($docCount documents, $chunkCount chunks, $storageType)"
 
         return if (verbose == true) {
             val embeddingInfo = if (embeddingModel != null) "with embeddings" else "text-only"
             val vectorWeightInfo = if (embeddingModel != null) ", vector weight: $vectorWeight" else ""
-            "$basicInfo ($embeddingInfo$vectorWeightInfo)".indent(indent)
+            val pathInfo = if (indexPath != null) ", path: $indexPath" else ""
+            "$basicInfo ($embeddingInfo$vectorWeightInfo$pathInfo)".indent(indent)
         } else {
             basicInfo.indent(indent)
         }
     }
 
     override fun close() {
+        try {
+            // Ensure all pending changes are committed before closing
+            commit()
+        } catch (e: Exception) {
+            logger.warn("Error committing changes during close: {}", e.message)
+        }
+
         directoryReader?.close()
         indexWriter.close()
         directory.close()
@@ -404,7 +483,7 @@ class LuceneRagFacetProvider @JvmOverloads constructor(
         val docCount = try {
             refreshReaderIfNeeded()
             directoryReader?.numDocs() ?: 0
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             0
         }
 
@@ -415,7 +494,9 @@ class LuceneRagFacetProvider @JvmOverloads constructor(
                 contentElementStorage.values.filterIsInstance<Chunk>().map { it.text.length }.average()
             } else 0.0,
             hasEmbeddings = embeddingModel != null,
-            vectorWeight = vectorWeight
+            vectorWeight = vectorWeight,
+            isPersistent = indexPath != null,
+            indexPath = indexPath?.toString()
         )
     }
 }
@@ -429,4 +510,6 @@ data class LuceneStatistics(
     val averageChunkLength: Double,
     val hasEmbeddings: Boolean,
     val vectorWeight: Double,
+    val isPersistent: Boolean,
+    val indexPath: String?,
 )
