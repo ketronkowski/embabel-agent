@@ -38,7 +38,7 @@ class FacetedRagService(
     }
 
     override val name: String
-        get() = "facets: " + ragFacets.joinToString(" & ") { it.name }
+        get() = "${javaClass.simpleName} with facets: " + ragFacets.joinToString(" & ") { it.name }
 
     override fun search(ragRequest: RagRequest): RagResponse {
         // TODO could parallelize

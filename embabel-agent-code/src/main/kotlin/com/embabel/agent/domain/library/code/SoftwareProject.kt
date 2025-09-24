@@ -76,6 +76,16 @@ open class SoftwareProject @JvmOverloads constructor(
 
     val ci = Ci(root)
 
+    @Tool(description = "Find all Java files under src/main/java. Good for quickly getting to grips with a project")
+    fun findJavaFiles(): List<String> {
+        val files = findFiles("src/main/java/**.java", findHighest = false)
+        return if (files.size > 100) {
+            listOf("More than 100 Java files found, please narrow your search")
+        } else {
+            files
+        }
+    }
+
     @Tool(description = "Returns the file containing a class with the given name")
     fun findClass(@ToolParam(description = "class name") name: String): String {
         val matches = findClassInProject(name, globPattern = "**/*.{java,kt}")
