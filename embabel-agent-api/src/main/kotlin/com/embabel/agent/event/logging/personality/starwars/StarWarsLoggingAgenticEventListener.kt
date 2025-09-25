@@ -106,7 +106,7 @@ class StarWarsLoggingAgenticEventListener : LoggingAgenticEventListener(
             .indentLines(level = 1, skipIndentFirstLine = true)
 
     override fun getProcessCompletionMessage(e: AgentProcessFinishedEvent): String =
-        "[${e.processId}]Feel the force: process completed in ${e.agentProcess.runningTime}"
+        "[${e.processId}] Feel the force: process completed in ${e.agentProcess.runningTime}"
 
     override fun getProcessFailureMessage(e: AgentProcessFinishedEvent): String =
         "Powerful the dark side is: Process ${e.processId} failed"
