@@ -40,7 +40,7 @@ import org.springframework.web.client.body
 @ExcludeFromJacocoGeneratedReport(reason = "Ollama configuration can't be unit tested")
 @Configuration
 class OllamaModelsConfig(
-    @Value("\${spring.ai.ollama.base-url}")
+    @param:Value("\${spring.ai.ollama.base-url}")
     private val baseUrl: String,
     private val configurableBeanFactory: ConfigurableBeanFactory,
     private val properties: ConfigurableModelProviderProperties,
@@ -48,19 +48,19 @@ class OllamaModelsConfig(
     private val logger = LoggerFactory.getLogger(OllamaModelsConfig::class.java)
 
     private data class ModelResponse(
-        @JsonProperty("models") val models: List<ModelDetails>
+        @param:JsonProperty("models") val models: List<ModelDetails>,
     )
 
     private data class ModelDetails(
-        @JsonProperty("name") val name: String,
-        @JsonProperty("size") val size: Long,
-        @JsonProperty("modified_at") val modifiedAt: String
+        @param:JsonProperty("name") val name: String,
+        @param:JsonProperty("size") val size: Long,
+        @param:JsonProperty("modified_at") val modifiedAt: String,
     )
 
     private data class Model(
         val name: String,
         val model: String,
-        val size: Long
+        val size: Long,
     )
 
     private fun loadModels(): List<Model> =
