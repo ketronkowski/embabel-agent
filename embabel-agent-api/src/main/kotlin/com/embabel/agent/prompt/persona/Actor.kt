@@ -25,4 +25,4 @@ import com.embabel.common.ai.prompt.PromptContributor
 data class Actor<T : PromptContributor>(
     val persona: T,
     val llm: LlmOptions,
-)
+) : PromptContributor by persona
