@@ -20,12 +20,14 @@ import com.embabel.agent.api.common.OperationContext
 import com.embabel.agent.api.common.PromptRunner
 import com.embabel.common.ai.model.LlmOptions
 import com.embabel.common.ai.prompt.PromptContributor
+import org.springframework.validation.annotation.Validated
 
 /**
  * An Actor plays a role: Convenient way to combine a PromptContributor
  * with an LLM and tools.
  * Open to allow subclasses to add tools via @Tool methods
  */
+@Validated
 open class Actor<T : PromptContributor> @JvmOverloads constructor(
     val persona: T,
     val llm: LlmOptions,
@@ -50,4 +52,6 @@ open class Actor<T : PromptContributor> @JvmOverloads constructor(
      * to create objects or generate text.
      */
     fun promptRunner(context: OperationContext) = promptRunner(context.ai())
+
+    override fun toString(): String = "Actor(persona=${persona}, llm=$llm, toolGroups=$toolGroups)"
 }
