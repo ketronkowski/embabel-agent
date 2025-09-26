@@ -41,7 +41,6 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.DependsOn
 import org.springframework.context.annotation.Primary
-import org.springframework.core.annotation.Order
 import org.springframework.web.client.RestTemplate
 
 /**
@@ -123,10 +122,19 @@ class AgentPlatformConfiguration(
     ): ContextRepository = InMemoryContextRepository(contextRepositoryProperties)
 
     @Bean
-    fun toolGroupResolver(toolGroups: List<ToolGroup>): ToolGroupResolver = RegistryToolGroupResolver(
-        name = "SpringBeansToolGroupResolver",
-        toolGroups
-    )
+    fun toolGroupResolver(
+        toolGroups: List<ToolGroup>,
+        toolGroupProviders: List<List<ToolGroup>>,
+    ): ToolGroupResolver {
+        val allToolGroups = buildList {
+            addAll(toolGroups)
+            toolGroupProviders.forEach { addAll(it) }
+        }
+        return RegistryToolGroupResolver(
+            name = "SpringBeansToolGroupResolver",
+            allToolGroups
+        )
+    }
 
     /**
      * Gets registered as an event listener

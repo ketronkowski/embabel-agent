@@ -140,11 +140,10 @@ abstract class AbstractLlmOperations(
         llmOptions: LlmOptions,
     ): Llm {
         val crit: ModelSelectionCriteria = when (llmOptions.criteria) {
-            null -> DefaultModelSelectionCriteria
             is AutoModelSelectionCriteria ->
                 autoLlmSelectionCriteriaResolver.resolveAutoLlm()
 
-            else -> llmOptions.criteria ?: DefaultModelSelectionCriteria
+            else -> llmOptions.criteria
         }
         return modelProvider.getLlm(crit)
     }
