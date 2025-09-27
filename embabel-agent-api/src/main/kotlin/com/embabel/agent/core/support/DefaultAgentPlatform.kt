@@ -33,9 +33,6 @@ import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.ApplicationContext
-import org.springframework.core.io.Resource
-import org.springframework.core.io.support.PathMatchingResourcePatternResolver
-import org.springframework.core.io.support.ResourcePatternResolver
 import org.springframework.stereotype.Service
 import java.util.concurrent.ConcurrentHashMap
 
@@ -112,25 +109,6 @@ internal class DefaultAgentPlatform(
         agents[agent.name] = agent
         logger.debug("✅ Deployed agent {}\n\tdescription: {}", agent.name, agent.description)
         eventListener.onPlatformEvent(AgentDeploymentEvent(this, agent))
-        return this
-    }
-
-    fun deploy(resource: Resource): DefaultAgentPlatform {
-        logger.info("Loading agent from {}", resource)
-        val agent = yamlObjectMapper.readValue(resource.inputStream, Agent::class.java)
-        return deploy(agent)
-    }
-
-
-    /**
-     * Deploy all agents from the given path
-     */
-    fun deployAgents(agentPath: String = "classpath:agents/*.yml"): DefaultAgentPlatform {
-        val resolver: ResourcePatternResolver = PathMatchingResourcePatternResolver()
-        val resources = resolver.getResources(agentPath)
-        resources.map { resource ->
-            deploy(resource)
-        }
         return this
     }
 
