@@ -20,6 +20,7 @@ import com.embabel.agent.tools.file.*
 import com.embabel.coding.tools.ci.BuildOptions
 import com.embabel.coding.tools.ci.BuildResult
 import com.embabel.coding.tools.ci.Ci
+import com.embabel.coding.tools.git.GitOperations
 import com.embabel.common.util.StringTransformer
 import com.embabel.common.util.loggerFor
 import com.fasterxml.jackson.annotation.JsonClassDescription
@@ -43,7 +44,7 @@ open class SoftwareProject @JvmOverloads constructor(
     @get:JsonPropertyDescription("Build command, such as 'mvn clean test'")
     val buildCommand: String = "mvn clean test",
     val wasCreated: Boolean = false,
-) : LlmReference, FileTools, SymbolSearch, FileChangeLog by DefaultFileChangeLog(), FileReadLog by DefaultFileReadLog() {
+) : LlmReference, FileTools, SymbolSearch, GitOperations, FileChangeLog by DefaultFileChangeLog(), FileReadLog by DefaultFileReadLog() {
 
     init {
         if (!exists()) {
