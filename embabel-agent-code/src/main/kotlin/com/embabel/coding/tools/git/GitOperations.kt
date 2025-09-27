@@ -108,4 +108,35 @@ interface GitOperations : DirectoryBased {
             false
         }
     }
+
+    fun commit(message: String, addAll: Boolean = true): Boolean {
+        return try {
+            openGit().use { git ->
+                if (addAll) {
+                    git.add().addFilepattern(".").call()
+                }
+                git.commit()
+                    .setMessage(message)
+                    .call()
+                true
+            }
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    fun revert(commitHash: String): Boolean {
+        return try {
+            openGit().use { git ->
+                val repo = git.repository
+                val objectId = repo.resolve(commitHash)
+                git.revert()
+                    .include(objectId)
+                    .call()
+                true
+            }
+        } catch (e: Exception) {
+            false
+        }
+    }
 }
