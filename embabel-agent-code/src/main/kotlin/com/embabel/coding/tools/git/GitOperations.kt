@@ -77,6 +77,12 @@ interface GitOperations : DirectoryBased {
                     .setCreateBranch(true)
                     .setName(branch)
                     .call()
+
+                // Create an initial empty commit to establish the branch
+                git.commit()
+                    .setMessage("Initial commit for branch $branch")
+                    .setAllowEmpty(true)
+                    .call()
                 true
             }
         } catch (e: Exception) {
@@ -117,6 +123,21 @@ interface GitOperations : DirectoryBased {
                 }
                 git.commit()
                     .setMessage(message)
+                    .call()
+                true
+            }
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    fun revert(): Boolean {
+        return try {
+            openGit().use { git ->
+                val repo = git.repository
+                val headCommit = repo.resolve("HEAD")
+                git.revert()
+                    .include(headCommit)
                     .call()
                 true
             }
