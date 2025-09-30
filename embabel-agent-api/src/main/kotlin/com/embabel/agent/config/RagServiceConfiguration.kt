@@ -47,7 +47,10 @@ class RagServiceConfiguration {
         facets: List<RagFacet<out Retrievable>>,
         facetProviders: List<RagFacetProvider>,
     ): RagService {
-        return FacetedRagService(facets = facets, facetProviders = facetProviders)
+        return FacetedRagService(
+            name = "default Rag Service",
+            facets = facets, facetProviders = facetProviders
+        )
     }
 
     @Bean
