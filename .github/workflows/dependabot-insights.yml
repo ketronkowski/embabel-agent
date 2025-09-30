@@ -5,7 +5,7 @@ on:
 
 permissions:
   contents: read
-  security-events: read  # Required to access Dependabot alerts
+  security-events: read  # Required to access Dependabot alerts     
 
 jobs:
   generate-insights:
@@ -20,14 +20,10 @@ jobs:
         run: |
           sudo apt update
           sudo apt install -y gh
-
-      - name: Authenticate GitHub CLI
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh auth login --with-token <<< "$GH_TOKEN"
-
-      - name: Verify GitHub CLI Auth
-        run: gh auth status
-
+      
       - name: Run alert grouping script
-        run: .github/scripts/dependabot-group-alerts.sh
+        env:
+          GH_TOKEN: ${{ secrets.DEPENDABOT_SECRET }}
+        run: |
+          bash .github/scripts/dependabot-group-alerts.sh
+
