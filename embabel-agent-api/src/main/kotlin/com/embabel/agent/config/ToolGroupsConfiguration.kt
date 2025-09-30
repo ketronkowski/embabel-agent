@@ -130,8 +130,7 @@ class ToolGroupsConfiguration(
                 // don't use it for now
                 (it.toolDefinition.name().contains("brave") || it.toolDefinition.name().contains("fetch") ||
                         wikipediaTools.any { wt -> it.toolDefinition.name().contains(wt) }) &&
-                        !(it.toolDefinition.name().contains("brave_local_search") || it.toolDefinition.name()
-                            .contains("brave_image_search"))
+                        !(it.toolDefinition.name().contains("brave_local_search"))
             },
         )
     }

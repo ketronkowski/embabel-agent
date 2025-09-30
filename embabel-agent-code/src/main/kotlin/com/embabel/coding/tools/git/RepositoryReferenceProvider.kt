@@ -18,10 +18,12 @@ package com.embabel.coding.tools.git
 import com.embabel.agent.core.AgentProcess
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.errors.GitAPIException
+import org.slf4j.LoggerFactory
 import org.springframework.ai.tool.annotation.Tool
 import org.springframework.ai.tool.annotation.ToolParam
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.absolutePathString
 
 /**
  * Limits for file formats when reading files from a cloned repository.
@@ -36,6 +38,8 @@ data class FileFormatLimits(
 data class RepositoryReferenceProvider(
     private val fileFormatLimits: FileFormatLimits = FileFormatLimits(),
 ) {
+
+    private val logger = LoggerFactory.getLogger(javaClass)
 
     fun withFileCountLimit(limit: Int): RepositoryReferenceProvider {
         return copy(
@@ -85,9 +89,11 @@ data class RepositoryReferenceProvider(
         branch: String? = null,
         depth: Int? = null,
     ): ClonedRepositoryReference {
+        logger.info("Cloning a Git repository from $url...")
         val tempDir = createTempDirectory()
 
         try {
+            logger.info("Cloning a Git repository from $url into temp dir ${tempDir.absolutePathString()}")
             val cloneCommand = Git.cloneRepository()
                 .setURI(url)
                 .setDirectory(tempDir.toFile())
@@ -103,6 +109,7 @@ data class RepositoryReferenceProvider(
                 }
             }
 
+            logger.info("✅ Cloned Git repository from $url...")
             return ClonedRepositoryReference(
                 url = url,
                 description = description,
