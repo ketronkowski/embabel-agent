@@ -43,17 +43,43 @@ data class LlmDataBindingProperties(
                 override fun <T : Any, E : Throwable> onError(
                     context: RetryContext,
                     callback: RetryCallback<T, E>,
-                    throwable: Throwable
+                    throwable: Throwable,
                 ) {
-                    logger.info(
-                        "LLM invocation {}: Retry attempt {} of {} due to: {}",
-                        name,
-                        context.retryCount,
-                        maxAttempts,
-                        throwable.message ?: "Unknown error"
-                    )
+                    if (isRateLimitError(throwable)) {
+                        logger.info(
+                            "🔒 LLM invocation {} RATE LIMITED: Retry attempt {} of {}",
+                            name,
+                            context.retryCount,
+                            maxAttempts,
+                        )
+                    } else {
+                        logger.warn(
+                            "LLM invocation {}: Retry attempt {} of {} due to: {}",
+                            name,
+                            context.retryCount,
+                            maxAttempts,
+                            throwable.message ?: "Unknown error"
+                        )
+                    }
                 }
             })
             .build()
+    }
+
+    private fun isRateLimitError(t: Throwable): Boolean {
+        val message = t.message?.lowercase() ?: return false
+        return RATE_LIMIT_PATTERNS.any { pattern ->
+            message.contains(pattern)
+        }
+    }
+
+    companion object {
+        private val RATE_LIMIT_PATTERNS = listOf(
+            "rate limit",
+            "too many requests",
+            "quota exceeded",
+            "rate-limited",
+            "429",
+        )
     }
 }
