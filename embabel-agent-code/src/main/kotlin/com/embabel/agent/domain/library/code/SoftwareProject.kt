@@ -48,7 +48,7 @@ open class SoftwareProject @JvmOverloads constructor(
 
     init {
         if (!exists()) {
-            error("Directory does not exist")
+            error("Directory '$root' does not exist")
         }
         loggerFor<SoftwareProject>().info(
             "Software project tools: ${
