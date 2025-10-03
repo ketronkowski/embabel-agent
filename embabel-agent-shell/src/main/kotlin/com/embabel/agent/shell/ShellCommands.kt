@@ -407,7 +407,7 @@ class ShellCommands(
                     processOptions = processOptions,
                     goalChoiceApprover = GoalChoiceApprover.APPROVE_ALL,
                     agentScope = agentPlatform,
-                    bindings = mapOf(IoBinding.DEFAULT_BINDING to UserInput(intent)),
+                    bindings = mapOf("userInput" to UserInput(intent)),
                     goalSelectionOptions = GoalSelectionOptions(),
                 )
             } else {
