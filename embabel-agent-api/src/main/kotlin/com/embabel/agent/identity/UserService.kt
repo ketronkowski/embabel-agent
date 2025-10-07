@@ -15,23 +15,17 @@
  */
 package com.embabel.agent.identity
 
-/**
- * Superinterface for all users in the system.
- * displayName and username properties can default to id
- * if an implementation doesn't know how to populate them,
- * but they allow consistent experience.
- */
-interface User {
+interface UserService<U : User> {
+
+    fun findById(id: String): U?
 
     /**
-     * User's id in this system. Embabel-owned, stable.
-     * Additional keys will be added for other systems like Discord
+     * Add the user to the system.
+     * Default implementation refuses to do so.
      */
-    val id: String
-
-    val displayName: String
-
-    val username: String
-
-    val email: String?
+    fun provisionUser(
+        userInfo: U,
+    ): U {
+        error("User cannot be provisioned: $userInfo")
+    }
 }
