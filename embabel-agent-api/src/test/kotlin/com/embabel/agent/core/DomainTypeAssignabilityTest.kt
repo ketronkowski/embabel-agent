@@ -35,7 +35,7 @@ class DomainTypeAssignabilityTest {
     inner class DynamicTypeAssignability {
 
         @Test
-        fun `DynamicType isAssignableFrom always returns false`() {
+        fun `DynamicType isAssignableFrom Class always returns false`() {
             val dynamicType = DynamicType(name = "TestType")
 
             assertFalse(dynamicType.isAssignableFrom(String::class.java))
@@ -45,13 +45,65 @@ class DomainTypeAssignabilityTest {
         }
 
         @Test
-        fun `DynamicType isAssignableTo always returns false`() {
+        fun `DynamicType isAssignableTo Class always returns false`() {
             val dynamicType = DynamicType(name = "TestType")
 
             assertFalse(dynamicType.isAssignableTo(String::class.java))
             assertFalse(dynamicType.isAssignableTo(Int::class.java))
             assertFalse(dynamicType.isAssignableTo(ConcreteBase::class.java))
             assertFalse(dynamicType.isAssignableTo(Any::class.java))
+        }
+
+        @Test
+        fun `DynamicType isAssignableFrom DynamicType with same name returns true`() {
+            val type1 = DynamicType(name = "TestType")
+            val type2 = DynamicType(name = "TestType")
+
+            assertTrue(type1.isAssignableFrom(type2))
+            assertTrue(type2.isAssignableFrom(type1))
+        }
+
+        @Test
+        fun `DynamicType isAssignableTo DynamicType with same name returns true`() {
+            val type1 = DynamicType(name = "TestType")
+            val type2 = DynamicType(name = "TestType")
+
+            assertTrue(type1.isAssignableTo(type2))
+            assertTrue(type2.isAssignableTo(type1))
+        }
+
+        @Test
+        fun `DynamicType isAssignableFrom DynamicType with different name returns false`() {
+            val type1 = DynamicType(name = "TestType1")
+            val type2 = DynamicType(name = "TestType2")
+
+            assertFalse(type1.isAssignableFrom(type2))
+            assertFalse(type2.isAssignableFrom(type1))
+        }
+
+        @Test
+        fun `DynamicType isAssignableTo DynamicType with different name returns false`() {
+            val type1 = DynamicType(name = "TestType1")
+            val type2 = DynamicType(name = "TestType2")
+
+            assertFalse(type1.isAssignableTo(type2))
+            assertFalse(type2.isAssignableTo(type1))
+        }
+
+        @Test
+        fun `DynamicType isAssignableFrom JvmType returns false`() {
+            val dynamicType = DynamicType(name = "TestType")
+            val jvmType = JvmType(String::class.java)
+
+            assertFalse(dynamicType.isAssignableFrom(jvmType))
+        }
+
+        @Test
+        fun `DynamicType isAssignableTo JvmType returns false`() {
+            val dynamicType = DynamicType(name = "TestType")
+            val jvmType = JvmType(String::class.java)
+
+            assertFalse(dynamicType.isAssignableTo(jvmType))
         }
     }
 
@@ -175,6 +227,56 @@ class DomainTypeAssignabilityTest {
             val jvmType = JvmType(ConcreteDerived::class.java)
             assertTrue(jvmType.isAssignableTo(ConcreteBase::class.java))
             assertTrue(jvmType.isAssignableTo(AbstractBase::class.java))
+        }
+
+        @Test
+        fun `JvmType isAssignableFrom JvmType with same class returns true`() {
+            val type1 = JvmType(String::class.java)
+            val type2 = JvmType(String::class.java)
+
+            assertTrue(type1.isAssignableFrom(type2))
+            assertTrue(type2.isAssignableFrom(type1))
+        }
+
+        @Test
+        fun `JvmType isAssignableTo JvmType with same class returns true`() {
+            val type1 = JvmType(String::class.java)
+            val type2 = JvmType(String::class.java)
+
+            assertTrue(type1.isAssignableTo(type2))
+            assertTrue(type2.isAssignableTo(type1))
+        }
+
+        @Test
+        fun `JvmType isAssignableFrom JvmType with subclass returns true`() {
+            val baseType = JvmType(ConcreteBase::class.java)
+            val derivedType = JvmType(ConcreteDerived::class.java)
+
+            assertTrue(baseType.isAssignableFrom(derivedType))
+        }
+
+        @Test
+        fun `JvmType isAssignableTo JvmType with superclass returns true`() {
+            val derivedType = JvmType(ConcreteDerived::class.java)
+            val baseType = JvmType(ConcreteBase::class.java)
+
+            assertTrue(derivedType.isAssignableTo(baseType))
+        }
+
+        @Test
+        fun `JvmType isAssignableFrom DynamicType returns false`() {
+            val jvmType = JvmType(String::class.java)
+            val dynamicType = DynamicType(name = "TestType")
+
+            assertFalse(jvmType.isAssignableFrom(dynamicType))
+        }
+
+        @Test
+        fun `JvmType isAssignableTo DynamicType returns false`() {
+            val jvmType = JvmType(String::class.java)
+            val dynamicType = DynamicType(name = "TestType")
+
+            assertFalse(jvmType.isAssignableTo(dynamicType))
         }
     }
 }

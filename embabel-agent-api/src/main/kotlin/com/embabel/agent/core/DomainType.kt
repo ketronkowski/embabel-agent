@@ -42,12 +42,19 @@ sealed interface DomainType : HasInfoString, NamedAndDescribed {
 
     fun isAssignableFrom(other: Class<*>): Boolean
 
+    fun isAssignableFrom(other: DomainType): Boolean
+
     fun isAssignableTo(other: Class<*>): Boolean
+
+    fun isAssignableTo(other: DomainType): Boolean
 
 }
 
 /**
  * Simple data type
+ * @param name name of the type. Should be unique within a given context
+ * @param description description of the type
+ * @param properties properties of the type
  */
 data class DynamicType(
     override val name: String,
@@ -57,7 +64,11 @@ data class DynamicType(
 
     override fun isAssignableFrom(other: Class<*>): Boolean = false
 
+    override fun isAssignableFrom(other: DomainType): Boolean = other.name == name
+
     override fun isAssignableTo(other: Class<*>): Boolean = false
+
+    override fun isAssignableTo(other: DomainType): Boolean = other.name == name
 
     fun withProperty(
         property: PropertyDefinition,
@@ -120,8 +131,20 @@ data class JvmType @JsonCreator constructor(
     override fun isAssignableFrom(other: Class<*>): Boolean =
         clazz.isAssignableFrom(other)
 
+    override fun isAssignableFrom(other: DomainType): Boolean =
+        when (other) {
+            is JvmType -> clazz.isAssignableFrom(other.clazz)
+            is DynamicType -> false
+        }
+
     override fun isAssignableTo(other: Class<*>): Boolean =
         other.isAssignableFrom(clazz)
+
+    override fun isAssignableTo(other: DomainType): Boolean =
+        when (other) {
+            is JvmType -> other.clazz.isAssignableFrom(clazz)
+            is DynamicType -> false
+        }
 
     @get:JsonIgnore
     override val properties: List<PropertyDefinition>
