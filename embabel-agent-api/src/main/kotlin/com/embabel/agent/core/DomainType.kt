@@ -20,18 +20,30 @@ import com.embabel.common.core.types.HasInfoString
 import com.embabel.common.core.types.NamedAndDescribed
 import com.embabel.common.util.indent
 import com.embabel.common.util.indentLines
-import com.fasterxml.jackson.annotation.JsonClassDescription
+import com.fasterxml.jackson.annotation.*
 
 /**
  * Type known to the Embabel agent platform.
  * May be backed by a domain object or by a map.
  */
+@JsonTypeInfo(
+    use = JsonTypeInfo.Id.DEDUCTION,
+)
+@JsonSubTypes(
+    JsonSubTypes.Type(value = DynamicType::class, name = "dynamic"),
+    JsonSubTypes.Type(value = JvmType::class, name = "jvm"),
+)
 sealed interface DomainType : HasInfoString, NamedAndDescribed {
 
     /**
      * Exposed even for JvmTypes, for consistency
      */
     val properties: List<PropertyDefinition>
+
+    fun isAssignableFrom(other: Class<*>): Boolean
+
+    fun isAssignableTo(other: Class<*>): Boolean
+
 }
 
 /**
@@ -42,6 +54,10 @@ data class DynamicType(
     override val description: String = name,
     override val properties: List<PropertyDefinition> = emptyList(),
 ) : DomainType {
+
+    override fun isAssignableFrom(other: Class<*>): Boolean = false
+
+    override fun isAssignableTo(other: Class<*>): Boolean = false
 
     fun withProperty(
         property: PropertyDefinition,
@@ -73,13 +89,24 @@ data class PropertyDefinition(
 /**
  * Typed backed by a JVM object
  */
-data class JvmType(
-    val clazz: Class<*>,
+data class JvmType @JsonCreator constructor(
+    @param:JsonProperty("className")
+    val className: String,
 ) : DomainType {
 
-    override val name: String
-        get() = clazz.name
 
+    @get:JsonIgnore
+    val clazz: Class<*> by lazy {
+        Class.forName(className)
+    }
+
+    constructor(clazz: Class<*>) : this(clazz.name)
+
+    @get:JsonIgnore
+    override val name: String
+        get() = className
+
+    @get:JsonIgnore
     override val description: String
         get() {
             val ann = clazz.getAnnotation(JsonClassDescription::class.java)
@@ -90,6 +117,13 @@ data class JvmType(
             }
         }
 
+    override fun isAssignableFrom(other: Class<*>): Boolean =
+        clazz.isAssignableFrom(other)
+
+    override fun isAssignableTo(other: Class<*>): Boolean =
+        other.isAssignableFrom(clazz)
+
+    @get:JsonIgnore
     override val properties: List<PropertyDefinition>
         get() {
             return clazz.declaredFields.map {
