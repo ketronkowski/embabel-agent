@@ -60,6 +60,10 @@ data class FakePromptRunner(
         logger.info("Fake prompt runner created: ${hashCode()}")
     }
 
+    override fun withInteractionId(interactionId: InteractionId): PromptRunner {
+        TODO("Not yet implemented")
+    }
+
     /**
      * Add a response to the list of expected responses.
      * This is used to simulate responses from the LLM.
@@ -101,7 +105,6 @@ data class FakePromptRunner(
     override fun <T> createObject(
         prompt: String,
         outputClass: Class<T>,
-        interactionId: String?,
     ): T {
         _llmInvocations += LlmInvocation(
             interaction = createLlmInteraction(),
@@ -126,7 +129,6 @@ data class FakePromptRunner(
     override fun <T> createObject(
         messages: List<Message>,
         outputClass: Class<T>,
-        interactionId: String?,
     ): T {
         return createObject(prompt = messages.joinToString(), outputClass = outputClass)
     }

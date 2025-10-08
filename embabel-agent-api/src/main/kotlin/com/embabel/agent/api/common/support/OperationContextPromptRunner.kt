@@ -41,6 +41,7 @@ import org.springframework.ai.tool.ToolCallback
  */
 internal data class OperationContextPromptRunner(
     private val context: OperationContext,
+    private val interactionId: InteractionId? = null,
     override val llm: LlmOptions,
     override val toolGroups: Set<ToolGroupRequirement>,
     override val toolObjects: List<ToolObject>,
@@ -59,10 +60,13 @@ internal data class OperationContextPromptRunner(
         return InteractionId("${context.operation.name}-${outputClass.name}")
     }
 
+    override fun withInteractionId(interactionId: InteractionId): PromptRunner =
+        copy(interactionId = interactionId)
+
+
     override fun <T> createObject(
         messages: List<Message>,
         outputClass: Class<T>,
-        interactionId: String?,
     ): T {
         return context.processContext.createObject(
             messages = messages,
@@ -75,7 +79,7 @@ internal data class OperationContextPromptRunner(
                         context
                     )
                 },
-                id = interactionId?.let { InteractionId(it) } ?: idForPrompt(messages, outputClass),
+                id = interactionId ?: idForPrompt(messages, outputClass),
                 generateExamples = generateExamples,
             ),
             outputClass = outputClass,
@@ -99,7 +103,7 @@ internal data class OperationContextPromptRunner(
                         context
                     )
                 },
-                id = idForPrompt(listOf(UserMessage(prompt)), outputClass),
+                id = interactionId ?: idForPrompt(listOf(UserMessage(prompt)), outputClass),
                 generateExamples = generateExamples,
             ),
             outputClass = outputClass,
