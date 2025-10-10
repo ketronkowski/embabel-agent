@@ -28,7 +28,6 @@ import com.embabel.agent.tools.agent.AgentToolCallback
 import com.embabel.agent.tools.agent.Handoffs
 import com.embabel.agent.tools.agent.PromptedTextCommunicator
 import com.embabel.chat.Message
-import com.embabel.chat.UserMessage
 import com.embabel.common.ai.model.LlmOptions
 import com.embabel.common.ai.prompt.PromptContributor
 import com.embabel.common.core.types.ZeroToOne
@@ -43,6 +42,7 @@ internal data class OperationContextPromptRunner(
     private val context: OperationContext,
     private val interactionId: InteractionId? = null,
     override val llm: LlmOptions,
+    override val messages: List<Message> = emptyList(),
     override val toolGroups: Set<ToolGroupRequirement>,
     override val toolObjects: List<ToolObject>,
     override val promptContributors: List<PromptContributor>,
@@ -63,13 +63,15 @@ internal data class OperationContextPromptRunner(
     override fun withInteractionId(interactionId: InteractionId): PromptRunner =
         copy(interactionId = interactionId)
 
+    override fun withMessages(messages: List<Message>): PromptRunner =
+        copy(messages = this.messages + messages)
 
     override fun <T> createObject(
         messages: List<Message>,
         outputClass: Class<T>,
     ): T {
         return context.processContext.createObject(
-            messages = messages,
+            messages = this.messages + messages,
             interaction = LlmInteraction(
                 llm = llm,
                 toolGroups = this.toolGroups + toolGroups,
@@ -89,11 +91,11 @@ internal data class OperationContextPromptRunner(
     }
 
     override fun <T> createObjectIfPossible(
-        prompt: String,
+        messages: List<Message>,
         outputClass: Class<T>,
     ): T? {
         val result = context.processContext.createObjectIfPossible<T>(
-            prompt = prompt,
+            messages = messages,
             interaction = LlmInteraction(
                 llm = llm,
                 toolGroups = this.toolGroups + toolGroups,
@@ -103,7 +105,7 @@ internal data class OperationContextPromptRunner(
                         context
                     )
                 },
-                id = interactionId ?: idForPrompt(listOf(UserMessage(prompt)), outputClass),
+                id = interactionId ?: idForPrompt(messages, outputClass),
                 generateExamples = generateExamples,
             ),
             outputClass = outputClass,
@@ -112,9 +114,9 @@ internal data class OperationContextPromptRunner(
         )
         if (result.isFailure) {
             loggerFor<OperationContextPromptRunner>().warn(
-                "Failed to create object of type {} with prompt {}: {}",
+                "Failed to create object of type {} with messages {}: {}",
                 outputClass.name,
-                prompt,
+                messages,
                 result.exceptionOrNull()?.message,
             )
         }

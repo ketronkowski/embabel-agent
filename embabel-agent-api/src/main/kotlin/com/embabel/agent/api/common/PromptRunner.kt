@@ -22,6 +22,7 @@ import com.embabel.agent.core.ToolGroup
 import com.embabel.agent.core.ToolGroupRequirement
 import com.embabel.agent.prompt.element.ContextualPromptElement
 import com.embabel.agent.spi.LlmUse
+import com.embabel.chat.Message
 import com.embabel.common.ai.model.LlmOptions
 import com.embabel.common.ai.prompt.PromptContributor
 import com.embabel.common.ai.prompt.PromptElement
@@ -120,6 +121,11 @@ interface PromptRunner : LlmUse, PromptRunnerOperations {
     val toolObjects: List<ToolObject>
 
     /**
+     * Messages added to this PromptRunner
+     */
+    val messages: List<Message>
+
+    /**
      * Set an interaction id for this prompt runner.
      */
     fun withInteractionId(interactionId: InteractionId): PromptRunner
@@ -133,6 +139,17 @@ interface PromptRunner : LlmUse, PromptRunnerOperations {
      * Specify an LLM for the PromptRunner
      */
     fun withLlm(llm: LlmOptions): PromptRunner
+
+    /**
+     * Add a message that will be included in the final prompt.
+     */
+    fun withMessage(message: Message): PromptRunner =
+        withMessages(listOf(message))
+
+    fun withMessages(messages: List<Message>): PromptRunner
+
+    fun withMessages(vararg message: Message): PromptRunner =
+        withMessages(message.toList())
 
     /**
      * Add a tool group to the PromptRunner

@@ -354,7 +354,7 @@ class ChatClientLlmTransformerTest {
                     JinjavaTemplateRenderer(),
                 )
             val result = transformer.createObjectIfPossible(
-                prompt = "Say hello",
+                messages = listOf(UserMessage("Say hello")),
                 interaction = LlmInteraction(id = InteractionId("test")),
                 agentProcess = mockAgentProcess,
                 action = null,

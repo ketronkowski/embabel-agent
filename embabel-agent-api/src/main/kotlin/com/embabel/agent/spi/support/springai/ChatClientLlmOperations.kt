@@ -101,7 +101,6 @@ internal class ChatClientLlmOperations(
         logger.info("Current LLM settings: maxAttempts=${dataBindingProperties.maxAttempts}, fixedBackoffMillis=${dataBindingProperties.fixedBackoffMillis}ms, timeout=${llmOperationsPromptsProperties.defaultTimeout.seconds}s")
     }
 
-    @Suppress("UNCHECKED_CAST")
     override fun <O> doTransform(
         messages: List<Message>,
         interaction: LlmInteraction,
@@ -228,9 +227,8 @@ internal class ChatClientLlmOperations(
         }
     }
 
-    @Suppress("UNCHECKED_CAST")
     override fun <O> doTransformIfPossible(
-        prompt: String,
+        messages: List<Message>,
         interaction: LlmInteraction,
         outputClass: Class<O>,
         llmRequestEvent: LlmRequestEvent<O>,
@@ -249,7 +247,8 @@ internal class ChatClientLlmOperations(
                 if (promptContributions.isNotEmpty()) {
                     add(SystemMessage(promptContributions))
                 }
-                add(UserMessage("Instruction: <$prompt>\n\n$maybeReturnPromptContribution"))
+                add(UserMessage(maybeReturnPromptContribution))
+                addAll(messages.map { it.toSpringAiMessage() })
             }
         )
         llmRequestEvent.agentProcess.processContext.onProcessEvent(
@@ -371,7 +370,7 @@ internal class ChatClientLlmOperations(
         llm: Llm,
     ): ChatClient {
         return ChatClient
-            .builder(llm.model, observationRegistry, DefaultChatClientObservationConvention(),)
+            .builder(llm.model, observationRegistry, DefaultChatClientObservationConvention())
             .build()
     }
 

@@ -385,7 +385,7 @@ class ChatClientLlmOperationsTest {
             val prompt = "The quick brown fox jumped over the lazy dog"
             val setup = createChatClientLlmOperations(fakeChatModel)
             val result = setup.llmOperations.createObjectIfPossible(
-                prompt = prompt,
+                messages = listOf(UserMessage(prompt)),
                 interaction = LlmInteraction(
                     id = InteractionId("id"), llm = LlmOptions()
                 ),
@@ -417,7 +417,7 @@ class ChatClientLlmOperationsTest {
 
             val setup = createChatClientLlmOperations(fakeChatModel)
             val result = setup.llmOperations.createObjectIfPossible(
-                prompt = "prompt",
+                messages = listOf(UserMessage("prompt")),
                 interaction = LlmInteraction(
                     id = InteractionId("id"), llm = LlmOptions()
                 ),
@@ -442,7 +442,7 @@ class ChatClientLlmOperationsTest {
 
             val setup = createChatClientLlmOperations(fakeChatModel)
             val result = setup.llmOperations.createObjectIfPossible(
-                prompt = "prompt",
+                messages = listOf(UserMessage("prompt")),
                 interaction = LlmInteraction(
                     id = InteractionId("id"), llm = LlmOptions()
                 ),
@@ -465,7 +465,7 @@ class ChatClientLlmOperationsTest {
 
             val setup = createChatClientLlmOperations(fakeChatModel)
             val result = setup.llmOperations.createObjectIfPossible(
-                prompt = "prompt",
+                messages = listOf(UserMessage("prompt")),
                 interaction = LlmInteraction(
                     id = InteractionId("id"), llm = LlmOptions()
                 ),
@@ -483,7 +483,7 @@ class ChatClientLlmOperationsTest {
             val setup = createChatClientLlmOperations(fakeChatModel)
             try {
                 setup.llmOperations.createObjectIfPossible(
-                    prompt = "prompt",
+                    messages = listOf(UserMessage("prompt")),
                     interaction = LlmInteraction(
                         id = InteractionId("id"), llm = LlmOptions()
                     ),
@@ -511,7 +511,7 @@ class ChatClientLlmOperationsTest {
 
             val setup = createChatClientLlmOperations(fakeChatModel)
             val result = setup.llmOperations.createObjectIfPossible(
-                prompt = "prompt",
+                messages = listOf(UserMessage("prompt")),
                 interaction = LlmInteraction(
                     id = InteractionId("id"), llm = LlmOptions()
                 ),
@@ -536,7 +536,7 @@ class ChatClientLlmOperationsTest {
             val toolCallbacks = ToolCallbacks.from(Wumpus("wumpy")).toList()
             val setup = createChatClientLlmOperations(fakeChatModel)
             setup.llmOperations.createObjectIfPossible(
-                prompt = "prompt",
+                messages = listOf(UserMessage("prompt")),
                 interaction = LlmInteraction(
                     id = InteractionId("id"),
                     llm = LlmOptions(),

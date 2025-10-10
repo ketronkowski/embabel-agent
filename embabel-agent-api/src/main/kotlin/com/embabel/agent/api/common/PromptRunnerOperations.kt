@@ -60,6 +60,11 @@ interface PromptRunnerOperations {
     fun <T> createObjectIfPossible(
         prompt: String,
         outputClass: Class<T>,
+    ): T? = createObjectIfPossible(listOf(UserMessage(prompt)), outputClass)
+
+    fun <T> createObjectIfPossible(
+        messages: List<Message>,
+        outputClass: Class<T>,
     ): T?
 
     /**

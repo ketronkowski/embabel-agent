@@ -199,7 +199,7 @@ interface LlmOperations {
     /**
      * Try to create an output object in the context of an AgentProcess.
      * Return a failure result if the LLM does not have enough information to create the object.
-     * @param prompt User prompt
+     * @param messages messages
      * @param interaction Llm options and tool callbacks to use, plus unique identifier
      * @param outputClass Class of the output object
      * @param agentProcess Agent process we are running within
@@ -207,7 +207,7 @@ interface LlmOperations {
      * @throws InvalidLlmReturnFormatException if the LLM returns an object of the wrong type
      */
     fun <O> createObjectIfPossible(
-        prompt: String,
+        messages: List<Message>,
         interaction: LlmInteraction,
         outputClass: Class<O>,
         agentProcess: AgentProcess,

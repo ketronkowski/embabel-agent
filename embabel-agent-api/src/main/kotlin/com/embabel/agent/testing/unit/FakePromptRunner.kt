@@ -22,6 +22,7 @@ import com.embabel.agent.core.support.safelyGetToolCallbacks
 import com.embabel.agent.prompt.element.ContextualPromptElement
 import com.embabel.agent.spi.LlmInteraction
 import com.embabel.chat.Message
+import com.embabel.chat.UserMessage
 import com.embabel.common.ai.model.LlmOptions
 import com.embabel.common.ai.prompt.PromptContributor
 import com.embabel.common.core.MobyNameGenerator
@@ -38,12 +39,13 @@ enum class Method {
 
 data class LlmInvocation(
     val interaction: LlmInteraction,
-    val prompt: String,
+    val messages: List<Message>,
     val method: Method,
 )
 
 data class FakePromptRunner(
     override val llm: LlmOptions?,
+    override val messages: List<Message> = emptyList(),
     override val toolGroups: Set<ToolGroupRequirement>,
     override val toolObjects: List<ToolObject>,
     override val promptContributors: List<PromptContributor>,
@@ -63,6 +65,10 @@ data class FakePromptRunner(
     override fun withInteractionId(interactionId: InteractionId): PromptRunner {
         TODO("Not yet implemented")
     }
+
+
+    override fun withMessages(messages: List<Message>): PromptRunner =
+        copy(messages = this.messages + messages)
 
     /**
      * Add a response to the list of expected responses.
@@ -108,19 +114,19 @@ data class FakePromptRunner(
     ): T {
         _llmInvocations += LlmInvocation(
             interaction = createLlmInteraction(),
-            prompt = prompt,
+            messages = messages,
             method = Method.CREATE_OBJECT,
         )
         return getResponse(outputClass)!!
     }
 
     override fun <T> createObjectIfPossible(
-        prompt: String,
+        messages: List<Message>,
         outputClass: Class<T>,
     ): T? {
         _llmInvocations += LlmInvocation(
             interaction = createLlmInteraction(),
-            prompt = prompt,
+            messages = messages,
             method = Method.CREATE_OBJECT_IF_POSSIBLE,
         )
         return getResponse(outputClass)
@@ -140,7 +146,7 @@ data class FakePromptRunner(
     ): Boolean {
         _llmInvocations += LlmInvocation(
             interaction = createLlmInteraction(),
-            prompt = condition,
+            messages = listOf(UserMessage(condition)),
             method = Method.EVALUATE_CONDITION,
         )
         return true
