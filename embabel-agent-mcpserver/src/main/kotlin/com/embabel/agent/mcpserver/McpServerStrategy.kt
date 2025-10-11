@@ -15,11 +15,19 @@
  */
 package com.embabel.agent.mcpserver
 
-import com.embabel.common.core.types.HasInfoString
-import io.modelcontextprotocol.server.McpServerFeatures
+import com.embabel.agent.mcpserver.domain.McpExecutionMode
+import reactor.core.publisher.Mono
 
-interface McpPromptPublisher : HasInfoString {
+/**
+ * Strategy interface for MCP server operations.
+ * Provides a common interface for sync and async server management.
+ */
+interface McpServerStrategy {
+    val executionMode: McpExecutionMode
 
-    fun prompts(): List<McpServerFeatures.SyncPromptSpecification>
-
+    fun addTool(toolSpec: Any): Mono<Void>
+    fun removeTool(toolName: String): Mono<Void>
+    fun addResource(resourceSpec: Any): Mono<Void>
+    fun addPrompt(promptSpec: Any): Mono<Void>
+    fun getToolRegistry(): ToolRegistry
 }
