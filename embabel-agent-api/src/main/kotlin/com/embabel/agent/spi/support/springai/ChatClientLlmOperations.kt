@@ -360,15 +360,15 @@ internal class ChatClientLlmOperations(
         }
 
         // Create a ParameterizedTypeReference that uses our custom type
-        return object : org.springframework.core.ParameterizedTypeReference<T>() {
+        return object : ParameterizedTypeReference<T>() {
             override fun getType() = type
         }
     }
 
-
-    private fun createChatClient(
-        llm: Llm,
-    ): ChatClient {
+    /**
+     * Create a chat client for the given Embabel Llm definition
+     **/
+    private fun createChatClient(llm: Llm): ChatClient {
         return ChatClient
             .builder(llm.model, observationRegistry, DefaultChatClientObservationConvention())
             .build()

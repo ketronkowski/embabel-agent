@@ -181,7 +181,7 @@ interface LlmOperations {
 
     /**
      * Create an output object, in the context of an AgentProcess.
-     * @param messages messages
+     * @param messages messages in the conversation so far. Could just be user message.
      * @param interaction Llm options and tool callbacks to use, plus unique identifier
      * @param outputClass Class of the output object
      * @param agentProcess Agent process we are running within
@@ -216,6 +216,8 @@ interface LlmOperations {
 
     /**
      * Low level transform, not necessarily aware of platform
+     * This is a convenience overload that creates a UserMessage
+     * from a String prompt
      * @param prompt user prompt. Will become the last user message
      * @param interaction The LLM call options
      * @param outputClass Class of the output object
@@ -235,7 +237,11 @@ interface LlmOperations {
         )
 
     /**
-     * Respond in a conversation
+     * Low level transform, not necessarily aware of platform
+     * @param messages messages
+     * @param interaction The LLM call options
+     * @param outputClass Class of the output object
+     * @param llmRequestEvent Event already published for this request if one has been
      */
     fun <O> doTransform(
         messages: List<Message>,
