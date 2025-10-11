@@ -89,11 +89,10 @@ data class RepositoryReferenceProvider(
         branch: String? = null,
         depth: Int? = null,
     ): ClonedRepositoryReference {
-        logger.info("Cloning a Git repository from $url...")
         val tempDir = createTempDirectory()
 
         try {
-            logger.info("Cloning a Git repository from $url into temp dir ${tempDir.absolutePathString()}")
+            logger.debug("Cloning a Git repository from $url into temp dir ${tempDir.absolutePathString()}")
             val cloneCommand = Git.cloneRepository()
                 .setURI(url)
                 .setDirectory(tempDir.toFile())
@@ -109,12 +108,12 @@ data class RepositoryReferenceProvider(
                 }
             }
 
-            logger.info("✅ Cloned Git repository from $url...")
+            logger.info("✅ Cloned Git repository from $url into temp dir ${tempDir.absolutePathString()}")
             return ClonedRepositoryReference(
                 url = url,
                 description = description,
                 localPath = tempDir,
-                shouldDeleteOnClose = true,
+                deleteOnClose = true,
                 fileFormatLimits = fileFormatLimits,
             )
         } catch (e: Exception) {
@@ -168,7 +167,7 @@ data class RepositoryReferenceProvider(
             url = url,
             description = description,
             localPath = targetDirectory,
-            shouldDeleteOnClose = false,
+            deleteOnClose = false,
             fileFormatLimits = fileFormatLimits,
         )
     }

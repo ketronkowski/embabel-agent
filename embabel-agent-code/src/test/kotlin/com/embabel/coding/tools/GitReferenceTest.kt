@@ -103,7 +103,7 @@ class GitReferenceTest {
                 assertTrue(Files.exists(targetDir.resolve("README")))
 
                 // This should not auto-delete on close
-                assertFalse(clonedRepo.shouldDeleteOnClose)
+                assertFalse(clonedRepo.deleteOnClose)
             }
         loggerFor<GitReferenceTest>().info("Cloned repository at: ${targetDir.toAbsolutePath()}")
 
@@ -195,8 +195,7 @@ class GitReferenceTest {
             url = "1",
             description = "Different description",
             localPath = emptyRepo,
-
-            shouldDeleteOnClose = false,
+            deleteOnClose = false,
         )
 
         val content = clonedRepo.writeAllFilesToString()
@@ -214,7 +213,7 @@ class GitReferenceTest {
             url = "x",
             description = "Different description",
             localPath = testDir,
-            shouldDeleteOnClose = true
+            deleteOnClose = true
         )
 
         // Verify directory exists initially
@@ -241,7 +240,7 @@ class GitReferenceTest {
             url = "y",
             description = "Different description",
             localPath = testDir,
-            shouldDeleteOnClose = false
+            deleteOnClose = false,
         )
 
         assertTrue(Files.exists(testDir))
@@ -261,21 +260,22 @@ class GitReferenceTest {
         val repo1 = ClonedRepositoryReference(
             url = "foo1",
             description = "Different description",
-            testDir,
-            shouldDeleteOnClose = false
+            localPath = testDir,
+
+            deleteOnClose = false,
         )
         val repo2 =
             ClonedRepositoryReference(
                 url = "foo2",
                 description = "Different description",
                 localPath = testDir,
-                shouldDeleteOnClose = true
+                deleteOnClose = true
             )  // Different cleanup behavior
         val repo3 = ClonedRepositoryReference(
             url = "foo3",
             description = "Different description",
             tempDir.resolve("other-repo"),
-            shouldDeleteOnClose = false
+            deleteOnClose = false
         )
 
         // Same path should be equal regardless of other properties

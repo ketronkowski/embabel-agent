@@ -21,6 +21,8 @@ import com.embabel.agent.mcpserver.sync.McpPromptPublisher
 import com.embabel.agent.mcpserver.sync.McpResourcePublisher
 import com.embabel.agent.mcpserver.sync.SyncServerStrategy
 import io.modelcontextprotocol.server.McpSyncServer
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.ai.mcp.McpToolUtils
 import org.springframework.ai.tool.ToolCallbackProvider
 import org.springframework.ai.tool.method.MethodToolCallbackProvider
@@ -48,7 +50,7 @@ class McpSyncServerCondition : Condition {
      */
     override fun matches(
         context: org.springframework.context.annotation.ConditionContext,
-        metadata: org.springframework.core.type.AnnotatedTypeMetadata
+        metadata: org.springframework.core.type.AnnotatedTypeMetadata,
     ): Boolean {
         val environment = context.environment
         val enabled = environment.getProperty("embabel.agent.mcpserver.enabled", Boolean::class.java, false)
@@ -68,8 +70,10 @@ class McpSyncServerCondition : Condition {
 @Configuration
 @Conditional(McpSyncServerCondition::class)
 class McpSyncServerConfiguration(
-    applicationContext: ConfigurableApplicationContext
+    applicationContext: ConfigurableApplicationContext,
 ) : AbstractMcpServerConfiguration(applicationContext) {
+
+    override val logger: Logger = LoggerFactory.getLogger(McpSyncServerConfiguration::class.java)
 
     /**
      * Information about the current server instance.

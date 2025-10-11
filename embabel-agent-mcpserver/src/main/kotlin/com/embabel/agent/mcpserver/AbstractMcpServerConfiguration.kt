@@ -19,7 +19,7 @@ import com.embabel.agent.mcpserver.domain.McpExecutionMode
 import com.embabel.agent.mcpserver.domain.ServerInfo
 import com.embabel.agent.mcpserver.domain.ToolSpecification
 import com.embabel.agent.spi.support.AgentScanningBeanPostProcessorEvent
-import org.slf4j.LoggerFactory
+import org.slf4j.Logger
 import org.springframework.ai.tool.ToolCallbackProvider
 import org.springframework.ai.tool.annotation.Tool
 import org.springframework.context.ConfigurableApplicationContext
@@ -37,10 +37,11 @@ import reactor.core.publisher.Mono
  * @property applicationContext the Spring application context
  */
 abstract class AbstractMcpServerConfiguration(
-    protected val applicationContext: ConfigurableApplicationContext
+    protected val applicationContext: ConfigurableApplicationContext,
 ) {
 
-    protected val logger = LoggerFactory.getLogger(this::class.java)
+    // Subclasses should set this so they don't get CGLIB proxy names
+    protected abstract val logger: Logger
 
     /**
      * Event listener that triggers MCP server initialization after agent scanning.
@@ -94,7 +95,7 @@ abstract class AbstractMcpServerConfiguration(
             .filter { !shouldPreserveTool(it) }
 
         if (toolsToRemove.isNotEmpty()) {
-            logger.info("Removing {} existing tools: {}", toolsToRemove.size, toolsToRemove.joinToString(", "))
+            logger.debug("Removing {} existing tools: {}", toolsToRemove.size, toolsToRemove.joinToString(", "))
 
             return Flux.fromIterable(toolsToRemove)
                 .flatMap { toolName ->

@@ -21,6 +21,8 @@ import com.embabel.agent.mcpserver.async.McpAsyncPromptPublisher
 import com.embabel.agent.mcpserver.async.McpAsyncResourcePublisher
 import com.embabel.agent.mcpserver.domain.McpExecutionMode
 import io.modelcontextprotocol.server.McpAsyncServer
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.ai.mcp.McpToolUtils
 import org.springframework.ai.tool.ToolCallbackProvider
 import org.springframework.ai.tool.method.MethodToolCallbackProvider
@@ -35,7 +37,7 @@ import org.springframework.context.annotation.Configuration
 class McpAsyncServerCondition : org.springframework.context.annotation.Condition {
     override fun matches(
         context: org.springframework.context.annotation.ConditionContext,
-        metadata: org.springframework.core.type.AnnotatedTypeMetadata
+        metadata: org.springframework.core.type.AnnotatedTypeMetadata,
     ): Boolean {
         val environment = context.environment
         val enabled = environment.getProperty("embabel.agent.mcpserver.enabled", Boolean::class.java, false)
@@ -53,8 +55,10 @@ class McpAsyncServerCondition : org.springframework.context.annotation.Condition
 @Configuration
 @Conditional(McpAsyncServerCondition::class)
 class McpAsyncServerConfiguration(
-    applicationContext: ConfigurableApplicationContext
+    applicationContext: ConfigurableApplicationContext,
 ) : AbstractMcpServerConfiguration(applicationContext) {
+
+    override val logger: Logger = LoggerFactory.getLogger(McpAsyncServerConfiguration::class.java)
 
     private val serverInfo = ServerInfoFactory.create(McpExecutionMode.ASYNC)
 

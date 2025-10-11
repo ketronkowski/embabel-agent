@@ -36,7 +36,7 @@ class FacetedRagService(
     val ragFacets = facets.toList() + facetProviders.flatMap { it.facets() }
 
     init {
-        logger.info("Discovered {} RagFacets:", ragFacets.size)
+        logger.info("Discovered {} RagFacets", ragFacets.size)
     }
 
     override fun search(ragRequest: RagRequest): RagResponse {

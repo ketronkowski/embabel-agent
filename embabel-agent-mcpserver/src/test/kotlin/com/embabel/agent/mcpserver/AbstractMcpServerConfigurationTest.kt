@@ -17,15 +17,17 @@ package com.embabel.agent.mcpserver
 
 import com.embabel.agent.mcpserver.domain.McpExecutionMode
 import com.embabel.agent.spi.support.AgentScanningBeanPostProcessorEvent
-import io.mockk.*
-import io.modelcontextprotocol.server.McpServerFeatures
-import org.junit.jupiter.api.Test
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.verify
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.ai.tool.ToolCallbackProvider
 import org.springframework.context.ConfigurableApplicationContext
 import reactor.core.publisher.Mono
-import reactor.test.StepVerifier
 
 class AbstractMcpServerConfigurationTest {
 
@@ -194,8 +196,10 @@ class AbstractMcpServerConfigurationTest {
 
     // Test implementation of abstract class
     inner class TestAbstractMcpServerConfiguration(
-        applicationContext: ConfigurableApplicationContext
+        applicationContext: ConfigurableApplicationContext,
     ) : AbstractMcpServerConfiguration(applicationContext) {
+
+        override val logger: Logger = LoggerFactory.getLogger(TestAbstractMcpServerConfiguration::class.java)
 
         var createServerStrategyCalled = false
         var mockServerStrategy: McpServerStrategy? = null
