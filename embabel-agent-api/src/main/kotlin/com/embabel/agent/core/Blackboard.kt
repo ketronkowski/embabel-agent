@@ -107,6 +107,14 @@ interface Blackboard : Bindable, MayHaveLastResult, HasInfoString {
     operator fun get(name: String): Any?
 
     /**
+     * Threadsafe get or put
+     */
+    fun getOrPut(
+        name: String,
+        creator: () -> Any,
+    ): Any
+
+    /**
      * Indicates whether this blackboard contains a variable.
      */
     fun hasValue(
