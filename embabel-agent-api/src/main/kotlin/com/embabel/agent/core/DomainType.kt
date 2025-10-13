@@ -47,3 +47,9 @@ sealed interface DomainType : HasInfoString, NamedAndDescribed {
     fun isAssignableTo(other: DomainType): Boolean
 
 }
+
+data class PropertyDefinition(
+    val name: String,
+    val type: String = "string",
+    val description: String? = name,
+)

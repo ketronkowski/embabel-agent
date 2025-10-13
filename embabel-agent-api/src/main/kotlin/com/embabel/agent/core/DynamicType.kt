@@ -59,8 +59,3 @@ data class DynamicType(
 
 }
 
-data class PropertyDefinition(
-    val name: String,
-    val type: String = "string",
-    val description: String? = name,
-)
