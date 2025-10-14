@@ -67,6 +67,38 @@ sealed interface DomainType : HasInfoString, NamedAndDescribed {
      */
     val parents: List<DomainType>
 
+    /**
+     * Is instance creation permitted?
+     * Or is this reference data?
+     */
+    val creationPermitted: Boolean
+
+    /**
+     * Get all labels for this type, including from parent types.
+     * For JvmType: simple class names of this type and all parent types.
+     * For DynamicType: capitalized value after last '.' in name, plus parent labels.
+     */
+    @get:JsonIgnore
+    val labels: Set<String>
+        get() {
+            val allLabels = mutableSetOf<String>()
+            allLabels.add(ownLabel)
+            parents.forEach { parent ->
+                allLabels.addAll(parent.labels)
+            }
+            return allLabels
+        }
+
+    /**
+     * Get the label for this type only (not including parent labels)
+     */
+    @get:JsonIgnore
+    val ownLabel: String
+        get() {
+            val simpleName = name.substringAfterLast('.')
+            return simpleName.replaceFirstChar { it.uppercase() }
+        }
+
     fun isAssignableFrom(other: Class<*>): Boolean
 
     fun isAssignableFrom(other: DomainType): Boolean

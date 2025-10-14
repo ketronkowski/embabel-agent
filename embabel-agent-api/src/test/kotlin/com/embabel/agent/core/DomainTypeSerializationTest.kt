@@ -299,6 +299,89 @@ class DomainTypeSerializationTest {
             // Verify no duplicates (name appears at multiple levels)
             assertEquals(propertyNames.size, propertyNames.distinct().size)
         }
+
+        @Test
+        fun `test DynamicType ownLabel extracts capitalized name after last dot`() {
+            val type1 = DynamicType(name = "Person")
+            assertEquals("Person", type1.ownLabel)
+
+            val type2 = DynamicType(name = "com.example.User")
+            assertEquals("User", type2.ownLabel)
+
+            val type3 = DynamicType(name = "com.example.domain.Customer")
+            assertEquals("Customer", type3.ownLabel)
+        }
+
+        @Test
+        fun `test DynamicType labels includes own label`() {
+            val type = DynamicType(name = "Person")
+            val labels = type.labels
+            assertEquals(1, labels.size)
+            assertTrue(labels.contains("Person"))
+        }
+
+        @Test
+        fun `test DynamicType labels includes parent labels`() {
+            val animalType = DynamicType(name = "Animal")
+            val dogType = DynamicType(
+                name = "Dog",
+                parents = listOf(animalType),
+            )
+
+            val labels = dogType.labels
+            assertEquals(2, labels.size)
+            assertTrue(labels.contains("Dog"))
+            assertTrue(labels.contains("Animal"))
+        }
+
+        @Test
+        fun `test DynamicType labels includes all ancestor labels`() {
+            val livingType = DynamicType(name = "Living")
+            val animalType = DynamicType(name = "Animal", parents = listOf(livingType))
+            val dogType = DynamicType(name = "Dog", parents = listOf(animalType))
+
+            val labels = dogType.labels
+            assertEquals(3, labels.size)
+            assertTrue(labels.contains("Dog"))
+            assertTrue(labels.contains("Animal"))
+            assertTrue(labels.contains("Living"))
+        }
+
+        @Test
+        fun `test DynamicType labels deduplicates across multiple parents`() {
+            val namedType = DynamicType(name = "Named")
+            val livingType = DynamicType(name = "Living")
+            val personType = DynamicType(
+                name = "Person",
+                parents = listOf(namedType, livingType),
+            )
+
+            val labels = personType.labels
+            assertEquals(3, labels.size)
+            assertTrue(labels.contains("Person"))
+            assertTrue(labels.contains("Named"))
+            assertTrue(labels.contains("Living"))
+        }
+
+        @Test
+        fun `test DynamicType labels with JvmType parent`() {
+            val jvmAnimal = JvmType(JvmTypeTest.Animal::class.java)
+            val serviceDogType = DynamicType(
+                name = "ServiceDog",
+                parents = listOf(jvmAnimal),
+            )
+
+            val labels = serviceDogType.labels
+            assertEquals(2, labels.size)
+            assertTrue(labels.contains("ServiceDog"))
+            assertTrue(labels.contains("Animal"))
+        }
+
+        @Test
+        fun `test DynamicType ownLabel capitalizes first letter`() {
+            val type = DynamicType(name = "person")
+            assertEquals("Person", type.ownLabel)
+        }
     }
 
     @Nested

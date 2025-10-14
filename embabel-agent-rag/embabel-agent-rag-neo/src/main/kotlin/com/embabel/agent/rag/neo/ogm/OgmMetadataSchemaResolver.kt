@@ -15,10 +15,9 @@
  */
 package com.embabel.agent.rag.neo.ogm
 
-import com.embabel.agent.core.SimplePropertyDefinition
+import com.embabel.agent.core.DataDictionary
 import com.embabel.agent.rag.EntitySearch
-import com.embabel.agent.rag.schema.*
-import com.fasterxml.jackson.annotation.JsonClassDescription
+import com.embabel.agent.rag.schema.SchemaResolver
 import org.neo4j.ogm.session.SessionFactory
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -38,54 +37,64 @@ class OgmMetadataSchemaResolver(
 
     // TODO is not using name
     // TODO not filtering entities
-    override fun getSchema(entitySearch: EntitySearch): KnowledgeGraphSchema? {
-        val metadata = sessionFactory.metaData()
-        val relationships = mutableListOf<RelationshipDefinition>()
-        val entityDefinitions = metadata.persistentEntities()
-            .filter { it.hasPrimaryIndexField() }
-            .map { entity ->
-                val classDescription = entity.underlyingClass.getAnnotation(JsonClassDescription::class.java)?.value
-                val creationPermitted =
-                    entity.underlyingClass.getAnnotation(CreationPermitted::class.java)?.value != false
-                val labels = entity.staticLabels().toSet()
-                val entityDefinition = EntityDefinition(
-                    labels = labels,
-                    properties = entity.propertyFields().map { property ->
-                        SimplePropertyDefinition(
-                            name = property.name,
-                            type = property.typeDescriptor,
-                            description = property.name, // TODO get from annotation
-                        )
-                    },
-                    description = classDescription ?: labels.joinToString(","),
-                    creationPermitted = creationPermitted,
-                )
-                entity.relationshipFields().forEach { relationshipField ->
-                    val targetEntity = relationshipField.typeDescriptor.split(".").last()
-                    relationships.add(
-                        RelationshipDefinition(
-                            sourceLabel = entityDefinition.type,
-                            targetLabel = targetEntity,
-                            type = relationshipField.relationship(),
-                            description = relationshipField.name,
-                            cardinality = if (relationshipField.isArray || relationshipField.isIterable) {
-                                Cardinality.MANY
-                            } else {
-                                Cardinality.ONE
-                            },
-                        )
-                    )
-                }
-                entityDefinition
-            }
-        if (entityDefinitions.size == 2 && relationships.isEmpty()) {
-            // Special case of superclasses only
-            return null
-        }
-        return KnowledgeGraphSchema(
-            entities = entityDefinitions,
-            relationships = relationships,
-        )
+    override fun getSchema(entitySearch: EntitySearch): DataDictionary? {
+//        val metadata = sessionFactory.metaData()
+//        val entityDefinitions = metadata.persistentEntities()
+//            .filter { it.hasPrimaryIndexField() }
+//            .map { entity ->
+//                val classDescription = entity.underlyingClass.getAnnotation(JsonClassDescription::class.java)?.value
+//                val creationPermitted =
+//                    entity.underlyingClass.getAnnotation(CreationPermitted::class.java)?.value != false
+//                val labels = entity.staticLabels().toSet()
+//                val entityDefinition = EntityDefinition(
+//                    labels = labels,
+//                    properties = entity.propertyFields().map { property ->
+//                        SimplePropertyDefinition(
+//                            name = property.name,
+//                            type = property.typeDescriptor,
+//                            description = property.name, // TODO get from annotation
+//                        )
+//                    },
+//                    description = classDescription ?: labels.joinToString(","),
+//                    creationPermitted = creationPermitted,
+//                )
+//                entity.relationshipFields().forEach { relationshipField ->
+//                    val targetEntity = relationshipField.typeDescriptor.split(".").last()
+//                    relationships.add(
+//                        RelationshipDefinition(
+//                            sourceLabel = entityDefinition.type,
+//                            targetLabel = targetEntity,
+//                            type = relationshipField.relationship(),
+//                            description = relationshipField.name,
+//                            cardinality = if (relationshipField.isArray || relationshipField.isIterable) {
+//                                Cardinality.MANY
+//                            } else {
+//                                Cardinality.ONE
+//                            },
+//                        )
+//                    )
+//                }
+//                entityDefinition
+//            }
+//        if (entityDefinitions.size == 2 && relationships.isEmpty()) {
+//            // Special case of superclasses only
+//            return null
+//        }
+//        return KnowledgeGraphSchema(
+//            entities = entityDefinitions,
+//            relationships = relationships,
+//        )
+        TODO()
     }
 
 }
+
+//fun DataDictionary.explain(): String {
+//    return """
+//            |Schema with ${this.domainTypes.size} entities and ${this.allowedRelationships().size} relationships:
+//            |Entities:
+//            |${this.domainTypes.joinToString("\n") { "\t${it.infoString(verbose)} " }}
+//            |Relationships:
+//            |${this.allowedRelationships().joinToString("\n") { "\t${it.infoString(verbose)} " }}
+//            """.trimMargin()
+//}

@@ -15,6 +15,7 @@
  */
 package com.embabel.agent.rag.schema
 
+import com.embabel.agent.core.DataDictionary
 import com.embabel.agent.rag.EntitySearch
 
 /**
@@ -25,5 +26,5 @@ interface SchemaResolver {
     /**
      * Resolve the schema of the knowledge graph, if possible
      */
-    fun getSchema(entitySearch: EntitySearch): KnowledgeGraphSchema?
+    fun getSchema(entitySearch: EntitySearch): DataDictionary?
 }

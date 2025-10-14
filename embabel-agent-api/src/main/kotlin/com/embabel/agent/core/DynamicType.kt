@@ -30,6 +30,7 @@ data class DynamicType(
     override val description: String = name,
     override val ownProperties: List<PropertyDefinition> = emptyList(),
     override val parents: List<DomainType> = emptyList(),
+    override val creationPermitted: Boolean = true,
 ) : DomainType {
 
     override fun isAssignableFrom(other: Class<*>): Boolean = false

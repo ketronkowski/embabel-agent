@@ -31,6 +31,13 @@ data class JvmType @JsonCreator constructor(
 ) : DomainType {
 
     @get:JsonIgnore
+    override val creationPermitted: Boolean
+        get() {
+            val cpa = clazz.getAnnotation(CreationPermitted::class.java)
+            return cpa != null
+        }
+
+    @get:JsonIgnore
     override val parents: List<JvmType>
         get() {
             val superclass = clazz.superclass
@@ -52,6 +59,10 @@ data class JvmType @JsonCreator constructor(
     @get:JsonIgnore
     override val name: String
         get() = className
+
+    @get:JsonIgnore
+    override val ownLabel: String
+        get() = clazz.simpleName
 
     @get:JsonIgnore
     override val description: String

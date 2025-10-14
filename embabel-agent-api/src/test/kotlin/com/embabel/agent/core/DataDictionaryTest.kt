@@ -52,7 +52,7 @@ class DataDictionaryTest {
         val rel = relationships[0]
         assertEquals("Customer", (rel.from as JvmType).clazz.simpleName)
         assertEquals("Address", (rel.to as JvmType).clazz.simpleName)
-        assertEquals("address", rel.relationshipName)
+        assertEquals("address", rel.name)
         assertEquals(Cardinality.ONE, rel.cardinality)
     }
 
@@ -68,7 +68,7 @@ class DataDictionaryTest {
         val relationships = dictionary.allowedRelationships()
 
         assertEquals(2, relationships.size)
-        val relationshipNames = relationships.map { it.relationshipName }
+        val relationshipNames = relationships.map { it.name }
         assertTrue(relationshipNames.contains("headquarters"))
         assertTrue(relationshipNames.contains("billingAddress"))
     }
@@ -115,7 +115,7 @@ class DataDictionaryTest {
         assertEquals(1, relationships.size)
         assertEquals("Person", relationships[0].from.name)
         assertEquals("Address", relationships[0].to.name)
-        assertEquals("address", relationships[0].relationshipName)
+        assertEquals("address", relationships[0].name)
         assertEquals(Cardinality.ONE, relationships[0].cardinality)
     }
 
@@ -137,7 +137,7 @@ class DataDictionaryTest {
         assertEquals(1, relationships.size)
         assertEquals("Person", relationships[0].from.name)
         assertEquals(Address::class.java.name, relationships[0].to.name)
-        assertEquals("homeAddress", relationships[0].relationshipName)
+        assertEquals("homeAddress", relationships[0].name)
     }
 
     @Test
@@ -171,7 +171,7 @@ class DataDictionaryTest {
         // Employee should have the inherited address relationship
         val employeeRelationships = relationships.filter { it.from.name == "Employee" }
         assertEquals(1, employeeRelationships.size)
-        assertEquals("address", employeeRelationships[0].relationshipName)
+        assertEquals("address", employeeRelationships[0].name)
         assertEquals("Address", employeeRelationships[0].to.name)
 
         // BasePerson also has the relationship
@@ -196,7 +196,7 @@ class DataDictionaryTest {
         val rel = relationships[0]
         assertEquals("Library", (rel.from as JvmType).clazz.simpleName)
         assertEquals("Address", (rel.to as JvmType).clazz.simpleName)
-        assertEquals("books", rel.relationshipName)
+        assertEquals("books", rel.name)
         assertEquals(Cardinality.LIST, rel.cardinality)
     }
 
@@ -235,16 +235,16 @@ class DataDictionaryTest {
 
         assertEquals(4, relationships.size)
 
-        val featuredRel = relationships.find { it.relationshipName == "featuredBook" }!!
+        val featuredRel = relationships.find { it.name == "featuredBook" }!!
         assertEquals(Cardinality.ONE, featuredRel.cardinality)
 
-        val optionalRel = relationships.find { it.relationshipName == "optionalBook" }!!
+        val optionalRel = relationships.find { it.name == "optionalBook" }!!
         assertEquals(Cardinality.OPTIONAL, optionalRel.cardinality)
 
-        val listRel = relationships.find { it.relationshipName == "books" }!!
+        val listRel = relationships.find { it.name == "books" }!!
         assertEquals(Cardinality.LIST, listRel.cardinality)
 
-        val setRel = relationships.find { it.relationshipName == "uniqueBooks" }!!
+        val setRel = relationships.find { it.name == "uniqueBooks" }!!
         assertEquals(Cardinality.SET, setRel.cardinality)
     }
 }

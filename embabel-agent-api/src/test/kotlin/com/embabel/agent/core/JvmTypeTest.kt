@@ -236,4 +236,53 @@ class JvmTypeTest {
         assertEquals(propertyNames.size, propertyNames.distinct().size)
     }
 
+    @Test
+    fun `should return own label as simple class name`() {
+        val type = JvmType(Dog::class.java)
+        assertEquals("Dog", type.ownLabel)
+    }
+
+    @Test
+    fun `should return labels including own type`() {
+        val type = JvmType(Dog::class.java)
+        val labels = type.labels
+        assertEquals(1, labels.size)
+        assert(labels.contains("Dog"))
+    }
+
+    @Test
+    fun `should include parent labels in labels`() {
+        val type = JvmType(Horse::class.java)
+        val labels = type.labels
+        assertEquals(2, labels.size)
+        assert(labels.contains("Horse"))
+        assert(labels.contains("Animal"))
+    }
+
+    @Test
+    fun `should include all ancestor labels`() {
+        val type = JvmType(Product::class.java)
+        val labels = type.labels
+        assertEquals(3, labels.size)
+        assert(labels.contains("Product"))
+        assert(labels.contains("NamedEntity"))
+        assert(labels.contains("BaseEntity"))
+    }
+
+    @Test
+    fun `should include interface labels`() {
+        val type = JvmType(Truck::class.java)
+        val labels = type.labels
+        assertEquals(2, labels.size)
+        assert(labels.contains("Truck"))
+        assert(labels.contains("Vehicle"))
+    }
+
+    @Test
+    fun `should capitalize label from fully qualified class name`() {
+        val type = JvmType(String::class.java)
+        assertEquals("String", type.ownLabel)
+        assert(type.labels.contains("String"))
+    }
+
 }

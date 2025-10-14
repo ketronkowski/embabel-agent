@@ -15,10 +15,10 @@
  */
 package com.embabel.agent.rag.neo.ogm
 
+import com.embabel.agent.core.DataDictionary
 import com.embabel.agent.rag.RagRequest
 import com.embabel.agent.rag.neo.common.CypherQuery
 import com.embabel.agent.rag.neo.common.CypherRagQueryGenerator
-import com.embabel.agent.rag.schema.KnowledgeGraphSchema
 import com.embabel.common.ai.model.ModelProvider
 import com.embabel.common.ai.model.ModelSelectionCriteria.Companion.byRole
 import com.embabel.common.util.loggerFor
@@ -29,7 +29,7 @@ import org.slf4j.Logger
  */
 class SchemaDrivenCypherRagQueryGenerator(
     modelProvider: ModelProvider,
-    private val schema: KnowledgeGraphSchema,
+    private val schema: DataDictionary,
 ) : CypherRagQueryGenerator {
 
     private val logger: Logger = loggerFor<SchemaDrivenCypherRagQueryGenerator>()
@@ -45,7 +45,7 @@ class SchemaDrivenCypherRagQueryGenerator(
             Use only entities and relationships defined in the schema.
             Use only properties defined in the schema.
             Be willing to use relationships, paths and ordering to get the best insights.
-            Schema: ${schema.infoString(verbose = true)}
+            Schema: ${TODO()}
 
             You must return entities named as `n`.
 

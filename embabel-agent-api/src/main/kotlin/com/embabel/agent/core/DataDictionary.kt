@@ -19,18 +19,19 @@ package com.embabel.agent.core
  * Represents a relationship between two domain types.
  * @param from The source domain type
  * @param to The target domain type
- * @param relationshipName The name of the relationship (inferred from property name)
+ * @param name The name of the relationship (inferred from property name)
  * @param cardinality The cardinality of the relationship
  */
 data class AllowedRelationship(
     val from: DomainType,
     val to: DomainType,
-    val relationshipName: String,
+    val name: String,
+    val description: String = name,
     val cardinality: Cardinality,
 )
 
 /**
- * Implemented by types that reference data types
+ * Exposes access to a set of known data types
  */
 interface DataDictionary {
 
@@ -62,7 +63,7 @@ interface DataDictionary {
                         AllowedRelationship(
                             from = domainType,
                             to = property.type,
-                            relationshipName = property.name,
+                            name = property.name,
                             cardinality = property.cardinality,
                         )
                     )
@@ -70,6 +71,15 @@ interface DataDictionary {
             }
         }
         return relationships
+    }
+
+    /**
+     * The domain type matching these labels, if we have one
+     */
+    fun domainTypeForLabels(labels: Set<String>): DomainType? {
+        return domainTypes.maxByOrNull { entity ->
+            entity.labels.intersect(labels).size
+        }
     }
 
 }

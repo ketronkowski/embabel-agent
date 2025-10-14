@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.embabel.agent.rag.neo.ogm
+package com.embabel.agent.core
 
 /**
  * If this value is false, we cannot create new instances
