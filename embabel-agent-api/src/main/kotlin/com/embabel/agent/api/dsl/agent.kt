@@ -33,6 +33,7 @@ fun agent(
 ): Agent {
     return AgentBuilder(
         name = name,
+        provider = provider,
         version = version,
         description = description,
         promptContributors = promptContributors,

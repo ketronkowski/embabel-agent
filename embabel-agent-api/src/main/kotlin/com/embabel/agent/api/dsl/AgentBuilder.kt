@@ -125,6 +125,7 @@ class AgentBuilder(
         preConditions: List<Condition> = emptyList(),
         pre: List<String> = emptyList(),
         post: List<Condition> = emptyList(),
+        canRerun: Boolean = false,
         inputVarName: String = IoBinding.DEFAULT_BINDING,
         outputVarName: String? = IoBinding.DEFAULT_BINDING,
         cost: ZeroToOne = 0.0,
@@ -138,6 +139,7 @@ class AgentBuilder(
             description = description,
             pre = pre + preConditions.map { it.name },
             post = post.map { it.name },
+            canRerun = canRerun,
             cost = cost,
             qos = qos,
             inputVarName = inputVarName,
@@ -264,7 +266,7 @@ class AgentBuilder(
         ): Condition = condition
     }
 
-    fun condition(
+    fun conditionOf(
         name: String? = null,
         cost: ZeroToOne = 0.0,
         block: ConditionPredicate,
@@ -293,7 +295,7 @@ class AgentBuilder(
      * type safe access
      * val myCondition = condition("custom prompt")
      */
-    fun condition(
+    fun promptedCondition(
         name: String? = null,
         prompt: (context: OperationContext) -> String,
         llm: LlmCall = LlmCall(),
