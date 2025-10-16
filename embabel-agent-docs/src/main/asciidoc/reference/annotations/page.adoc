@@ -56,6 +56,7 @@ These are the normal inputs for action methods.
 They are backed by the blackboard and will be used as inputs to the action method.
 A nullable domain object parameter will be populated if it is non-null on the blackboard.
 This enables nice-to-have parameters that are not required for the action to run.
+In Kotlin, use a nullable parameter with `?`: in Java, mark the parameter with the `org.springframework.lang.Nullable` or another `Nullable` annotation.
 
 * _Infrastructure objects_. `OperationContext` parameters may be passed to action or condition methods.
 

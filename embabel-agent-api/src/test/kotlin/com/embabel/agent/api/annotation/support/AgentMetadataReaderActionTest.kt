@@ -73,13 +73,20 @@ class AgentMetadataReaderActionTest {
     }
 
     @Test
-    fun `one action with nullable parameter metadata`() {
+    fun `one action with nullable parameter metadata Kotlin`() {
+        testNullableParameter(OneTransformerActionWithNullableParameter())
+    }
+
+    // Java nullable parameter tests moved to AgentMetadataReaderNullableParameterJavaTest.java
+    // because Kotlin compiles first and Java test classes aren't available yet
+
+    private fun testNullableParameter(instance: Any) {
         val reader = AgentMetadataReader()
-        val metadata = reader.createAgentMetadata(OneTransformerActionWithNullableParameter())
+        val metadata = reader.createAgentMetadata(instance)
         assertNotNull(metadata)
         assertEquals(1, metadata!!.actions.size)
         val action = metadata.actions.single()
-        assertEquals(1, action.inputs.size, "Should have 1 input as nullable doesn't count")
+        assertEquals(1, action.inputs.size, "Should have 1 input as nullable doesn't count in Java")
         assertEquals(UserInput::class.java.name, action.inputs.single().type)
         assertEquals(1, action.outputs.size, "Should have 1 output")
         assertEquals(

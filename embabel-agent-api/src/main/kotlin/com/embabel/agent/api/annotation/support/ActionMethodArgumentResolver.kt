@@ -90,7 +90,7 @@ class ProcessContextArgumentResolver : ActionMethodArgumentResolver {
     override fun resolveArgument(
         javaParameter: Parameter,
         kotlinParameter: KParameter?,
-        operationContext: OperationContext
+        operationContext: OperationContext,
     ): Any {
         return operationContext.processContext
     }
@@ -112,7 +112,7 @@ class OperationContextArgumentResolver : ActionMethodArgumentResolver {
     override fun resolveArgument(
         javaParameter: Parameter,
         kotlinParameter: KParameter?,
-        operationContext: OperationContext
+        operationContext: OperationContext,
     ): Any {
         return operationContext
     }
@@ -134,7 +134,7 @@ class AiArgumentResolver : ActionMethodArgumentResolver {
     override fun resolveArgument(
         javaParameter: Parameter,
         kotlinParameter: KParameter?,
-        operationContext: OperationContext
+        operationContext: OperationContext,
     ): Any {
         return operationContext.ai()
     }
@@ -183,17 +183,25 @@ class BlackboardArgumentResolver : ActionMethodArgumentResolver {
 
     override fun resolveInputBinding(
         javaParameter: Parameter,
-        kotlinParameter: KParameter?
+        kotlinParameter: KParameter?,
     ): Set<IoBinding> {
         if (kotlinParameter != null) {
             if (kotlinParameter.type.isMarkedNullable) {
                 return emptySet()
             }
-            val annotation = kotlinParameter.findAnnotation<RequireNameMatch>()
-            val name = getBindingParameterName(kotlinParameter.name, annotation) ?: throw IllegalArgumentException(
-                "Name for argument of type [${kotlinParameter.type}] not specified, and parameter name information not " +
-                        "available via reflection. Ensure that the compiler uses the '-parameters' flag."
-            )
+            val nullableAnnotation = kotlinParameter.annotations.find {
+                it.annotationClass.simpleName == "Nullable"
+            }
+            if (nullableAnnotation != null) {
+                return emptySet()
+            }
+
+            val requireNameMatchAnnotation = kotlinParameter.findAnnotation<RequireNameMatch>()
+            val name = getBindingParameterName(kotlinParameter.name, requireNameMatchAnnotation)
+                ?: throw IllegalArgumentException(
+                    "Name for argument of type [${kotlinParameter.type}] not specified, and parameter name information not " +
+                            "available via reflection. Ensure that the compiler uses the '-parameters' flag."
+                )
 
             return expandInputBindings(
                 name,
@@ -219,7 +227,7 @@ class BlackboardArgumentResolver : ActionMethodArgumentResolver {
     override fun resolveArgument(
         javaParameter: Parameter,
         kotlinParameter: KParameter?,
-        operationContext: OperationContext
+        operationContext: OperationContext,
     ): Any? {
         if (kotlinParameter != null) {
             val classifier = kotlinParameter.type.classifier
