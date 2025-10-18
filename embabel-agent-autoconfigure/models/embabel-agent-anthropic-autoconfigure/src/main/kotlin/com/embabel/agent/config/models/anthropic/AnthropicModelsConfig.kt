@@ -90,9 +90,9 @@ class AnthropicModelsConfig(
     }
 
     @Bean
-    fun claudeOpus4(): Llm {
+    fun claudeOpus40(): Llm {
         return anthropicLlmOf(
-            AnthropicModels.Companion.CLAUDE_40_OPUS,
+            AnthropicModels.CLAUDE_40_OPUS,
             knowledgeCutoffDate = LocalDate.of(2025, 3, 31),
         )
             .copy(
@@ -104,9 +104,23 @@ class AnthropicModelsConfig(
     }
 
     @Bean
-    fun claudeSonnet(): Llm {
+    fun claudeOpus41(): Llm {
         return anthropicLlmOf(
-            AnthropicModels.Companion.CLAUDE_37_SONNET,
+            AnthropicModels.CLAUDE_41_OPUS,
+            knowledgeCutoffDate = LocalDate.of(2025, 1, 1),
+        )
+            .copy(
+                pricingModel = PerTokenPricingModel(
+                    usdPer1mInputTokens = 15.0,
+                    usdPer1mOutputTokens = 75.0,
+                )
+            )
+    }
+
+    @Bean
+    fun claudeSonnet37(): Llm {
+        return anthropicLlmOf(
+            AnthropicModels.CLAUDE_37_SONNET,
             knowledgeCutoffDate = LocalDate.of(2024, 10, 31),
         )
             .copy(
@@ -118,14 +132,40 @@ class AnthropicModelsConfig(
     }
 
     @Bean
-    fun claudeHaiku(): Llm = anthropicLlmOf(
-        AnthropicModels.Companion.CLAUDE_35_HAIKU,
+    fun claudeSonnet45(): Llm {
+        return anthropicLlmOf(
+            AnthropicModels.CLAUDE_SONNET_4_5,
+            knowledgeCutoffDate = LocalDate.of(2025, 1, 1),
+        )
+            .copy(
+                pricingModel = PerTokenPricingModel(
+                    usdPer1mInputTokens = 3.0,
+                    usdPer1mOutputTokens = 15.0,
+                )
+            )
+    }
+
+    @Bean
+    fun claudeHaiku35(): Llm = anthropicLlmOf(
+        AnthropicModels.CLAUDE_35_HAIKU,
         knowledgeCutoffDate = LocalDate.of(2024, 10, 22),
     )
         .copy(
             pricingModel = PerTokenPricingModel(
                 usdPer1mInputTokens = .80,
                 usdPer1mOutputTokens = 4.0,
+            )
+        )
+
+    @Bean
+    fun claudeHaiku45(): Llm = anthropicLlmOf(
+        AnthropicModels.CLAUDE_HAIKU_4_5,
+        knowledgeCutoffDate = LocalDate.of(2025, 2, 1),
+    )
+        .copy(
+            pricingModel = PerTokenPricingModel(
+                usdPer1mInputTokens = 1.0,
+                usdPer1mOutputTokens = 5.0,
             )
         )
 
@@ -144,7 +184,8 @@ class AnthropicModelsConfig(
             .toolCallingManager(
                 ToolCallingManager.builder()
                     .observationRegistry(observationRegistry.getIfUnique { ObservationRegistry.NOOP })
-                    .build())
+                    .build()
+            )
             .retryTemplate(properties.retryTemplate("anthropic-$name"))
             .observationRegistry(observationRegistry.getIfUnique { ObservationRegistry.NOOP })
             .build()
@@ -152,7 +193,7 @@ class AnthropicModelsConfig(
         return Llm(
             name = name,
             model = chatModel,
-            provider = AnthropicModels.Companion.PROVIDER,
+            provider = AnthropicModels.PROVIDER,
             optionsConverter = AnthropicOptionsConverter,
             knowledgeCutoffDate = knowledgeCutoffDate,
         )
@@ -164,13 +205,17 @@ class AnthropicModelsConfig(
             logger.info("Using custom Anthropic base URL: {}", baseUrl)
             builder.baseUrl(baseUrl)
         }
-        //add observation registry to rest and web client builders
+        // add observation registry to rest and web client builders
         builder
-            .restClientBuilder(RestClient.builder()
-                .observationRegistry(observationRegistry.getIfUnique { ObservationRegistry.NOOP }))
+            .restClientBuilder(
+                RestClient.builder()
+                    .observationRegistry(observationRegistry.getIfUnique { ObservationRegistry.NOOP })
+            )
         builder
-            .webClientBuilder(WebClient.builder()
-                .observationRegistry(observationRegistry.getIfUnique { ObservationRegistry.NOOP }))
+            .webClientBuilder(
+                WebClient.builder()
+                    .observationRegistry(observationRegistry.getIfUnique { ObservationRegistry.NOOP })
+            )
 
         return builder.build()
     }
