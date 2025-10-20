@@ -72,10 +72,13 @@ class InMemoryBlackboard(
         bind(key, value)
     }
 
-    override fun getOrPut(
+    override fun <V : Any> getOrPut(
         name: String,
-        creator: () -> Any,
-    ): Any = _map.getOrPut(name, creator)
+        creator: () -> V,
+    ): V {
+        val entry = _map.getOrPut(name, creator)
+        return entry as V
+    }
 
     override fun setCondition(
         key: String,

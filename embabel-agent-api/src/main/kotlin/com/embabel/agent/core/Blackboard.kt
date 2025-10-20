@@ -110,10 +110,10 @@ interface Blackboard : Bindable, MayHaveLastResult, HasInfoString {
     /**
      * Threadsafe get or put
      */
-    fun getOrPut(
+    fun <V : Any> getOrPut(
         name: String,
-        creator: () -> Any,
-    ): Any
+        creator: () -> V,
+    ): V
 
     /**
      * Indicates whether this blackboard contains a variable.
