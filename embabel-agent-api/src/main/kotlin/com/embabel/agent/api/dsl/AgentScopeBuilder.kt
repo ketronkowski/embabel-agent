@@ -215,7 +215,7 @@ fun <A, B, C> aggregate(
     val allCompletedCondition = ComputedBooleanCondition(
         name = "All<${bClass.name}=>${cClass.name}",
         evaluator = { it, condition ->
-            it.all(bClass).size == transforms.size
+            it.objectsOfType(bClass).size == transforms.size
         }
     )
     val actions = mutableListOf<Action>()
@@ -272,7 +272,7 @@ fun <A1, A2, B : Any, C> biAggregate(
     val allCompletedCondition = ComputedBooleanCondition(
         name = "List<${bClass.name}>=>${cClass.name}",
         evaluator = { it, condition ->
-            it.all(bClass).size == transforms.size
+            it.objectsOfType(bClass).size == transforms.size
         }
     )
     val actions = mutableListOf<Action>()

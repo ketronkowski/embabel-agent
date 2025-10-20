@@ -89,7 +89,8 @@ interface MayHaveLastResult {
 
 
 /**
- * How agent processes maintain context
+ * A Blackboard is how an AgentProcess maintains context.
+ * Blackboard operations are threadsafe.
  */
 interface Blackboard : Bindable, MayHaveLastResult, HasInfoString {
 
@@ -101,7 +102,7 @@ interface Blackboard : Bindable, MayHaveLastResult, HasInfoString {
     val blackboardId: String
 
     /**
-     * Return the value of a variable, if it is set.
+     * Return the value of a variable, if it is set by name.
      * Does not limit return via type information.
      */
     operator fun get(name: String): Any?
@@ -153,7 +154,6 @@ interface Blackboard : Bindable, MayHaveLastResult, HasInfoString {
      * Resolve superclasses
      * For example, getValue("it", "Animal") will match a Dog if Dog extends Animal
      */
-    @Suppress("UNCHECKED_CAST")
     fun getValue(
         variable: String = IoBinding.DEFAULT_BINDING,
         type: String,
@@ -194,6 +194,13 @@ interface Blackboard : Bindable, MayHaveLastResult, HasInfoString {
      */
     fun <T> last(clazz: Class<T>): T? {
         return objects.filterIsInstance(clazz).lastOrNull()
+    }
+
+    /**
+     * Return all objects of the given type
+     */
+    fun <T> objectsOfType(clazz: Class<T>): List<T> {
+        return objects.filterIsInstance(clazz)
     }
 
     /**
@@ -247,15 +254,12 @@ fun satisfiesType(
     return interfaces.any { it.simpleName == type || it.name == type }
 }
 
-fun <T> Blackboard.all(clazz: Class<T>): List<T> {
-    return objects.filterIsInstance(clazz)
-}
 
 /**
  * Return all entries of a specific type
  */
-inline fun <reified T> Blackboard.all(): List<T> {
-    return all(T::class.java)
+inline fun <reified T> Blackboard.objectsOfType(): List<T> {
+    return objectsOfType(T::class.java)
 }
 
 /**
@@ -270,17 +274,6 @@ inline fun <reified T> Blackboard.count(): Int {
  */
 inline fun <reified T> Blackboard.last(): T? {
     return last(T::class.java)
-}
-
-inline fun <reified T> Blackboard.lastOrNull(predicate: (t: T) -> Boolean): T? {
-    return objects.filterIsInstance<T>().lastOrNull { predicate(it) }
-}
-
-fun <T> Blackboard.lastOrNull(
-    clazz: Class<T>,
-    predicate: (t: T) -> Boolean,
-): T? {
-    return objects.filterIsInstance<T>(clazz).lastOrNull { predicate(it) }
 }
 
 /**
@@ -316,8 +309,7 @@ private fun <T : Aggregation> aggregationFromBlackboard(
 }
 
 private fun KType.toJavaClass(): Class<*> {
-    val type = this.javaType
-    return when (type) {
+    return when (val type = this.javaType) {
         is Class<*> -> type
         is ParameterizedType -> type.rawType as Class<*>
         else -> throw IllegalArgumentException("Cannot convert KType to Class: $this")

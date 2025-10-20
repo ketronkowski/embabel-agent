@@ -20,7 +20,7 @@ import com.embabel.agent.api.common.support.Branch
 import com.embabel.agent.core.Agent
 import com.embabel.agent.core.AgentProcessStatusCode
 import com.embabel.agent.core.ProcessOptions
-import com.embabel.agent.core.all
+import com.embabel.agent.core.objectsOfType
 import com.embabel.agent.domain.io.UserInput
 import com.embabel.agent.spi.support.SpiPerson
 import com.embabel.agent.testing.integration.IntegrationTestUtils.dummyAgentPlatform
@@ -364,7 +364,7 @@ class AgentScopeBuilderTest {
                 "Expected history:\nActual:\n${result.processContext.agentProcess.history.joinToString("\n")}"
             )
             assertTrue(result.lastResult() is AllNames)
-            assertTrue(result.all<Thing>().isNotEmpty(), "Should have got interim result from agent")
+            assertTrue(result.objectsOfType<Thing>().isNotEmpty(), "Should have got interim result from agent")
         }
 
 
@@ -394,7 +394,7 @@ class AgentScopeBuilderTest {
                 "Expected history:\nActual:\n${result.processContext.agentProcess.history.joinToString("\n")}"
             )
             assertTrue(result.lastResult() is AllNames)
-            assertTrue(result.all<Thing>().isNotEmpty(), "Should have got interim result from agent")
+            assertTrue(result.objectsOfType<Thing>().isNotEmpty(), "Should have got interim result from agent")
         }
     }
 
@@ -434,9 +434,16 @@ class AgentScopeBuilderTest {
     }
 }
 
-data class GeneratedName(val name: String, val reason: String)
+data class GeneratedName(
+    val name: String,
+    val reason: String,
+)
+
 data class GeneratedNames(val names: List<GeneratedName>)
-data class AllNames(val accepted: List<GeneratedName>, val rejected: List<GeneratedName>)
+data class AllNames(
+    val accepted: List<GeneratedName>,
+    val rejected: List<GeneratedName>,
+)
 
 data class Garden(val name: String)
 
