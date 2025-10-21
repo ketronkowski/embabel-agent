@@ -22,6 +22,7 @@ import com.embabel.agent.core.Goal
 import com.embabel.agent.core.ProcessContext
 import com.embabel.agent.core.ToolGroupRequirement
 import com.embabel.agent.core.hitl.ConfirmationRequest
+import com.embabel.agent.core.last
 import com.embabel.agent.domain.io.UserInput
 import com.embabel.agent.support.Dog
 import com.embabel.common.ai.model.LlmOptions
@@ -816,6 +817,31 @@ class UsesFrogOrDogSomeOf {
     @AchievesGoal(description = "Creating a prince from a frog")
     @Action
     fun toPerson(frog: Frog): PersonWithReverseTool {
+        return PersonWithReverseTool(frog.name)
+    }
+
+}
+
+@Agent(description = "thing")
+class GetsFromBlackboard {
+
+    @Action(post = ["done"])
+    fun frog(): Frog {
+        return Frog("Kermit")
+    }
+
+    @Condition
+    fun done(context: OperationContext): Boolean {
+        return context.last(Frog::class.java) != null
+    }
+
+    @AchievesGoal(description = "Creating a prince from a frog")
+    @Action(pre = ["done"])
+    fun toPerson(
+        context: OperationContext,
+    ): PersonWithReverseTool {
+        // Would be better to declare a Frog parameter but that's not what we are testing
+        val frog = context.last<Frog>()!!
         return PersonWithReverseTool(frog.name)
     }
 

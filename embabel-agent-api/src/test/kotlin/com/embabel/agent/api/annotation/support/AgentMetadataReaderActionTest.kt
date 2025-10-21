@@ -935,6 +935,32 @@ class AgentMetadataReaderActionTest {
     }
 
     @Nested
+    inner class PathFinding {
+
+        @Test
+        fun `can find path when value comes from blackboard rather than parameter`() {
+            val reader = AgentMetadataReader()
+            val metadata =
+                reader.createAgentMetadata(
+                    GetsFromBlackboard()
+                )
+            assertNotNull(metadata)
+            assertEquals(2, metadata!!.actions.size)
+
+            val ap = IntegrationTestUtils.dummyAgentPlatform()
+            val agent = metadata as CoreAgent
+            val agentProcess =
+                ap.runAgentFrom(
+                    agent,
+                    ProcessOptions(),
+                    emptyMap(),
+                )
+            assertEquals(AgentProcessStatusCode.COMPLETED, agentProcess.status)
+            assertEquals(PersonWithReverseTool("Kermit"), agentProcess.lastResult())
+        }
+    }
+
+    @Nested
     inner class AwaitableTest {
 
         @Test
