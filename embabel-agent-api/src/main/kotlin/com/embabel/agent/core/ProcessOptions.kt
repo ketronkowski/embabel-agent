@@ -113,7 +113,7 @@ enum class Delay {
 }
 
 /**
- *  Controls Process running.
+ *  Controls how an AgentProcess is run.
  *  Prevents infinite loops, enforces budget limits, and manages delays.
  */
 data class ProcessControl(
@@ -309,6 +309,11 @@ data class Identities(
  * By default, it will be modified as the process runs.
  * Whether this is an independent copy is up to the caller, who can call spawn()
  * before passing this argument.
+ * @param budget budget constraints for this process. Will be exposed to actions
+ * and tools and enforced by default ProcessControl.
+ * @param processControl custom ProcessControl if specified. If not specified, default will be based on Budget.
+ * If specified, this overrides the budget-based defaults and may not relate
+ * to the budget.
  * @param verbosity detailed verbosity settings for logging etc.
  * @param prune whether to prune the agent to only relevant actions
  * @param listeners additional listeners (beyond platform event listeners) to receive events from this process.
@@ -320,15 +325,23 @@ data class ProcessOptions(
     val verbosity: Verbosity = Verbosity(),
     val allowGoalChange: Boolean = true,
     val budget: Budget = Budget(),
-    val control: ProcessControl = ProcessControl(
-        toolDelay = Delay.NONE,
-        operationDelay = Delay.NONE,
-        earlyTerminationPolicy = budget.earlyTerminationPolicy(),
-    ),
+    private val processControl: ProcessControl? = null,
     val prune: Boolean = false,
     val listeners: List<AgenticEventListener> = emptyList(),
     val outputChannel: OutputChannel = DevNullOutputChannel,
 ) {
+
+    /**
+     * ProcessControl in effect for this process
+     */
+    val control: ProcessControl
+        get() {
+            return processControl ?: ProcessControl(
+                toolDelay = Delay.NONE,
+                operationDelay = Delay.NONE,
+                earlyTerminationPolicy = budget.earlyTerminationPolicy(),
+            )
+        }
 
     companion object {
 
@@ -448,7 +461,7 @@ data class ProcessOptions(
          * @return this [Builder]
          */
         fun control(control: ProcessControl): Builder {
-            this.processOptions = processOptions.copy(control = control)
+            this.processOptions = processOptions.copy(processControl = control)
             return this
         }
 
@@ -462,7 +475,7 @@ data class ProcessOptions(
                 this.processOptions.budget.earlyTerminationPolicy()
             )
             consumer.accept(controlBuilder)
-            this.processOptions = processOptions.copy(control = controlBuilder.build())
+            this.processOptions = processOptions.copy(processControl = controlBuilder.build())
             return this
         }
 

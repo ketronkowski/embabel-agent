@@ -47,6 +47,7 @@ interface AgenticEventListener {
         /**
          * EventListener that does nothing
          */
+        @JvmField
         val DevNull: AgenticEventListener = object : AgenticEventListener {
         }
     }

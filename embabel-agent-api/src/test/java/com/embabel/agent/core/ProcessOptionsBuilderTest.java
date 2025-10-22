@@ -29,7 +29,7 @@ class ProcessOptionsBuilderTest {
     void builder() {
         var identities = new Identities();
         var blackboard = new InMemoryBlackboard();
-        var listener = AgenticEventListener.Companion.getDevNull();
+        var listener = AgenticEventListener.DevNull;
 
         var po = ProcessOptions.builder()
                 .contextId("42")
@@ -72,10 +72,40 @@ class ProcessOptionsBuilderTest {
 
         assertEquals(Delay.MEDIUM, po.getControl().getToolDelay());
         assertEquals(Delay.LONG, po.getControl().getOperationDelay());
-
         assertTrue(po.getPrune());
         assertEquals(List.of(listener), po.getListeners());
+    }
 
+    @Test
+    void correctProcessControlDefault() {
+        var identities = new Identities();
+        var blackboard = new InMemoryBlackboard();
+        var listener = AgenticEventListener.DevNull;
+
+        var po = ProcessOptions.builder()
+                .contextId("42")
+                .identities(identities)
+                .blackboard(blackboard)
+                .verbosity(vb -> vb
+                        .showPrompts(true)
+                        .showLlmResponses(true)
+                        .debug(true)
+                        .showPlanning(true)
+                )
+                .budget(bb -> bb
+                        .cost(1)
+                        .actions(2)
+                        .tokens(3)
+                )
+                .listener(listener)
+                .listeners(listeners -> assertEquals(List.of(listener), listeners))
+                .build();
+
+        assertEquals(Delay.NONE, po.getControl().getToolDelay());
+        assertEquals(Delay.NONE, po.getControl().getOperationDelay());
+        assertEquals(po.getBudget().earlyTerminationPolicy(), po.getControl().getEarlyTerminationPolicy(),
+                "Should have default budget-based early termination policy");
+        assertEquals(List.of(listener), po.getListeners());
     }
 
 }
