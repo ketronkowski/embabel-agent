@@ -2,21 +2,57 @@
 === Tools
 
 Tools can be passed to LLMs to allow them to perform actions.
+Tools can either be outside the JVM process, as with MCP, or inside the JVM process, as with domain objects exposing `@Tool` methods.
 
-Embabel provides tools to LLMs in several ways:
+Embabel allows you to provide tools to LLMs in two ways:
 
-* At action or `PromptRunner` level, from a tool group or _tool instance_.
-A tool instance is an object with `@Tool` methods.
-* At domain object level via `@Tool` methods authored by the application developer.
+* Via the `PromptRunner` by providing one or more in process **tool instances**.
+A tool instance is an object annotated with `@Tool` methods.
+* At action or `PromptRunner` level, from a **tool group**.
 
-==== Implementing Tool Instances
+`LlmReference` implementations also expose tools, but this is handled internally by the framework.
+
+==== In Process Tools: Implementing Tool Instances
+
+Implement one or more methods annotated with `@Tool` on a class.
+You do not need to annotate the class itself.
+Each annotated method represents a distinct tool that will be exposed to the LLM.
+
+A simple example of a tool method:
+
+[source,kotlin]
+----
+class MathTools {
+
+    @Tool(description = "add two numbers")
+    fun add(a: Double, b: Double) = a + b
+
+    // Other tools
+----
 
 Classes implementing tools can be stateful.
 They are often domain objects.
+Tools on mapped entities are especially useful, as they can encapsulate state that is never exposed to the LLM.
+See https://medium.com/@springrod/domain-tools-direct-access-zero-ceremony-9a3e8d4cf550[Domain Tools: Direct Access, Zero Ceremony] for a discussion of tool use patterns.
 
-Return type restrictions: TODO
+The `@Tool` annotation comes from https://docs.spring.io/spring-ai/reference/api/tools.html[Spring AI].
 
-Method parameter restrictions: TODO
+Tool methods can have any visibility, and can be static or instance scope.
+They are allowed on inner classes.
+
+[quote,Spring AI,Tool Calling]
+____
+You can define any number of arguments for the method (including no argument) with most types (primitives, POJOs, enums, lists, arrays, maps, and so on).
+Similarly, the method can return most types, including void.
+If the method returns a value, the return type must be a serializable type, as the result will be serialized and sent back to the model.
+
+The following types are not currently supported as parameters or return types for methods used as tools:
+
+- Optional
+- Asynchronous types (e.g. CompletableFuture, Future)
+- Reactive types (e.g. Flow, Mono, Flux)
+- Functional types (e.g. Function, Supplier, Consumer).
+____
 
 You can obtain the current `AgentProcess` in a Tool method implementation via `AgentProcess.get()`.
 This enables tools to bind to the `AgentProcess`, making objects available to other actions.
@@ -24,16 +60,11 @@ For example:
 
 [source,java]
 ----
-@Tool(description="My Tool")
-String bindCustomer(Long id) {
-    var customer = customerRepository.findById(id);
-    var agentProcess = AgentProcess.get();
-    if (agentProcess != null) {
-        agentProcess.addObject(customer);
-        return "Customer bound to blackboard";
-    }
-    return "No agent process: Unable to bind customer";
-}
+
+@Tool(description="My Tool") String bindCustomer(Long id) {
+var customer = customerRepository.findById(id); var agentProcess = AgentProcess.get(); if (agentProcess != null) {
+agentProcess.addObject(customer); return "Customer bound to blackboard"; } return "No agent process: Unable to bind customer"; }
+
 ----
 
 [[reference.tools__tool-groups]]
@@ -48,17 +79,38 @@ Thus tool groups cannot be specified at agent level, but must be specified on in
 
 Tool groups are often backed by <<reference.integrations__mcp,MCP>>.
 
-===== Configuring Tool Groups with Spring
+===== Configuring Tool Groups in configuration files
 
-Embabel uses Spring's `@Configuration` and `@Bean` annotations to expose ToolGroups to the agent platform.
+If you have configured MCP servers in your application configuration, you can selectively expose tools from those servers to agents by configuring tool groups.
+The easiest way to do this is in your `application.yml` or `application.properties` file.
+Select tools by name.
+
+For example:
+
+[source,yaml]
+----
+embabel:
+
+  agent:
+    platform:
+      tools:
+        includes:
+          linked-in:
+            tools:
+              - get_person_profile
+              - get_company_profile
+----
+
+===== Configuring Tool Groups in Spring @Configuration
+
+You can also use Spring's `@Configuration` and `@Bean` annotations to expose ToolGroups to the agent platform with greater control.
 The framework provides a default `ToolGroupsConfiguration` that demonstrates how to inject MCP servers and selectively expose MCP tools:
 
 [source,kotlin]
 ----
-@Configuration
-class ToolGroupsConfiguration(
-    private val mcpSyncClients: List<McpSyncClient>,
-) {
+
+@Configuration class ToolGroupsConfiguration(
+    private val mcpSyncClients: List<McpSyncClient>) {
 
     @Bean
     fun mathToolGroup() = MathTools()
@@ -98,7 +150,7 @@ The `permissions` property declares what access the tool group requires (e.g., `
 
 ===== Creating Custom Tool Group Configurations
 
-Applications can implement their own `@Configuration` classes to expose custom tool groups:
+Applications can implement their own `@Configuration` classes to expose custom tool groups, which can be backed by any service or resource, not just MCP.
 
 [source,java]
 ----
@@ -202,7 +254,7 @@ Instead of declaring tools at the action level, you can also specify tools direc
 [source,kotlin]
 ----
 // Add tool groups to a specific prompt
-context.promptRunner().withToolGroup(CoreToolGroups.WEB).create(
+context.ai().withAutoLlm().withToolGroup(CoreToolGroups.WEB).create(
     """
     Given the topic, generate a detailed report using web research.
 
@@ -247,9 +299,3 @@ context.ai()
 - `withTools(vararg String)`: Convenient method to add multiple tool groups
 - `withToolObject(Any)`: Add domain object with @Tool methods
 - `withToolObject(ToolObject)`: Add ToolObject with custom configuration
-
-==== Tool Objects
-
-==== Tools on Domain Objects
-
-Important
