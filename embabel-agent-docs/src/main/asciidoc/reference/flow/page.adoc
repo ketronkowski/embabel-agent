@@ -3,7 +3,7 @@
 
 Agents can be invoked programmatically or via user input.
 
-See <<reference.invoking, Invoking Embabel Agents>> for details on programmatic     invocation.
+See <<reference.invoking, Invoking Embabel Agents>> for details on programmatic invocation.
 Programmatic invocation typically involves structured types other than user input.
 
 In the case of user input, an LLM will choose the appropriate agent via the `Autonomy` class.
@@ -124,8 +124,10 @@ The blackboard enables:
 [[reference.flow__binding]]
 ==== Binding
 
-By default items in the blackboard are matched by type. When there are multiple candidates the most recent one is provided.
-It is also possible to assign a keyed name to blackboard items. Example:
+By default items in the blackboard are matched by type.
+When there are multiple candidates the most recent one is provided.
+It is also possible to assign a keyed name to blackboard items.
+Example:
 
     @Action
     public Person extractPerson(UserInput userInput, OperationContext context) {
@@ -141,5 +143,16 @@ It is also possible to assign a keyed name to blackboard items. Example:
         return maybeAPerson;
     }
 
-
 TIP: When routing flows by type, the name is not important, but for reference the default name is 'it'.
+
+==== Context
+
+Embabel offers a way to store longer term state: the `com.embabel.agent.core.Context`.
+While a blackboard is tied to a specific agent process, a context can persist across multiple processes.
+
+Contexts are identified by a unique `contextId` string.
+When starting an agent process, you can specify a `contextId` in the `ProcessOptions`.
+This will populate that process's blackboard with any data stored in the specified context.
+
+NOTE: Context persistence is dependent on the implementation of `com.embabel.agent.spi.ContextRepository`.
+The default implementation works only in memory, so does not survive server restarts.
