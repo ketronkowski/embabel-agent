@@ -16,8 +16,8 @@
 package com.embabel.agent.config.models.docker
 
 import com.embabel.agent.common.RetryProperties
-import com.embabel.agent.config.models.DockerLocalModels.Companion.PROVIDER
-import com.embabel.agent.config.models.OpenAiChatOptionsConverter
+import com.embabel.agent.api.models.DockerLocalModels.Companion.PROVIDER
+import com.embabel.agent.api.models.OpenAiChatOptionsConverter
 import com.embabel.common.ai.model.*
 import com.embabel.common.util.ExcludeFromJacocoGeneratedReport
 import io.micrometer.observation.ObservationRegistry
@@ -99,7 +99,7 @@ class DockerLocalModelsConfig(
 
     private data class ModelResponse(
         val `object`: String,
-        val data: List<ModelDetails>
+        val data: List<ModelDetails>,
     )
 
     private data class ModelDetails(
@@ -107,7 +107,7 @@ class DockerLocalModelsConfig(
     )
 
     private data class Model(
-        val id: String
+        val id: String,
     )
 
     private fun loadModels(): List<Model> =
@@ -198,16 +198,22 @@ class DockerLocalModelsConfig(
                 OpenAiApi.Builder()
                     .baseUrl(dockerConnectionProperties.baseUrl)
                     .apiKey(NoopApiKey())
-                    .restClientBuilder(RestClient.builder()
-                        .observationRegistry(observationRegistry.getIfUnique { ObservationRegistry.NOOP }))
-                    .webClientBuilder(WebClient.builder()
-                        .observationRegistry(observationRegistry.getIfUnique { ObservationRegistry.NOOP }))
+                    .restClientBuilder(
+                        RestClient.builder()
+                        .observationRegistry(observationRegistry.getIfUnique { ObservationRegistry.NOOP })
+                    )
+                    .webClientBuilder(
+                        WebClient.builder()
+                        .observationRegistry(observationRegistry.getIfUnique { ObservationRegistry.NOOP })
+                    )
                     .build()
             )
             .observationRegistry(observationRegistry.getIfUnique { ObservationRegistry.NOOP })
-            .toolCallingManager(ToolCallingManager.builder()
-                .observationRegistry(observationRegistry.getIfUnique { ObservationRegistry.NOOP })
-                    .build())
+            .toolCallingManager(
+                ToolCallingManager.builder()
+                    .observationRegistry(observationRegistry.getIfUnique { ObservationRegistry.NOOP })
+                    .build()
+            )
             .defaultOptions(
                 OpenAiChatOptions.builder()
                     .model(model.id)

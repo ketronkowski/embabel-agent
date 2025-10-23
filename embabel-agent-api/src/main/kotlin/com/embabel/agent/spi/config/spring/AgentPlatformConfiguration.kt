@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.embabel.agent.config
+package com.embabel.agent.spi.config.spring
 
 import com.embabel.agent.channel.DevNullOutputChannel
 import com.embabel.agent.channel.OutputChannel
@@ -171,7 +171,7 @@ class AgentPlatformConfiguration(
         @Autowired(required = false)
         @Qualifier("dockerLocalModelsConfig") dockerLocalModelsConfig: Any?,
         @Autowired(required = false)
-        @Qualifier("ollamaModelsConfig") ollamaModelsConfig: Any?
+        @Qualifier("ollamaModelsConfig") ollamaModelsConfig: Any?,
     ): ModelProvider {
 
         return ConfigurableModelProvider(

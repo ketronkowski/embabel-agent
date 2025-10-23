@@ -19,6 +19,10 @@ import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.Logger
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
+import com.embabel.agent.spi.config.spring.migration.DeprecatedPropertyScanner
+import com.embabel.agent.spi.config.spring.migration.DeprecatedPropertyScanningConfig
+import com.embabel.agent.spi.config.spring.migration.DeprecatedPropertyWarningConfig
+import com.embabel.agent.spi.config.spring.migration.SimpleDeprecatedConfigWarner
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -39,22 +43,26 @@ import org.springframework.test.context.TestPropertySource
  * Tests the interaction between DeprecatedPropertyScanningConfig, SimpleDeprecatedConfigWarner,
  * and DeprecatedPropertyScanner components working together for platform property migrations.
  */
-@SpringBootTest(classes = [
-    PlatformPropertiesMigrationIntegrationTest.TestConfiguration::class
-])
-@TestPropertySource(properties = [
-    // Enable migration scanning
-    "embabel.agent.platform.migration.scanning.enabled=true",
-    "embabel.agent.platform.migration.scanning.include-packages[0]=com.embabel.agent",
+@SpringBootTest(
+    classes = [
+        PlatformPropertiesMigrationIntegrationTest.TestConfiguration::class
+    ]
+)
+@TestPropertySource(
+    properties = [
+        // Enable migration scanning
+        "embabel.agent.platform.migration.scanning.enabled=true",
+        "embabel.agent.platform.migration.scanning.include-packages[0]=com.embabel.agent",
 
-    // Set up deprecated properties for testing
-    "embabel.anthropic.max-attempts=15",
-    "embabel.agent-platform.ranking.backoff-millis=500",
-    "embabel.agent.sse.max-buffer-size=200",
+        // Set up deprecated properties for testing
+        "embabel.anthropic.max-attempts=15",
+        "embabel.agent-platform.ranking.backoff-millis=500",
+        "embabel.agent.sse.max-buffer-size=200",
 
-    // Configure scanning to include test packages
-    "embabel.agent.platform.migration.scanning.auto-exclude-jar-packages=false"
-])
+        // Configure scanning to include test packages
+        "embabel.agent.platform.migration.scanning.auto-exclude-jar-packages=false"
+    ]
+)
 class PlatformPropertiesMigrationIntegrationTest {
 
     @Autowired
@@ -309,7 +317,7 @@ class PlatformPropertiesMigrationIntegrationTest {
         fun conditionalPropertyScanner(
             scanningConfigProvider: ObjectProvider<DeprecatedPropertyScanningConfig>,
             propertyWarnerProvider: ObjectProvider<SimpleDeprecatedConfigWarner>,
-            environment: Environment
+            environment: Environment,
         ): DeprecatedPropertyScanner =
             DeprecatedPropertyScanner(scanningConfigProvider, propertyWarnerProvider, environment)
     }

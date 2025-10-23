@@ -13,24 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.embabel.agent.config
+package com.embabel.agent.api.models
 
-import org.springframework.boot.context.properties.ConfigurationProperties
 
 /**
- * Configuration properties for the agent process repository.
+ * Well-known models from OpenAI.
  */
-@ConfigurationProperties("embabel.agent.platform.context-repository")
-class ContextRepositoryProperties {
-    /**
-     * Maximum number of contexts to keep in memory.
-     * When this limit is exceeded, the oldest processes will be evicted.
-     * Default is 1000.
-     */
-    var windowSize: Int = 1000
+class OpenAiModels {
 
     companion object {
-        operator fun invoke(windowSize: Int): ContextRepositoryProperties =
-            ContextRepositoryProperties().apply { this.windowSize = windowSize }
+
+        const val GPT_41_MINI = "gpt-4.1-mini"
+
+        const val GPT_41 = "gpt-4.1"
+
+        const val GPT_41_NANO = "gpt-4.1-nano"
+
+        const val GPT_5 = "gpt-5"
+
+        const val GPT_5_MINI = "gpt-5-mini"
+
+        const val GPT_5_NANO = "gpt-5-nano"
+
+        const val PROVIDER = "OpenAI"
+
+        const val TEXT_EMBEDDING_3_SMALL = "text-embedding-3-small"
+
+        const val DEFAULT_TEXT_EMBEDDING_MODEL = TEXT_EMBEDDING_3_SMALL
     }
 }

@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.embabel.agent.config.migration
+package com.embabel.agent.spi.config.spring.migration
 
+import jakarta.annotation.PostConstruct
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.beans.factory.SmartInitializingSingleton
-import jakarta.annotation.PostConstruct
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Conditional
 import org.springframework.core.env.Environment
@@ -122,7 +122,7 @@ import java.util.regex.Pattern
 class DeprecatedPropertyScanner(
     private val scanningConfigProvider: ObjectProvider<DeprecatedPropertyScanningConfig>,
     private val propertyWarnerProvider: ObjectProvider<SimpleDeprecatedConfigWarner>,
-    private val environment: Environment
+    private val environment: Environment,
 ) : SmartInitializingSingleton {
 
     private val resourceResolver = PathMatchingResourcePatternResolver()
@@ -209,28 +209,73 @@ class DeprecatedPropertyScanner(
         put("embabel.agent-platform.ranking.max-attempts", "embabel.agent.platform.ranking.max-attempts")
         put("embabel.agent-platform.ranking.backoff-millis", "embabel.agent.platform.ranking.backoff-millis")
         put("embabel.agent-platform.ranking.backoff-multiplier", "embabel.agent.platform.ranking.backoff-multiplier")
-        put("embabel.agent-platform.ranking.backoff-max-interval", "embabel.agent.platform.ranking.backoff-max-interval")
-        put("embabel.agent-platform.llm-operations.prompts.template", "embabel.agent.platform.llm-operations.prompts.template")
-        put("embabel.agent-platform.llm-operations.data-binding.max-attempts", "embabel.agent.platform.llm-operations.data-binding.max-attempts")
-        put("embabel.agent-platform.llm-operations.data-binding.fixed-backoff-millis", "embabel.agent.platform.llm-operations.data-binding.fixed-backoff-millis")
-        put("embabel.agent-platform.autonomy.agent-confidence-cut-off", "embabel.agent.platform.autonomy.agent-confidence-cut-off")
-        put("embabel.agent-platform.autonomy.goal-confidence-cut-off", "embabel.agent.platform.autonomy.goal-confidence-cut-off")
-        put("embabel.agent-platform.process-id-generation.include-version", "embabel.agent.platform.process-id-generation.include-version")
-        put("embabel.agent-platform.process-id-generation.include-agent-name", "embabel.agent.platform.process-id-generation.include-agent-name")
+        put(
+            "embabel.agent-platform.ranking.backoff-max-interval",
+            "embabel.agent.platform.ranking.backoff-max-interval"
+        )
+        put(
+            "embabel.agent-platform.llm-operations.prompts.template",
+            "embabel.agent.platform.llm-operations.prompts.template"
+        )
+        put(
+            "embabel.agent-platform.llm-operations.data-binding.max-attempts",
+            "embabel.agent.platform.llm-operations.data-binding.max-attempts"
+        )
+        put(
+            "embabel.agent-platform.llm-operations.data-binding.fixed-backoff-millis",
+            "embabel.agent.platform.llm-operations.data-binding.fixed-backoff-millis"
+        )
+        put(
+            "embabel.agent-platform.autonomy.agent-confidence-cut-off",
+            "embabel.agent.platform.autonomy.agent-confidence-cut-off"
+        )
+        put(
+            "embabel.agent-platform.autonomy.goal-confidence-cut-off",
+            "embabel.agent.platform.autonomy.goal-confidence-cut-off"
+        )
+        put(
+            "embabel.agent-platform.process-id-generation.include-version",
+            "embabel.agent.platform.process-id-generation.include-version"
+        )
+        put(
+            "embabel.agent-platform.process-id-generation.include-agent-name",
+            "embabel.agent.platform.process-id-generation.include-agent-name"
+        )
 
         // System properties consolidation (embabel.COMPONENT.* → embabel.agent.platform.COMPONENT.*)
-        put("embabel.llm-operations.data-binding.max-attempts", "embabel.agent.platform.llm-operations.data-binding.max-attempts")
-        put("embabel.llm-operations.data-binding.fixed-backoff-millis", "embabel.agent.platform.llm-operations.data-binding.fixed-backoff-millis")
+        put(
+            "embabel.llm-operations.data-binding.max-attempts",
+            "embabel.agent.platform.llm-operations.data-binding.max-attempts"
+        )
+        put(
+            "embabel.llm-operations.data-binding.fixed-backoff-millis",
+            "embabel.agent.platform.llm-operations.data-binding.fixed-backoff-millis"
+        )
         put("embabel.llm-operations.prompts.template", "embabel.agent.platform.llm-operations.prompts.template")
-        put("embabel.llm-operations.prompts.maybe-prompt-template", "embabel.agent.platform.llm-operations.prompts.maybe-prompt-template")
-        put("embabel.llm-operations.prompts.generate-examples-by-default", "embabel.agent.platform.llm-operations.prompts.generate-examples-by-default")
-        put("embabel.llm-operations.prompts.default-timeout", "embabel.agent.platform.llm-operations.prompts.default-timeout")
+        put(
+            "embabel.llm-operations.prompts.maybe-prompt-template",
+            "embabel.agent.platform.llm-operations.prompts.maybe-prompt-template"
+        )
+        put(
+            "embabel.llm-operations.prompts.generate-examples-by-default",
+            "embabel.agent.platform.llm-operations.prompts.generate-examples-by-default"
+        )
+        put(
+            "embabel.llm-operations.prompts.default-timeout",
+            "embabel.agent.platform.llm-operations.prompts.default-timeout"
+        )
         put("embabel.autonomy.agent-confidence-cut-off", "embabel.agent.platform.autonomy.agent-confidence-cut-off")
         put("embabel.autonomy.goal-confidence-cut-off", "embabel.agent.platform.autonomy.goal-confidence-cut-off")
         put("embabel.sse.max-buffer-size", "embabel.agent.platform.sse.max-buffer-size")
         put("embabel.sse.max-process-buffers", "embabel.agent.platform.sse.max-process-buffers")
-        put("embabel.process-id-generation.include-version", "embabel.agent.platform.process-id-generation.include-version")
-        put("embabel.process-id-generation.include-agent-name", "embabel.agent.platform.process-id-generation.include-agent-name")
+        put(
+            "embabel.process-id-generation.include-version",
+            "embabel.agent.platform.process-id-generation.include-version"
+        )
+        put(
+            "embabel.process-id-generation.include-agent-name",
+            "embabel.agent.platform.process-id-generation.include-agent-name"
+        )
 
         // Model provider configurations (embabel.PROVIDER.* → embabel.agent.platform.models.PROVIDER.*)
         put("embabel.anthropic.max-attempts", "embabel.agent.platform.models.anthropic.max-attempts")
@@ -304,7 +349,7 @@ class DeprecatedPropertyScanner(
         val pattern: Pattern,
         val replacement: String,
         val description: String,
-        val condition: ((String) -> Boolean)? = null
+        val condition: ((String) -> Boolean)? = null,
     ) {
         /**
          * Attempts to transform a deprecated property name into its recommended replacement.
@@ -347,7 +392,10 @@ class DeprecatedPropertyScanner(
      * @param scanningConfig The scanning configuration bean
      * @param propertyWarner The property warning component
      */
-    private fun doScanning(scanningConfig: DeprecatedPropertyScanningConfig, propertyWarner: SimpleDeprecatedConfigWarner) {
+    private fun doScanning(
+        scanningConfig: DeprecatedPropertyScanningConfig,
+        propertyWarner: SimpleDeprecatedConfigWarner,
+    ) {
         logger.info("Scanning for deprecated conditional properties in packages: ${scanningConfig.includePackages}")
 
         runCatching {
@@ -364,14 +412,21 @@ class DeprecatedPropertyScanner(
      * all .class files in the configured include packages and analyzes each one
      * for deprecated conditional annotations.
      */
-    private fun scanForDeprecatedConditionals(scanningConfig: DeprecatedPropertyScanningConfig, propertyWarner: SimpleDeprecatedConfigWarner) {
+    private fun scanForDeprecatedConditionals(
+        scanningConfig: DeprecatedPropertyScanningConfig,
+        propertyWarner: SimpleDeprecatedConfigWarner,
+    ) {
         val scanningResults = scanningConfig.includePackages
             .filter(scanningConfig::shouldIncludePackage)
             .flatMap { packageName -> findClassesInPackage(packageName, scanningConfig).asIterable() }
             .mapNotNull { resource ->
                 runCatching {
                     val metadataReader = metadataReaderFactory.getMetadataReader(resource)
-                    metadataReader to analyzeClassForDeprecatedConditionals(metadataReader, scanningConfig, propertyWarner)
+                    metadataReader to analyzeClassForDeprecatedConditionals(
+                        metadataReader,
+                        scanningConfig,
+                        propertyWarner
+                    )
                 }.getOrElse { exception ->
                     logger.debug("Error reading class metadata for $resource: ${exception.message}")
                     null
@@ -417,7 +472,10 @@ class DeprecatedPropertyScanner(
      * Uses Spring's PathMatchingResourcePatternResolver to locate .class files
      * and optionally filters out JAR-based classes based on configuration.
      */
-    private fun findClassesInPackage(packageName: String, scanningConfig: DeprecatedPropertyScanningConfig): Array<Resource> {
+    private fun findClassesInPackage(
+        packageName: String,
+        scanningConfig: DeprecatedPropertyScanningConfig,
+    ): Array<Resource> {
         val packagePath = packageName.replace('.', '/')
         val pattern = "classpath*:$packagePath/**/*.class"
 
@@ -449,7 +507,7 @@ class DeprecatedPropertyScanner(
     private fun analyzeClassForDeprecatedConditionals(
         metadataReader: MetadataReader,
         scanningConfig: DeprecatedPropertyScanningConfig,
-        propertyWarner: SimpleDeprecatedConfigWarner
+        propertyWarner: SimpleDeprecatedConfigWarner,
     ): Boolean {
         val className = metadataReader.classMetadata.className
         val annotationMetadata = metadataReader.annotationMetadata
@@ -478,7 +536,8 @@ class DeprecatedPropertyScanner(
                     Class.forName(annotationType)
                 }.onSuccess { metaClass ->
                     if (metaClass.isAnnotationPresent(ConditionalOnProperty::class.java) ||
-                        metaClass.isAnnotationPresent(Conditional::class.java)) {
+                        metaClass.isAnnotationPresent(Conditional::class.java)
+                    ) {
                         logger.debug("Found meta-annotation with conditional logic in $className: $annotationType")
                         // Could analyze meta-annotations further if needed
                     }
@@ -501,7 +560,7 @@ class DeprecatedPropertyScanner(
     private fun analyzeConditionalOnProperty(
         className: String,
         annotationMetadata: AnnotationMetadata,
-        propertyWarner: SimpleDeprecatedConfigWarner
+        propertyWarner: SimpleDeprecatedConfigWarner,
     ): Boolean {
         val attributes = annotationMetadata.getAnnotationAttributes(ConditionalOnProperty::class.java.name)
             ?: return false
@@ -550,10 +609,11 @@ class DeprecatedPropertyScanner(
     private fun analyzeConfigurationProperties(
         className: String,
         annotationMetadata: AnnotationMetadata,
-        propertyWarner: SimpleDeprecatedConfigWarner
+        propertyWarner: SimpleDeprecatedConfigWarner,
     ): Boolean {
-        val attributes = annotationMetadata.getAnnotationAttributes("org.springframework.boot.context.properties.ConfigurationProperties")
-            ?: return false
+        val attributes =
+            annotationMetadata.getAnnotationAttributes("org.springframework.boot.context.properties.ConfigurationProperties")
+                ?: return false
 
         // Extract prefix from annotation - it can be in 'prefix' or 'value' attribute
         val prefix = (attributes["prefix"] as? String) ?: (attributes["value"] as? String)
@@ -575,7 +635,7 @@ class DeprecatedPropertyScanner(
     private fun issueDeprecatedConfigurationPropertiesWarning(
         className: String,
         prefix: String,
-        propertyWarner: SimpleDeprecatedConfigWarner
+        propertyWarner: SimpleDeprecatedConfigWarner,
     ) {
         val recommendedPrefix = getRecommendedProperty(prefix)
         val annotationDetails = "@ConfigurationProperties(prefix = \"$prefix\")"
@@ -612,7 +672,7 @@ class DeprecatedPropertyScanner(
     private fun issueDeprecatedConditionalWarning(
         className: String,
         propertyName: String,
-        propertyWarner: SimpleDeprecatedConfigWarner
+        propertyWarner: SimpleDeprecatedConfigWarner,
     ) {
         val recommendedProperty = getRecommendedProperty(propertyName)
         val annotationDetails = "@ConditionalOnProperty(\"$propertyName\")"

@@ -17,7 +17,7 @@ package com.embabel.agent.testing.integration
 
 import com.embabel.agent.api.common.PlatformServices
 import com.embabel.agent.channel.DevNullOutputChannel
-import com.embabel.agent.config.AgentPlatformProperties.ProcessType
+import com.embabel.agent.spi.config.spring.AgentPlatformProperties.ProcessType
 import com.embabel.agent.core.*
 import com.embabel.agent.core.support.DefaultAgentPlatform
 import com.embabel.agent.core.support.InMemoryBlackboard

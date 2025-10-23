@@ -16,8 +16,8 @@
 package com.embabel.agent.config.models.openai
 
 import com.embabel.agent.common.RetryProperties
-import com.embabel.agent.config.models.OpenAiCompatibleModelFactory
-import com.embabel.agent.config.models.OpenAiModels
+import com.embabel.agent.api.models.OpenAiCompatibleModelFactory
+import com.embabel.agent.api.models.OpenAiModels
 import com.embabel.common.ai.model.*
 import com.embabel.common.util.ExcludeFromJacocoGeneratedReport
 import com.embabel.common.util.loggerFor

@@ -18,7 +18,7 @@ package com.embabel.chat.agent
 import com.embabel.agent.api.common.autonomy.PlanLister
 import com.embabel.agent.api.common.autonomy.ProcessWaitingException
 import com.embabel.agent.channel.OutputChannel
-import com.embabel.agent.config.models.OpenAiModels
+import com.embabel.agent.api.models.OpenAiModels
 import com.embabel.agent.core.Blackboard
 import com.embabel.agent.core.Goal
 import com.embabel.agent.core.ProcessOptions

@@ -15,7 +15,7 @@
  */
 package com.embabel.agent.spi.support
 
-import com.embabel.agent.config.ProcessRepositoryProperties
+import com.embabel.agent.spi.config.spring.ProcessRepositoryProperties
 import com.embabel.agent.core.AgentProcess
 import io.mockk.every
 import io.mockk.mockk

@@ -18,8 +18,6 @@ package com.embabel.agent.support
 import com.embabel.agent.core.Agent
 import com.embabel.agent.core.ProcessOptions
 import com.embabel.agent.spi.support.DefaultAgentProcessIdGenerator
-import com.embabel.agent.spi.support.DefaultProcessIdGeneratorProperties
-import com.embabel.agent.config.AgentPlatformProperties
 import com.embabel.agent.testing.integration.forProcessIdGenerationTesting
 import com.embabel.common.core.MobyNameGenerator
 import io.mockk.mockk

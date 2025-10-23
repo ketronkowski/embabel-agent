@@ -13,23 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.embabel.agent.config.models
-
-import com.embabel.common.util.ExcludeFromJacocoGeneratedReport
+package com.embabel.agent.api.models
 
 /**
- * Docker local models
- * This class will always be loaded, but models won't be loaded
- * from the Docker endpoint unless the "docker" profile is set.
- * Model names will be precisely as reported from
- * http://localhost:12434/engines/v1/models (assuming default port).
+ * Provides constants for Anthropic AI model identifiers.
+ * This class contains the latest model versions for Claude AI models offered by Anthropic.
  */
-@ExcludeFromJacocoGeneratedReport(reason = "Docker model configuration can't be unit tested")
-class DockerLocalModels(
-) {
-    companion object {
-        const val DOCKER_PROFILE = "docker"
+class AnthropicModels {
 
-        const val PROVIDER = "Docker"
+    companion object {
+
+        const val CLAUDE_37_SONNET = "claude-3-7-sonnet-latest"
+
+        const val CLAUDE_35_HAIKU = "claude-3-5-haiku-latest"
+
+        const val CLAUDE_40_OPUS = "claude-opus-4-20250514"
+
+        const val CLAUDE_41_OPUS = "claude-opus-4-1"
+
+        const val CLAUDE_SONNET_4_5 = "claude-sonnet-4-5"
+
+        const val CLAUDE_HAIKU_4_5 = "claude-haiku-4-5"
+
+        const val PROVIDER = "Anthropic"
     }
 }

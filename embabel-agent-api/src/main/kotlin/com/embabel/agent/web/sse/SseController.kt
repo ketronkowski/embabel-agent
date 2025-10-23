@@ -15,11 +15,10 @@
  */
 package com.embabel.agent.web.sse
 
-import com.embabel.agent.config.AgentPlatformProperties
+import com.embabel.agent.spi.config.spring.AgentPlatformProperties
 import com.embabel.agent.event.AgentProcessEvent
 import com.embabel.agent.event.AgenticEventListener
 import org.slf4j.LoggerFactory
-import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.http.MediaType.TEXT_EVENT_STREAM_VALUE
 import org.springframework.stereotype.Component
 import org.springframework.web.bind.annotation.GetMapping
@@ -151,7 +150,10 @@ class SSEController(
         return emitter
     }
 
-    private fun removeEmitter(processId: String, emitter: SseEmitter) {
+    private fun removeEmitter(
+        processId: String,
+        emitter: SseEmitter,
+    ) {
         processEmitters[processId]?.remove(emitter)
         if (processEmitters[processId]?.isEmpty() == true) {
             processEmitters.remove(processId)

@@ -19,7 +19,7 @@ import com.embabel.agent.core.Agent
 import com.embabel.agent.core.ProcessOptions
 import com.embabel.agent.spi.AgentProcessIdGenerator
 import com.embabel.common.core.NameGenerator
-import com.embabel.agent.config.AgentPlatformProperties
+import com.embabel.agent.spi.config.spring.AgentPlatformProperties
 import org.springframework.stereotype.Component
 import org.springframework.stereotype.Service
 
@@ -40,7 +40,10 @@ internal class DefaultAgentProcessIdGenerator(
     private val properties: DefaultProcessIdGeneratorProperties,
 ) : AgentProcessIdGenerator {
 
-    override fun createProcessId(agent: Agent, processOptions: ProcessOptions): String {
+    override fun createProcessId(
+        agent: Agent,
+        processOptions: ProcessOptions,
+    ): String {
         val agentName = if (properties.includeAgentName) {
             "${agent.name}-"
         } else {

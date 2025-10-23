@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.embabel.agent.config.migration
+package com.embabel.agent.spi.config.spring.migration
 
 import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
@@ -35,7 +35,7 @@ import org.springframework.stereotype.Component
 )
 class SimpleDeprecatedConfigWarner(
     private val environment: Environment,
-    private val warningConfig: DeprecatedPropertyWarningConfig
+    private val warningConfig: DeprecatedPropertyWarningConfig,
 ) {
 
     /**
@@ -59,7 +59,7 @@ class SimpleDeprecatedConfigWarner(
     fun warnDeprecatedProperty(
         deprecatedProperty: String,
         recommendedProperty: String,
-        deprecationReason: String? = null
+        deprecationReason: String? = null,
     ) {
         // Rate limiting: only warn once per property per application run
         if (deprecatedProperty in warnedProperties) return
@@ -97,7 +97,7 @@ class SimpleDeprecatedConfigWarner(
     fun warnDeprecatedProfile(
         deprecatedProfile: String,
         recommendedProperty: String,
-        deprecationReason: String? = null
+        deprecationReason: String? = null,
     ) {
         val warningKey = "PROFILE:$deprecatedProfile"
 
@@ -131,7 +131,7 @@ class SimpleDeprecatedConfigWarner(
     fun warnDeprecatedConfigurationProperties(
         className: String,
         annotationDetails: String,
-        recommendedApproach: String
+        recommendedApproach: String,
     ) {
         val warningKey = "CONFIG_PROPS:$className"
 
@@ -164,7 +164,7 @@ class SimpleDeprecatedConfigWarner(
     fun warnDeprecatedConditional(
         className: String,
         annotationDetails: String,
-        recommendedApproach: String
+        recommendedApproach: String,
     ) {
         val warningKey = "CONDITIONAL:$className"
 
@@ -234,7 +234,7 @@ class SimpleDeprecatedConfigWarner(
         deprecatedProperty: String,
         recommendedProperty: String,
         deprecationReason: String?,
-        propertyValue: String
+        propertyValue: String,
     ): String = buildString {
         append("DEPRECATED PROPERTY USAGE: Property '$deprecatedProperty' is deprecated and will be removed in a future version.")
         append(" Please migrate to '$recommendedProperty' instead.")
@@ -245,7 +245,7 @@ class SimpleDeprecatedConfigWarner(
     private fun buildDeprecatedProfileMessage(
         deprecatedProfile: String,
         recommendedProperty: String,
-        deprecationReason: String?
+        deprecationReason: String?,
     ): String = buildString {
         append("DEPRECATED PROFILE USAGE: Profile '$deprecatedProfile' is deprecated and will be removed in a future version.")
         append(" Please migrate to property-based configuration using '$recommendedProperty=true' instead.")
@@ -255,7 +255,7 @@ class SimpleDeprecatedConfigWarner(
     private fun buildDeprecatedConditionalMessage(
         className: String,
         annotationDetails: String,
-        recommendedApproach: String
+        recommendedApproach: String,
     ): String = buildString {
         append("DEPRECATED CONDITIONAL USAGE: Class '$className' uses deprecated conditional annotation: $annotationDetails.")
         append(" Please migrate to: $recommendedApproach")
@@ -307,7 +307,7 @@ class SimpleDeprecatedConfigWarner(
         val type: DeprecationType,
         val deprecatedItem: String,
         val recommendedReplacement: String,
-        val reason: String? = null
+        val reason: String? = null,
     )
 
     /**
@@ -324,7 +324,7 @@ class SimpleDeprecatedConfigWarner(
         val properties: List<DeprecationInfo>,
         val profiles: List<DeprecationInfo>,
         val conditionals: List<DeprecationInfo>,
-        val configurationProperties: List<DeprecationInfo>
+        val configurationProperties: List<DeprecationInfo>,
     )
 
     companion object {

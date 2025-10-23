@@ -15,6 +15,7 @@
  */
 package com.embabel.agent.config.migration
 
+import com.embabel.agent.spi.config.spring.migration.DeprecatedPropertyScanningConfig
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -39,15 +40,17 @@ import org.springframework.test.context.TestPropertySource
  * - No need to update tests when toggling production scanning on/off
  */
 @SpringBootTest(classes = [DeprecatedPropertyScanningConfigIntegrationTest.TestConfiguration::class])
-@TestPropertySource(properties = [
-    "embabel.agent.platform.migration.scanning.enabled=true",
-    "embabel.agent.platform.migration.scanning.auto-exclude-jar-packages=false",
-    "embabel.agent.platform.migration.scanning.max-scan-depth=5",
-    "embabel.agent.platform.migration.scanning.include-packages[0]=com.example.test",
-    "embabel.agent.platform.migration.scanning.include-packages[1]=com.example.custom",
-    "embabel.agent.platform.migration.scanning.additional-excludes[0]=com.example.excluded",
-    "embabel.agent.platform.migration.scanning.additional-excludes[1]=org.example.test"
-])
+@TestPropertySource(
+    properties = [
+        "embabel.agent.platform.migration.scanning.enabled=true",
+        "embabel.agent.platform.migration.scanning.auto-exclude-jar-packages=false",
+        "embabel.agent.platform.migration.scanning.max-scan-depth=5",
+        "embabel.agent.platform.migration.scanning.include-packages[0]=com.example.test",
+        "embabel.agent.platform.migration.scanning.include-packages[1]=com.example.custom",
+        "embabel.agent.platform.migration.scanning.additional-excludes[0]=com.example.excluded",
+        "embabel.agent.platform.migration.scanning.additional-excludes[1]=org.example.test"
+    ]
+)
 class DeprecatedPropertyScanningConfigIntegrationTest {
 
     @Autowired

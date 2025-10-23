@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.embabel.agent.config
+package com.embabel.agent.spi.config.spring
 
 import com.embabel.agent.api.common.Asyncer
 import com.embabel.agent.spi.support.ExecutorAsyncer
@@ -29,7 +29,7 @@ class AsyncConfiguration {
     @Bean
     fun asyncer(
         @Qualifier(TaskExecutionAutoConfiguration.APPLICATION_TASK_EXECUTOR_BEAN_NAME)
-        executor: Executor
+        executor: Executor,
     ): Asyncer {
         return ExecutorAsyncer(executor)
     }

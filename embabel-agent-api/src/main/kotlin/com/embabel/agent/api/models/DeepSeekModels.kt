@@ -13,28 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.embabel.agent.config.models
+package com.embabel.agent.api.models
 
 /**
- * Provides constants for Anthropic AI model identifiers.
- * This class contains the latest model versions for Claude AI models offered by Anthropic.
+ * Provides constants for DeepSeek AI model identifiers.
+ * This class contains the latest model versions for DeepSeek AI models offered by DeepSeek.
  */
-class AnthropicModels {
+class DeepSeekModels {
 
     companion object {
 
-        const val CLAUDE_37_SONNET = "claude-3-7-sonnet-latest"
+        const val DEEPSEEK_CHAT = "deepseek-chat";
+        const val DEEPSEEK_REASONER = "deepseek-reasoner";
 
-        const val CLAUDE_35_HAIKU = "claude-3-5-haiku-latest"
-
-        const val CLAUDE_40_OPUS = "claude-opus-4-20250514"
-
-        const val CLAUDE_41_OPUS = "claude-opus-4-1"
-
-        const val CLAUDE_SONNET_4_5 = "claude-sonnet-4-5"
-
-        const val CLAUDE_HAIKU_4_5 = "claude-haiku-4-5"
-
-        const val PROVIDER = "Anthropic"
+        const val PROVIDER = "deepseek";
     }
 }

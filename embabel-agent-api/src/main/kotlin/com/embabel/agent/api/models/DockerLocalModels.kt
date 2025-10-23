@@ -13,19 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.embabel.agent.config.models
+package com.embabel.agent.api.models
+
+import com.embabel.common.util.ExcludeFromJacocoGeneratedReport
 
 /**
- * Provides constants for DeepSeek AI model identifiers.
- * This class contains the latest model versions for DeepSeek AI models offered by DeepSeek.
+ * Docker local models
+ * This class will always be loaded, but models won't be loaded
+ * from the Docker endpoint unless the "docker" profile is set.
+ * Model names will be precisely as reported from
+ * http://localhost:12434/engines/v1/models (assuming default port).
  */
-class DeepSeekModels {
-
+@ExcludeFromJacocoGeneratedReport(reason = "Docker model configuration can't be unit tested")
+class DockerLocalModels(
+) {
     companion object {
+        const val DOCKER_PROFILE = "docker"
 
-        const val DEEPSEEK_CHAT = "deepseek-chat";
-        const val DEEPSEEK_REASONER = "deepseek-reasoner";
-
-        const val PROVIDER = "deepseek";
+        const val PROVIDER = "Docker"
     }
 }

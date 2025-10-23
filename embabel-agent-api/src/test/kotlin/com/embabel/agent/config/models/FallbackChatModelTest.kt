@@ -15,6 +15,8 @@
  */
 package com.embabel.agent.config.models
 
+import com.embabel.agent.api.models.FallbackChatModel
+import com.embabel.agent.api.models.withFallback
 import com.embabel.common.ai.model.Llm
 import io.mockk.every
 import io.mockk.mockk

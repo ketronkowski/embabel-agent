@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.embabel.agent.config.models
+package com.embabel.agent.api.models
 
 import com.embabel.common.ai.model.*
 import com.embabel.common.util.loggerFor
@@ -81,11 +81,15 @@ open class OpenAiCompatibleModelFactory(
 
         //add observation registry to rest and web client builders
         builder
-            .restClientBuilder(RestClient.builder()
-                .observationRegistry(observationRegistry))
+            .restClientBuilder(
+                RestClient.builder()
+                    .observationRegistry(observationRegistry)
+            )
         builder
-            .webClientBuilder(WebClient.builder()
-                .observationRegistry(observationRegistry))
+            .webClientBuilder(
+                WebClient.builder()
+                    .observationRegistry(observationRegistry)
+            )
 
         return builder.build()
     }
@@ -140,7 +144,8 @@ open class OpenAiCompatibleModelFactory(
             .toolCallingManager(
                 ToolCallingManager.builder()
                     .observationRegistry(observationRegistry)
-                    .build())
+                    .build()
+            )
             .openAiApi(openAiApi)
             .retryTemplate(retryTemplate)
             .observationRegistry(

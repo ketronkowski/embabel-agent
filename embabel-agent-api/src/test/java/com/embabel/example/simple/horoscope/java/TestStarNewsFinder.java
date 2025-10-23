@@ -20,7 +20,7 @@ import com.embabel.agent.api.annotation.Action;
 import com.embabel.agent.api.annotation.Agent;
 import com.embabel.agent.api.annotation.WaitFor;
 import com.embabel.agent.api.common.OperationContext;
-import com.embabel.agent.config.models.OpenAiModels;
+import com.embabel.agent.api.models.OpenAiModels;
 import com.embabel.agent.core.CoreToolGroups;
 import com.embabel.agent.domain.io.UserInput;
 import com.embabel.agent.domain.library.Person;

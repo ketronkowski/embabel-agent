@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.embabel.agent.config.migration
+package com.embabel.agent.spi.config.spring.migration
 
+import jakarta.annotation.PostConstruct
+import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.context.annotation.Configuration
-import jakarta.annotation.PostConstruct
-import org.slf4j.LoggerFactory
 
 /**
  * Configuration for conditional property scanning during migration.

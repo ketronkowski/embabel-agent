@@ -16,14 +16,12 @@
 package com.embabel.agent.tools.agent
 
 import com.embabel.agent.api.common.autonomy.Autonomy
-import com.embabel.agent.api.common.autonomy.AutonomyProperties
 import com.embabel.agent.api.dsl.evenMoreEvilWizard
 import com.embabel.agent.api.dsl.evenMoreEvilWizardWithStructuredInput
 import com.embabel.agent.api.dsl.exportedEvenMoreEvilWizard
 import com.embabel.agent.api.dsl.userInputToFrogOrPersonBranch
 import com.embabel.agent.testing.integration.IntegrationTestUtils
 import com.embabel.agent.testing.integration.RandomRanker
-import com.embabel.agent.config.AgentPlatformProperties
 import com.embabel.agent.testing.integration.forAutonomyTesting
 import org.junit.Test
 import org.junit.jupiter.api.Assertions.*

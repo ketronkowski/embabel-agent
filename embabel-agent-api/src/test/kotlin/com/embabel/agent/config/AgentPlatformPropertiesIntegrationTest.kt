@@ -16,20 +16,20 @@
 package com.embabel.agent.config
 
 import com.embabel.agent.api.common.autonomy.AutonomyProperties
-import com.embabel.agent.config.migration.DeprecatedPropertyScanningConfig
+import com.embabel.agent.spi.config.spring.AgentPlatformProperties
+import com.embabel.agent.spi.config.spring.migration.DeprecatedPropertyScanningConfig
 import com.embabel.agent.spi.support.DefaultProcessIdGeneratorProperties
 import com.embabel.agent.web.sse.SseProperties
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.context.annotation.Bean
 import org.springframework.core.env.Environment
-import org.springframework.test.context.TestPropertySource
 import org.springframework.test.context.ActiveProfiles
+import org.springframework.test.context.TestPropertySource
 
 /**
  * Integration tests for AgentPlatformProperties migration from legacy to unified configuration.
@@ -157,44 +157,46 @@ import org.springframework.test.context.ActiveProfiles
  */
 @SpringBootTest(classes = [AgentPlatformPropertiesIntegrationTest.TestConfiguration::class])
 @ActiveProfiles("test") // using FakeAIConfig
-@TestPropertySource(properties = [
-    // New AgentPlatformProperties (var properties) - these should always work
-    "embabel.agent.platform.name=test-platform",
-    "embabel.agent.platform.description=Test Platform Description",
-    "embabel.agent.platform.scanning.annotation=false",
-    "embabel.agent.platform.scanning.bean=true",
-    "embabel.agent.platform.ranking.max-attempts=15",
-    "embabel.agent.platform.ranking.backoff-millis=200",
-    "embabel.agent.platform.autonomy.agent-confidence-cut-off=0.8",
-    "embabel.agent.platform.autonomy.goal-confidence-cut-off=0.7",
-    "embabel.agent.platform.process-id-generation.include-version=true",
-    "embabel.agent.platform.process-id-generation.include-agent-name=true",
-    "embabel.agent.platform.llm-operations.prompts.maybe-prompt-template=custom_template",
-    "embabel.agent.platform.llm-operations.prompts.generate-examples-by-default=false",
-    "embabel.agent.platform.llm-operations.data-binding.max-attempts=20",
-    "embabel.agent.platform.llm-operations.data-binding.fixed-backoff-millis=50",
-    "embabel.agent.platform.models.anthropic.max-attempts=8",
-    "embabel.agent.platform.models.anthropic.backoff-millis=3000",
-    "embabel.agent.platform.models.openai.max-attempts=12",
-    "embabel.agent.platform.models.openai.backoff-millis=2500",
-    "embabel.agent.platform.sse.max-buffer-size=200",
-    "embabel.agent.platform.sse.max-process-buffers=2000",
-    "embabel.agent.platform.test.mock-mode=false",
+@TestPropertySource(
+    properties = [
+        // New AgentPlatformProperties (var properties) - these should always work
+        "embabel.agent.platform.name=test-platform",
+        "embabel.agent.platform.description=Test Platform Description",
+        "embabel.agent.platform.scanning.annotation=false",
+        "embabel.agent.platform.scanning.bean=true",
+        "embabel.agent.platform.ranking.max-attempts=15",
+        "embabel.agent.platform.ranking.backoff-millis=200",
+        "embabel.agent.platform.autonomy.agent-confidence-cut-off=0.8",
+        "embabel.agent.platform.autonomy.goal-confidence-cut-off=0.7",
+        "embabel.agent.platform.process-id-generation.include-version=true",
+        "embabel.agent.platform.process-id-generation.include-agent-name=true",
+        "embabel.agent.platform.llm-operations.prompts.maybe-prompt-template=custom_template",
+        "embabel.agent.platform.llm-operations.prompts.generate-examples-by-default=false",
+        "embabel.agent.platform.llm-operations.data-binding.max-attempts=20",
+        "embabel.agent.platform.llm-operations.data-binding.fixed-backoff-millis=50",
+        "embabel.agent.platform.models.anthropic.max-attempts=8",
+        "embabel.agent.platform.models.anthropic.backoff-millis=3000",
+        "embabel.agent.platform.models.openai.max-attempts=12",
+        "embabel.agent.platform.models.openai.backoff-millis=2500",
+        "embabel.agent.platform.sse.max-buffer-size=200",
+        "embabel.agent.platform.sse.max-process-buffers=2000",
+        "embabel.agent.platform.test.mock-mode=false",
 
-    // Migration scanning config (var properties) - known to work with environment variables
-    "embabel.agent.platform.migration.scanning.enabled=true",
-    "embabel.agent.platform.migration.scanning.include-packages[0]=com.embabel.agent",
-    "embabel.agent.platform.migration.scanning.include-packages[1]=com.test.package",
-    "embabel.agent.platform.migration.warnings.enabled=true",
+        // Migration scanning config (var properties) - known to work with environment variables
+        "embabel.agent.platform.migration.scanning.enabled=true",
+        "embabel.agent.platform.migration.scanning.include-packages[0]=com.embabel.agent",
+        "embabel.agent.platform.migration.scanning.include-packages[1]=com.test.package",
+        "embabel.agent.platform.migration.warnings.enabled=true",
 
-    // Legacy properties for val/var investigation (using @TestPropertySource instead of env vars)
-    "embabel.autonomy.agent-confidence-cut-off=0.95",
-    "embabel.autonomy.goal-confidence-cut-off=0.85",
-    "embabel.process-id-generation.include-version=true",
-    "embabel.process-id-generation.include-agent-name=true",
-    "embabel.sse.max-buffer-size=250",
-    "embabel.sse.max-process-buffers=2500"
-])
+        // Legacy properties for val/var investigation (using @TestPropertySource instead of env vars)
+        "embabel.autonomy.agent-confidence-cut-off=0.95",
+        "embabel.autonomy.goal-confidence-cut-off=0.85",
+        "embabel.process-id-generation.include-version=true",
+        "embabel.process-id-generation.include-agent-name=true",
+        "embabel.sse.max-buffer-size=250",
+        "embabel.sse.max-process-buffers=2500"
+    ]
+)
 class AgentPlatformPropertiesIntegrationTest {
 
     @Autowired

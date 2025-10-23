@@ -19,6 +19,8 @@ import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.Logger
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
+import com.embabel.agent.spi.config.spring.migration.DeprecatedPropertyWarningConfig
+import com.embabel.agent.spi.config.spring.migration.SimpleDeprecatedConfigWarner
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -41,7 +43,8 @@ class SimpleDeprecatedConfigWarnerTest {
     fun setUp() {
         environment = MockEnvironment()
         warner = SimpleDeprecatedConfigWarner(environment, DeprecatedPropertyWarningConfig(individualLogging = false))
-        warnerWithLogging = SimpleDeprecatedConfigWarner(environment, DeprecatedPropertyWarningConfig(individualLogging = true))
+        warnerWithLogging =
+            SimpleDeprecatedConfigWarner(environment, DeprecatedPropertyWarningConfig(individualLogging = true))
 
         // Set up log capture
         logger = LoggerFactory.getLogger(SimpleDeprecatedConfigWarner::class.java) as Logger

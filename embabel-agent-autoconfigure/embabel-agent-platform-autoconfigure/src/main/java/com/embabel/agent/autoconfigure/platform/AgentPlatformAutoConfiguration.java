@@ -16,8 +16,8 @@
 package com.embabel.agent.autoconfigure.platform;
 
 
-import com.embabel.agent.config.AgentPlatformConfiguration;
-import com.embabel.agent.config.ToolGroupsConfiguration;
+import com.embabel.agent.spi.config.spring.AgentPlatformConfiguration;
+import com.embabel.agent.spi.config.spring.ToolGroupsConfiguration;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

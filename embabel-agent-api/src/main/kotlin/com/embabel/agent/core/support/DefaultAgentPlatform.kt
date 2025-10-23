@@ -17,7 +17,7 @@ package com.embabel.agent.core.support
 
 import com.embabel.agent.api.common.Asyncer
 import com.embabel.agent.channel.OutputChannel
-import com.embabel.agent.config.AgentPlatformProperties
+import com.embabel.agent.spi.config.spring.AgentPlatformProperties
 import com.embabel.agent.core.*
 import com.embabel.agent.event.AgentDeploymentEvent
 import com.embabel.agent.event.AgentProcessCreationEvent
@@ -177,6 +177,7 @@ open class DefaultAgentPlatform(
                 parentId = null,
                 processOptions = processOptions,
             )
+
             AgentPlatformProperties.ProcessType.CONCURRENT -> ConcurrentAgentProcess(
                 agent = agent,
                 platformServices = platformServices,

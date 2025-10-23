@@ -16,7 +16,7 @@
 package com.embabel.agent.config.models.anthropic
 
 import com.embabel.agent.common.RetryProperties
-import com.embabel.agent.config.models.AnthropicModels
+import com.embabel.agent.api.models.AnthropicModels
 import com.embabel.common.ai.model.Llm
 import com.embabel.common.ai.model.LlmOptions
 import com.embabel.common.ai.model.OptionsConverter

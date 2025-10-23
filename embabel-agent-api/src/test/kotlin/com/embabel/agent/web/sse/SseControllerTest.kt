@@ -15,7 +15,7 @@
  */
 package com.embabel.agent.web.sse
 
-import com.embabel.agent.config.AgentPlatformProperties
+import com.embabel.agent.spi.config.spring.AgentPlatformProperties
 import com.embabel.agent.event.AgentProcessEvent
 import io.mockk.every
 import io.mockk.mockk

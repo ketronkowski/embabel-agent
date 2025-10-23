@@ -16,7 +16,7 @@
 package com.embabel.agent.config.models.deepseek
 
 import com.embabel.agent.common.RetryProperties
-import com.embabel.agent.config.models.DeepSeekModels
+import com.embabel.agent.api.models.DeepSeekModels
 import com.embabel.common.ai.model.Llm
 import com.embabel.common.ai.model.OptionsConverter
 import com.embabel.common.ai.model.PerTokenPricingModel
@@ -120,14 +120,16 @@ class DeepSeekModelsConfig(
 
     private fun deepSeekLlmOf(
         name: String,
-        knowledgeCutoffDate: LocalDate?
+        knowledgeCutoffDate: LocalDate?,
     ): Llm {
         val chatModel = DeepSeekChatModel
             .builder()
             .observationRegistry(observationRegistry.getIfUnique { ObservationRegistry.NOOP })
-            .toolCallingManager(ToolCallingManager.builder()
-                .observationRegistry(observationRegistry.getIfUnique { ObservationRegistry.NOOP })
-                .build())
+            .toolCallingManager(
+                ToolCallingManager.builder()
+                    .observationRegistry(observationRegistry.getIfUnique { ObservationRegistry.NOOP })
+                    .build()
+            )
             .defaultOptions(
                 DeepSeekChatOptions.builder()
                     .model(name)
@@ -153,10 +155,14 @@ class DeepSeekModelsConfig(
             builder.baseUrl(baseUrl)
         }
         return builder
-            .restClientBuilder(RestClient.builder()
-                .observationRegistry(observationRegistry.getIfUnique { ObservationRegistry.NOOP }))
-            .webClientBuilder(WebClient.builder()
-                .observationRegistry(observationRegistry.getIfUnique { ObservationRegistry.NOOP }))
+            .restClientBuilder(
+                RestClient.builder()
+                .observationRegistry(observationRegistry.getIfUnique { ObservationRegistry.NOOP })
+            )
+            .webClientBuilder(
+                WebClient.builder()
+                .observationRegistry(observationRegistry.getIfUnique { ObservationRegistry.NOOP })
+            )
             .build()
     }
 }

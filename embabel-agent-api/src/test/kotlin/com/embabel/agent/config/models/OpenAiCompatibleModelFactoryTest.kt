@@ -15,6 +15,7 @@
  */
 package com.embabel.agent.config.models
 
+import com.embabel.agent.api.models.OpenAiCompatibleModelFactory
 import com.embabel.common.ai.model.PricingModel
 import io.mockk.mockk
 import org.junit.jupiter.api.Assertions.assertEquals

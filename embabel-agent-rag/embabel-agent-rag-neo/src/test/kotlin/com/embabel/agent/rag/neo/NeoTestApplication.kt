@@ -15,9 +15,9 @@
  */
 package com.embabel.agent.rag.neo
 
-import com.embabel.agent.config.AgentPlatformConfiguration
-import com.embabel.agent.config.models.DockerLocalModels
-import com.embabel.agent.config.models.OllamaModels
+import com.embabel.agent.spi.config.spring.AgentPlatformConfiguration
+import com.embabel.agent.api.models.DockerLocalModels
+import com.embabel.agent.api.models.OllamaModels
 import org.neo4j.ogm.config.Configuration
 import org.neo4j.ogm.session.Session
 import org.neo4j.ogm.session.SessionFactory
@@ -53,10 +53,18 @@ import org.springframework.test.context.ActiveProfiles
 @ConfigurationPropertiesScan(basePackages = ["com.embabel"])
 @ComponentScan(
     basePackages = ["com.embabel"],
-    excludeFilters = [ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = [com.embabel.common.test.ai.config.FakeAiConfiguration::class])]
+    excludeFilters = [ComponentScan.Filter(
+        type = FilterType.ASSIGNABLE_TYPE,
+        classes = [com.embabel.common.test.ai.config.FakeAiConfiguration::class]
+    )]
 )
 @ActiveProfiles("test")
-@Import(AgentPlatformConfiguration::class, OllamaModels::class, DockerLocalModels::class, com.embabel.agent.rag.neo.config.NeoFakeAiConfiguration::class)
+@Import(
+    AgentPlatformConfiguration::class,
+    OllamaModels::class,
+    DockerLocalModels::class,
+    com.embabel.agent.rag.neo.config.NeoFakeAiConfiguration::class
+)
 open class NeoTestApplication {
 
     companion object {

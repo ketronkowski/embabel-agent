@@ -15,7 +15,7 @@
  */
 package com.embabel.agent.config.models.bedrock
 
-import com.embabel.agent.config.AgentPlatformConfiguration
+import com.embabel.agent.spi.config.spring.AgentPlatformConfiguration
 import com.embabel.common.ai.model.*
 import io.micrometer.observation.ObservationRegistry
 import org.springframework.ai.bedrock.cohere.BedrockCohereEmbeddingModel
@@ -212,8 +212,10 @@ class BedrockModels(
         .timeout(connectionProperties.timeout)
         .defaultOptions(ToolCallingChatOptions.builder().model(model).build())
         .observationRegistry(observationRegistry.getIfUnique { ObservationRegistry.NOOP })
-        .toolCallingManager(ToolCallingManager.builder()
-            .observationRegistry(observationRegistry.getIfUnique { ObservationRegistry.NOOP }).build())
+        .toolCallingManager(
+            ToolCallingManager.builder()
+            .observationRegistry(observationRegistry.getIfUnique { ObservationRegistry.NOOP }).build()
+        )
         .bedrockRuntimeClient(bedrockRuntimeClient.getIfAvailable())
         .bedrockRuntimeAsyncClient(bedrockRuntimeAsyncClient.getIfAvailable())
         .build()

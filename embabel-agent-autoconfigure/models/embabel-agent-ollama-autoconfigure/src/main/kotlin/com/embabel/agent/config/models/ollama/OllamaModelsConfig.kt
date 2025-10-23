@@ -15,7 +15,7 @@
  */
 package com.embabel.agent.config.models.ollama
 
-import com.embabel.agent.config.models.OllamaModels
+import com.embabel.agent.api.models.OllamaModels
 import com.embabel.common.ai.model.*
 import com.embabel.common.util.ExcludeFromJacocoGeneratedReport
 import com.fasterxml.jackson.annotation.JsonProperty
@@ -138,10 +138,14 @@ class OllamaModelsConfig(
             .ollamaApi(
                 OllamaApi.builder()
                     .baseUrl(baseUrl)
-                    .restClientBuilder(RestClient.builder()
-                        .observationRegistry(observationRegistry.getIfUnique { ObservationRegistry.NOOP }))
-                    .webClientBuilder(WebClient.builder()
-                        .observationRegistry(observationRegistry.getIfUnique { ObservationRegistry.NOOP }))
+                    .restClientBuilder(
+                        RestClient.builder()
+                        .observationRegistry(observationRegistry.getIfUnique { ObservationRegistry.NOOP })
+                    )
+                    .webClientBuilder(
+                        WebClient.builder()
+                        .observationRegistry(observationRegistry.getIfUnique { ObservationRegistry.NOOP })
+                    )
                     .build()
             )
             .defaultOptions(
@@ -172,10 +176,14 @@ class OllamaModelsConfig(
             .ollamaApi(
                 OllamaApi.builder()
                     .baseUrl(baseUrl)
-                    .restClientBuilder(RestClient.builder()
-                        .observationRegistry(observationRegistry.getIfUnique { ObservationRegistry.NOOP }))
-                    .webClientBuilder(WebClient.builder()
-                        .observationRegistry(observationRegistry.getIfUnique { ObservationRegistry.NOOP }))
+                    .restClientBuilder(
+                        RestClient.builder()
+                        .observationRegistry(observationRegistry.getIfUnique { ObservationRegistry.NOOP })
+                    )
+                    .webClientBuilder(
+                        WebClient.builder()
+                        .observationRegistry(observationRegistry.getIfUnique { ObservationRegistry.NOOP })
+                    )
                     .build()
             )
             .defaultOptions(

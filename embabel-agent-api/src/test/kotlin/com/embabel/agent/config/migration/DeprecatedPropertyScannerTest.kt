@@ -15,10 +15,13 @@
  */
 package com.embabel.agent.config.migration
 
+import com.embabel.agent.spi.config.spring.migration.DeprecatedPropertyScanner
+import com.embabel.agent.spi.config.spring.migration.DeprecatedPropertyScanningConfig
+import com.embabel.agent.spi.config.spring.migration.SimpleDeprecatedConfigWarner
+import io.mockk.*
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import io.mockk.*
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.mock.env.MockEnvironment
 import java.util.regex.Pattern

@@ -17,8 +17,7 @@ package com.embabel.agent.testing.integration
 
 import com.embabel.agent.api.common.autonomy.AutonomyProperties
 import com.embabel.agent.spi.support.DefaultProcessIdGeneratorProperties
-import com.embabel.agent.config.AgentPlatformProperties
-import com.embabel.common.core.types.ZeroToOne
+import com.embabel.agent.spi.config.spring.AgentPlatformProperties
 
 /**
  * Extension functions for creating test instances of properties that have migrated to AgentPlatformProperties.
@@ -31,7 +30,7 @@ import com.embabel.common.core.types.ZeroToOne
  */
 fun forAutonomyTesting(
     agentConfidenceCutOff: Double? = null,
-    goalConfidenceCutOff: Double? = null
+    goalConfidenceCutOff: Double? = null,
 ): AutonomyProperties {
     val autonomyConfig = AgentPlatformProperties.AutonomyConfig()
     autonomyConfig.agentConfidenceCutOff = agentConfidenceCutOff ?: 0.6
@@ -47,7 +46,7 @@ fun forAutonomyTesting(
  */
 fun forProcessIdGenerationTesting(
     includeAgentName: Boolean? = null,
-    includeVersion: Boolean? = null
+    includeVersion: Boolean? = null,
 ): DefaultProcessIdGeneratorProperties {
     val processIdConfig = AgentPlatformProperties.ProcessIdGenerationConfig()
     processIdConfig.includeAgentName = includeAgentName ?: false
