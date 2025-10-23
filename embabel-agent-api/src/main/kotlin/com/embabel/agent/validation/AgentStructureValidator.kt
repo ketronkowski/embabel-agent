@@ -15,13 +15,14 @@
  */
 package com.embabel.agent.validation
 
+import com.embabel.agent.api.annotation.Action
+import com.embabel.agent.api.annotation.Agent
+import com.embabel.agent.api.annotation.Condition
+import com.embabel.agent.core.AgentScope
+import com.embabel.common.util.loggerFor
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.ApplicationContext
 import org.springframework.stereotype.Component
-import com.embabel.agent.api.annotation.Agent
-import com.embabel.agent.api.annotation.Action
-import com.embabel.agent.api.annotation.Condition
-import com.embabel.agent.core.AgentScope
 
 /**
  * Validator that checks the fundamental structure of agent definitions.
@@ -39,7 +40,7 @@ import com.embabel.agent.core.AgentScope
  */
 @Component
 class AgentStructureValidator(
-    val context: ApplicationContext
+    val context: ApplicationContext,
 ) : InitializingBean, AgentValidator {
 
     override fun afterPropertiesSet() {
@@ -64,7 +65,7 @@ class AgentStructureValidator(
                         component = clazz.name
                     )
                 )
-                throw IllegalStateException(error.toString())
+                loggerFor<AgentStructureValidator>().warn(error.toString())
             }
         }
     }
