@@ -18,8 +18,8 @@ package com.embabel.chat.agent.shell
 import com.embabel.agent.api.common.autonomy.AgentProcessExecution
 import com.embabel.agent.api.common.autonomy.ProcessWaitingException
 import com.embabel.agent.shell.TerminalServices
-import com.embabel.chat.AgenticResultAssistantMessage
 import com.embabel.chat.AssistantMessage
+import com.embabel.chat.agent.AgenticResultAssistantMessage
 import com.embabel.chat.agent.ProcessWaitingHandler
 
 /**

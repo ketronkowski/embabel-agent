@@ -20,9 +20,18 @@ import com.embabel.agent.channel.MessageOutputChannelEvent
 import com.embabel.agent.channel.OutputChannel
 import com.embabel.agent.core.ProcessOptions
 import com.embabel.agent.domain.io.UserInput
-import com.embabel.chat.AgenticResultAssistantMessage
 import com.embabel.chat.AssistantMessage
 import com.embabel.chat.Conversation
+
+/**
+ * Assistant message resulting from an agentic execution
+ */
+class AgenticResultAssistantMessage(
+    val agentProcessExecution: AgentProcessExecution,
+    content: String,
+    name: String? = null,
+) : AssistantMessage(content = content, name = name)
+
 
 /**
  * Respond to messages by choosing and executing goals using Autonomy.

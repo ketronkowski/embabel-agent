@@ -24,6 +24,12 @@ import java.time.Instant
 interface SystemInput : Timestamped
 
 /**
+ * Superinterface for all inputs that come from users
+ * This can be useful to drive guardrails
+ */
+interface UserContent : HasContent
+
+/**
  * Special class that represents a single user input
  * Starting point for many flows.
  */
@@ -32,7 +38,7 @@ data class UserInput(
     @get:JsonPropertyDescription("user input")
     override val content: String,
     override val timestamp: Instant = Instant.now(),
-) : SystemInput, HasContent {
+) : SystemInput, UserContent {
 
     // For Java
     constructor (content: String) : this(content, Instant.now())

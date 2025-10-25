@@ -15,7 +15,7 @@
  */
 package com.embabel.chat
 
-import com.embabel.agent.api.common.autonomy.AgentProcessExecution
+import com.embabel.agent.domain.io.UserContent
 import com.embabel.agent.domain.library.HasContent
 import com.embabel.common.ai.prompt.PromptContributor
 import com.embabel.common.core.StableIdentified
@@ -90,7 +90,7 @@ class UserMessage @JvmOverloads constructor(
     content: String,
     name: String? = null,
     override val timestamp: Instant = Instant.now(),
-) : Message(role = Role.USER, content = content, name = name, timestamp = timestamp) {
+) : Message(role = Role.USER, content = content, name = name, timestamp = timestamp), UserContent {
 
     override fun toString(): String {
         return "UserMessage(from='${sender}', content='${trim(content, 80, 10)}')"
@@ -123,12 +123,3 @@ class SystemMessage @JvmOverloads constructor(
     }
 
 }
-
-/**
- * Assistant message resulting from an agentic execution
- */
-class AgenticResultAssistantMessage(
-    val agentProcessExecution: AgentProcessExecution,
-    content: String,
-    name: String? = null,
-) : AssistantMessage(content = content, name = name)
