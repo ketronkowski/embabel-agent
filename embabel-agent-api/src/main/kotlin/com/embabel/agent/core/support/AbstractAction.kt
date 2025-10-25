@@ -68,7 +68,7 @@ abstract class AbstractAction(
     @JsonIgnore
     override val preconditions: EffectSpec =
         run {
-            val conditions = pre.associate { it to ConditionDetermination(true) }.toMutableMap()
+            val conditions = pre.associateWith { ConditionDetermination(true) }.toMutableMap()
             inputs.forEach { input ->
                 conditions[input.value] = ConditionDetermination(true)
             }
@@ -85,7 +85,7 @@ abstract class AbstractAction(
 
     @JsonIgnore
     override val effects: EffectSpec = run {
-        val conditions = post.associate { it to ConditionDetermination(true) }.toMutableMap()
+        val conditions = post.associateWith { ConditionDetermination(true) }.toMutableMap()
         outputs.forEach { output ->
             conditions[output.value] = ConditionDetermination(true)
         }

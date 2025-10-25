@@ -46,7 +46,7 @@ internal class DefaultActionMethodManager(
         OperationContextArgumentResolver(),
         AiArgumentResolver(),
         BlackboardArgumentResolver(),
-    )
+    ),
 ) : ActionMethodManager {
 
     private val logger = LoggerFactory.getLogger(DefaultActionMethodManager::class.java)
@@ -63,6 +63,8 @@ internal class DefaultActionMethodManager(
             .map { it.type }
         val inputs = resolveInputBindings(method)
 
+        require(method.returnType != null) { "Action method ${method.name} must have a return type" }
+
         return MultiTransformationAction(
             name = nameGenerator.generateName(instance, method.name),
             description = actionAnnotation.description.ifBlank { method.name },
@@ -72,7 +74,7 @@ internal class DefaultActionMethodManager(
             pre = actionAnnotation.pre.toList(),
             post = actionAnnotation.post.toList(),
             inputClasses = inputClasses,
-            outputClass = method.returnType as Class<Any>,
+            outputClass = method.returnType,
             outputVarName = actionAnnotation.outputBinding,
             toolGroups = (actionAnnotation.toolGroupRequirements.map { ToolGroupRequirement(it.role) } + actionAnnotation.toolGroups.map {
                 ToolGroupRequirement(
@@ -201,7 +203,7 @@ internal class DefaultActionMethodManager(
     private fun handleAwaitableResponseException(
         instanceName: String,
         methodName: String,
-        awe: AwaitableResponseException
+        awe: AwaitableResponseException,
     ) {
         // This is not a failure, but will drive transition to a wait state
         logger.info(
@@ -216,7 +218,7 @@ internal class DefaultActionMethodManager(
     private fun handleThrowable(
         instanceName: String,
         methodName: String,
-        t: Throwable
+        t: Throwable,
     ) {
         logger.warn(
             "Error invoking action method {}.{}: {}",
