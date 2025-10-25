@@ -72,18 +72,12 @@ open class SimpleAgentProcess(
         )
         setStatus(AgentProcessStatusCode.STUCK)
         return this
-        }
-
-    protected fun logGoalInformation(plan: Plan) {
-        if (goal != null && goal?.name != plan.goal.name) {
-            logger.info("Process {} goal changed: {} -> {}", this.id, goal?.name, plan.goal.name)
-            require(processOptions.allowGoalChange) {
-                "Process ${this.id} goal changed from ${goal?.name} to ${plan.goal.name}, but allowGoalChange is false"
-            }
-        }
     }
 
-    protected fun handleProcessCompletion(plan: Plan, worldState: WorldState) {
+    protected fun handleProcessCompletion(
+        plan: Plan,
+        worldState: WorldState,
+    ) {
         logger.debug(
             "✅ Process {} completed, achieving goal {} in {} seconds",
             this.id,
@@ -101,7 +95,10 @@ open class SimpleAgentProcess(
         setStatus(AgentProcessStatusCode.COMPLETED)
     }
 
-    protected fun sendProcessRunningEvent(plan: Plan, worldState: WorldState) {
+    protected fun sendProcessRunningEvent(
+        plan: Plan,
+        worldState: WorldState,
+    ) {
         platformServices.eventListener.onProcessEvent(
             AgentProcessPlanFormulatedEvent(
                 agentProcess = this,
@@ -118,7 +115,6 @@ open class SimpleAgentProcess(
             return handlePlanNotFound(worldState)
         }
 
-        logGoalInformation(plan)
         _goal = plan.goal
 
         if (plan.isComplete()) {

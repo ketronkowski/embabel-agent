@@ -38,7 +38,7 @@ open class ConcurrentAgentProcess(
     blackboard: Blackboard,
     platformServices: PlatformServices,
     timestamp: Instant = Instant.now(),
-    val callbacks: List<AgentProcessCallback> = emptyList()
+    val callbacks: List<AgentProcessCallback> = emptyList(),
 ) : SimpleAgentProcess(
     id = id,
     parentId = parentId,
@@ -47,14 +47,13 @@ open class ConcurrentAgentProcess(
     blackboard = blackboard,
     platformServices = platformServices,
     timestamp = timestamp,
-    ) {
+) {
     override fun formulateAndExecutePlan(worldState: WorldState): AgentProcess {
         val plan = planner.bestValuePlanToAnyGoal(system = agent.planningSystem)
         if (plan == null) {
             return handlePlanNotFound(worldState)
         }
 
-        logGoalInformation(plan)
         _goal = plan.goal
 
         if (plan.isComplete()) {
@@ -71,9 +70,11 @@ open class ConcurrentAgentProcess(
                 achievableActions.map { achievableAction ->
                     agent.actions.singleOrNull { it.name == achievableAction.name }
                         ?: error(
-                            "No unique action found for ${plan.actions.first().name} in ${agent.actions.map {
-                                it.name
-                            }}: Actions are\n${
+                            "No unique action found for ${plan.actions.first().name} in ${
+                                agent.actions.map {
+                                    it.name
+                                }
+                            }: Actions are\n${
                                 agent.actions.joinToString(
                                     "\n",
                                 ) { it.name }
@@ -119,14 +120,17 @@ open class ConcurrentAgentProcess(
                 logger.debug("⏳ Process {} action {} paused", id, ActionStatusCode.PAUSED)
                 AgentProcessStatusCode.PAUSED
             }
+
             actionStatuses.any { it.status == ActionStatusCode.SUCCEEDED } -> {
                 logger.debug("Process {} action {} is running", id, ActionStatusCode.SUCCEEDED)
                 AgentProcessStatusCode.RUNNING
             }
+
             actionStatuses.any { it.status == ActionStatusCode.WAITING } -> {
                 logger.debug("⏳ Process {} action {} waiting", id, ActionStatusCode.WAITING)
                 AgentProcessStatusCode.WAITING
             }
+
             else -> {
                 error("Unexpected action statuses: $actionStatuses")
             }

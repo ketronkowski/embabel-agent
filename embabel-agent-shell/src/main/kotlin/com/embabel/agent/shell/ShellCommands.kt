@@ -290,7 +290,6 @@ class ShellCommands(
         this.defaultProcessOptions = ProcessOptions(
             blackboard = if (state) blackboard else null,
             verbosity = verbosity,
-            allowGoalChange = true,
             processControl = ProcessControl(
                 earlyTerminationPolicy = EarlyTerminationPolicy.maxActions(40),
                 toolDelay = if (toolDelay) Delay.LONG else Delay.NONE,
