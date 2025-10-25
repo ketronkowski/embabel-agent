@@ -67,7 +67,7 @@ data class ChatbotReturn(
 class AgentProcessChatbot(
     private val agentPlatform: AgentPlatform,
     private val agentSource: AgentSource,
-    private val listenerProvider: ListenerProvider = ListenerProvider { user, outputChannel -> emptyList() },
+    private val listenerProvider: ListenerProvider = ListenerProvider { _, _ -> emptyList() },
 ) : Chatbot {
 
     override fun createSession(

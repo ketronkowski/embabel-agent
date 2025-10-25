@@ -89,11 +89,11 @@ open class BranchingAction<I, O1, O2>(
     ): ActionStatus = ActionRunner.execute(processContext) {
         val input = processContext.getValue(inputVarName, inputClass.name) as I
         val branch = block.transform(
-            TransformationActionContext<I, Branch<O1, O2>>(
+            context = TransformationActionContext(
                 input = input,
                 processContext = processContext,
                 action = this,
-                inputClass = inputClass as Class<I>,
+                inputClass = inputClass,
                 outputClass = Branch::class.java as Class<Branch<O1, O2>>,
             )
         )

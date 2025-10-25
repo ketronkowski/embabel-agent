@@ -61,7 +61,10 @@ class AgenticEventSerializationTest {
         val saver = EventSavingAgenticEventListener()
         val ap = dummyAgentPlatform(listener = AgenticEventListener.of(saver, serializingListener))
         // If it doesn't die we're happy
-        ap.runAgentWithInput(evenMoreEvilWizard(), input = UserInput("anything at all"))
+        ap.runAgentFrom(
+            agent = evenMoreEvilWizard(),
+            bindings = mapOf("it" to UserInput("anything at all"))
+        )
         assertTrue(serializingListener.count > 0, "Events were serialized")
         assertEquals(0, fails.size, "Untyped events:\n${fails.joinToString(", ")}")
         assertTrue(

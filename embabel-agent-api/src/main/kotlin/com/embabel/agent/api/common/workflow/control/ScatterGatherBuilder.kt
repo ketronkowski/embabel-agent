@@ -68,7 +68,7 @@ class ScatterGatherBuilder<ELEMENT : Any, RESULT : Any>(
     ): Generators {
         return Generators(
             generators = generators.map { generator ->
-                Function<SupplierActionContext<ELEMENT>, ELEMENT> { context ->
+                Function<SupplierActionContext<ELEMENT>, ELEMENT> { _ ->
                     generator.get()
                 }
             },

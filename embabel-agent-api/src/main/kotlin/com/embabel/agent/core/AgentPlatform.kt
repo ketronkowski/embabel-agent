@@ -83,24 +83,6 @@ interface AgentPlatform : AgentScope {
     ): AgentProcess
 
     /**
-     * Run the given agent with the given input, which will be added
-     * to the blackboard with the default binding.
-     * @param agent the agent to run. Does not need to be deployed to the platform
-     * @param processOptions the options for the process
-     * @param input the input to bind to the blackboard
-     */
-    @Deprecated("Use createAgentProcess and run or start instead")
-    fun runAgentWithInput(
-        agent: Agent,
-        processOptions: ProcessOptions = ProcessOptions(),
-        input: Any,
-    ): AgentProcess = runAgentFrom(
-        agent,
-        processOptions,
-        mapOf(IoBinding.DEFAULT_BINDING to input),
-    )
-
-    /**
      * Create an agent process with the given options and bindings.
      * The process will not be started automatically, so this will return quickly,
      * unlike the run method on the created process.

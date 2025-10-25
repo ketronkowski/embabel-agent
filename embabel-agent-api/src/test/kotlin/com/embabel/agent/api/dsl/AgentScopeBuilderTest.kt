@@ -57,10 +57,10 @@ class AgentScopeBuilderTest {
             val agent: Agent = splitGarden()
             val ap = dummyAgentPlatform()
             val processOptions = ProcessOptions()
-            val result = ap.runAgentWithInput(
+            val result = ap.runAgentFrom(
                 agent = agent,
                 processOptions = processOptions,
-                input = UserInput("do something"),
+                bindings = mapOf("it" to UserInput("do something")),
             )
             assertEquals(AgentProcessStatusCode.COMPLETED, result.status)
             assertEquals(

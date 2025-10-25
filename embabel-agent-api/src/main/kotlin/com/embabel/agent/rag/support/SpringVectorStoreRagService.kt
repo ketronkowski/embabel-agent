@@ -52,7 +52,7 @@ class SpringVectorStoreRagService(
         return RagResponse(
             request = ragRequest,
             service = name,
-            results = results.map { it ->
+            results = results.map {
                 DocumentSimilarityResult(
                     document = it,
                     score = it.score!!,

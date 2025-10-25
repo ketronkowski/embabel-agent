@@ -140,6 +140,8 @@ class AiArgumentResolver : ActionMethodArgumentResolver {
     }
 }
 
+private const val PARAMETER_NAME_SHOULD_BE_AVAILABLE = "Parameter name should be available"
+
 /**
  * Resolves arguments that can be found on the [com.embabel.agent.core.Blackboard]
  */
@@ -158,7 +160,7 @@ class BlackboardArgumentResolver : ActionMethodArgumentResolver {
                 }
                 val annotation = kotlinParameter.findAnnotation<RequireNameMatch>()
                 val name = getBindingParameterName(kotlinParameter.name, annotation)
-                    ?: error("Parameter name should be available")
+                    ?: error(PARAMETER_NAME_SHOULD_BE_AVAILABLE)
                 return operationContext.hasValue(
                     variable = name,
                     type = classifier.java.name,
@@ -170,7 +172,7 @@ class BlackboardArgumentResolver : ActionMethodArgumentResolver {
         } else if (operationContext != null) {
             val annotation = javaParameter.getAnnotation(RequireNameMatch::class.java)
             val name = getBindingParameterName(javaParameter.name, annotation)
-                ?: error("Parameter name should be available")
+                ?: error(PARAMETER_NAME_SHOULD_BE_AVAILABLE)
             return operationContext.hasValue(
                 variable = name,
                 type = javaParameter.type.name,
@@ -234,7 +236,7 @@ class BlackboardArgumentResolver : ActionMethodArgumentResolver {
             if (classifier is KClass<*>) {
                 val annotation = kotlinParameter.findAnnotation<RequireNameMatch>()
                 val name = getBindingParameterName(kotlinParameter.name, annotation)
-                    ?: error("Parameter name should be available")
+                    ?: error(PARAMETER_NAME_SHOULD_BE_AVAILABLE)
                 val arg = operationContext.getValue(
                     variable = name,
                     type = classifier.java.name,
@@ -251,7 +253,7 @@ class BlackboardArgumentResolver : ActionMethodArgumentResolver {
         }
         val annotation = javaParameter.getAnnotation(RequireNameMatch::class.java)
         val name = getBindingParameterName(javaParameter.name, annotation)
-            ?: error("Parameter name should be available")
+            ?: error(PARAMETER_NAME_SHOULD_BE_AVAILABLE)
         return operationContext.getValue(
             variable = name,
             type = javaParameter.type.name,

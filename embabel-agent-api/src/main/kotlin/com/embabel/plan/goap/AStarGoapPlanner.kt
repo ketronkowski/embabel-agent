@@ -154,7 +154,7 @@ class AStarGoapPlanner(worldStateDeterminer: WorldStateDeterminer) :
     private fun backwardPlanningOptimization(
         plan: List<GoapAction>,
         startState: GoapWorldState,
-        goal: GoapGoal
+        goal: GoapGoal,
     ): List<GoapAction> {
         if (plan.isEmpty()) return plan
 
@@ -199,7 +199,7 @@ class AStarGoapPlanner(worldStateDeterminer: WorldStateDeterminer) :
     private fun forwardPlanningOptimization(
         plan: List<GoapAction>,
         startState: GoapWorldState,
-        goal: GoapGoal
+        goal: GoapGoal,
     ): List<GoapAction> {
         if (plan.isEmpty()) return plan
 
@@ -230,7 +230,7 @@ class AStarGoapPlanner(worldStateDeterminer: WorldStateDeterminer) :
 
         // Ensure our optimized plan still achieves the goal
         val finalState = simulatePlan(startState, optimizedPlan)
-        if (!goal.isAchievable(finalState) && !plan.isEmpty()) {
+        if (!goal.isAchievable(finalState) && plan.isNotEmpty()) {
             // Our optimization was too aggressive, return the original input plan
             return plan
         }
@@ -241,7 +241,10 @@ class AStarGoapPlanner(worldStateDeterminer: WorldStateDeterminer) :
     /**
      * Simulates applying a sequence of actions to a starting state and returns the final state.
      */
-    private fun simulatePlan(startState: GoapWorldState, actions: List<GoapAction>): GoapWorldState {
+    private fun simulatePlan(
+        startState: GoapWorldState,
+        actions: List<GoapAction>,
+    ): GoapWorldState {
         var currentState = startState
         for (action in actions) {
             if (action.isAchievable(currentState)) {
@@ -256,14 +259,20 @@ class AStarGoapPlanner(worldStateDeterminer: WorldStateDeterminer) :
      * This implementation counts the number of unsatisfied conditions.
      * The heuristic is admissible (never overestimates) which ensures A* finds the optimal path.
      */
-    private fun heuristic(state: GoapWorldState, goal: GoapGoal): Double {
+    private fun heuristic(
+        state: GoapWorldState,
+        goal: GoapGoal,
+    ): Double {
         return goal.preconditions.count { (key, value) -> state.state[key] != value }.toDouble()
     }
 
     /**
      * Apply an action to a state, returning the resulting new state.
      */
-    private fun applyAction(currentState: GoapWorldState, action: GoapAction): GoapWorldState {
+    private fun applyAction(
+        currentState: GoapWorldState,
+        action: GoapAction,
+    ): GoapWorldState {
         val newState = currentState.state.toMutableMap()
         action.effects.forEach { (key, value) ->
             newState[key] = value
@@ -276,7 +285,7 @@ class AStarGoapPlanner(worldStateDeterminer: WorldStateDeterminer) :
      */
     private fun reconstructPath(
         cameFrom: Map<GoapWorldState, Pair<GoapWorldState, GoapAction?>>,
-        goalState: GoapWorldState
+        goalState: GoapWorldState,
     ): List<GoapAction> {
         val actions = mutableListOf<GoapAction>()
         var currentState = goalState
@@ -300,7 +309,7 @@ class AStarGoapPlanner(worldStateDeterminer: WorldStateDeterminer) :
 private class SearchNode(
     val state: GoapWorldState,
     val gScore: Double,
-    val hScore: Double
+    val hScore: Double,
 ) : Comparable<SearchNode> {
     // Calculate f-score (total estimated cost to goal)
     private val fScore: Double = gScore + hScore
