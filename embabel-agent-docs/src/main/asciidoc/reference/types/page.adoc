@@ -129,4 +129,31 @@ This will trigger replanning if not caught.
 You can also choose to catch it within the action method making the LLM call,
 and take appropriate action in your own code.
 
+Simple example of annotation use:
+
+[source,java]
+----
+public class User {
+
+    @NotNull(message = "Name cannot be null")
+    private String name;
+
+    @AssertTrue(message = "Working must be true")
+    private boolean working;
+
+    @Size(min = 10, max = 200, message
+      = "About Me must be between 10 and 200 characters")
+    private String aboutMe;
+
+    @Min(value = 18, message = "Age should not be less than 18")
+    @Max(value = 150, message = "Age should not be greater than 150")
+    private int age;
+
+    @Email(message = "Email should be valid")
+    private String email;
+
+    // standard setters and getters
+}
+----
+
 // TODO: (jasper notes) Add links to subagent and evaluateCondition
