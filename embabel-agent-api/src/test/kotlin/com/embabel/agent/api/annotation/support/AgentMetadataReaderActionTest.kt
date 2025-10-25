@@ -284,7 +284,7 @@ class AgentMetadataReaderActionTest {
             assertEquals(ActionStatusCode.SUCCEEDED, result.status)
             assertEquals(PersonWithReverseTool("John Doe"), pc.blackboard.lastResult())
         }
-        
+
         @Test
         fun `action invocation with nullable parameter, passing value`() {
             val reader = AgentMetadataReader()
@@ -955,6 +955,37 @@ class AgentMetadataReaderActionTest {
                 )
             assertEquals(AgentProcessStatusCode.COMPLETED, agentProcess.status)
             assertEquals(PersonWithReverseTool("Kermit"), agentProcess.lastResult())
+        }
+
+        @Test
+        fun `always chooses action with most preconditions`() {
+            val reader = AgentMetadataReader()
+            val msp = MostSpecificPath()
+            val metadata = reader.createAgentMetadata(msp)
+
+            val ap = IntegrationTestUtils.dummyAgentPlatform()
+            val agent = metadata as CoreAgent
+            var agentProcess =
+                ap.runAgentFrom(
+                    agent,
+                    ProcessOptions(),
+                    emptyMap(),
+                )
+            assertEquals(AgentProcessStatusCode.COMPLETED, agentProcess.status)
+            assertEquals(Prince("Kermit"), agentProcess.lastResult())
+            assertEquals(1, msp.frogsCreatedFromScratch)
+
+            msp.frogsCreatedFromScratch = 0
+            agentProcess =
+                ap.runAgentFrom(
+                    agent,
+                    ProcessOptions(),
+                    mapOf("it" to UserInput("Billy")),
+                )
+            assertEquals(AgentProcessStatusCode.COMPLETED, agentProcess.status)
+            assertEquals(0, msp.frogsCreatedFromScratch, "Should call most specific path")
+
+            assertEquals(Prince("Billy"), agentProcess.lastResult())
         }
     }
 

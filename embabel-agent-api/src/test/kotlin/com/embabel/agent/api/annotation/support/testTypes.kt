@@ -846,3 +846,29 @@ class GetsFromBlackboard {
     }
 
 }
+
+data class Prince(val name: String)
+
+@Agent(description = "thing")
+class MostSpecificPath {
+
+    var frogsCreatedFromScratch = 0
+
+    @Action
+    fun makeFrogFromScratch(): Frog {
+        frogsCreatedFromScratch += 1
+        return Frog("Kermit")
+    }
+
+    @Action
+    fun makeFrogFromPerson(userInput: UserInput): Frog {
+        return Frog(userInput.content)
+    }
+
+    @AchievesGoal(description = "Creating a prince from a frog")
+    @Action
+    fun createPrince(
+        frog: Frog,
+    ) = Prince(frog.name)
+
+}
