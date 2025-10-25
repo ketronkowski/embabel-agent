@@ -95,7 +95,9 @@ class AStarGoapPlanner(worldStateDeterminer: WorldStateDeterminer) :
             }
 
             // Try each possible action from the current state
-            for (action in actions) {
+            // Sort actions by number of preconditions (descending) to prefer more specific actions
+            val sortedActions = actions.sortedByDescending { it.preconditions.size }
+            for (action in sortedActions) {
                 if (!action.isAchievable(current.state)) continue
 
                 // Calculate the new state after applying this action

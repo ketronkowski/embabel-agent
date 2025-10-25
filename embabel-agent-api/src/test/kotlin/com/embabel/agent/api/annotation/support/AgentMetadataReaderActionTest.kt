@@ -960,8 +960,8 @@ class AgentMetadataReaderActionTest {
         @Test
         fun `always chooses action with most preconditions`() {
             val reader = AgentMetadataReader()
-            val msp = MostSpecificPath()
-            val metadata = reader.createAgentMetadata(msp)
+            val mostSpecificPathAgent = MostSpecificPath()
+            val metadata = reader.createAgentMetadata(mostSpecificPathAgent)
 
             val ap = IntegrationTestUtils.dummyAgentPlatform()
             val agent = metadata as CoreAgent
@@ -973,9 +973,9 @@ class AgentMetadataReaderActionTest {
                 )
             assertEquals(AgentProcessStatusCode.COMPLETED, agentProcess.status)
             assertEquals(Prince("Kermit"), agentProcess.lastResult())
-            assertEquals(1, msp.frogsCreatedFromScratch)
+            assertEquals(1, mostSpecificPathAgent.frogsCreatedFromScratch)
 
-            msp.frogsCreatedFromScratch = 0
+            mostSpecificPathAgent.frogsCreatedFromScratch = 0
             agentProcess =
                 ap.runAgentFrom(
                     agent,
@@ -983,7 +983,7 @@ class AgentMetadataReaderActionTest {
                     mapOf("it" to UserInput("Billy")),
                 )
             assertEquals(AgentProcessStatusCode.COMPLETED, agentProcess.status)
-            assertEquals(0, msp.frogsCreatedFromScratch, "Should call most specific path")
+            assertEquals(0, mostSpecificPathAgent.frogsCreatedFromScratch, "Should use most specific path")
 
             assertEquals(Prince("Billy"), agentProcess.lastResult())
         }
