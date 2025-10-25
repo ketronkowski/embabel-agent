@@ -27,27 +27,19 @@ import java.time.Duration
 /**
  * We want to be more forgiving with data binding. This
  * can be important for smaller models.
+ * @param maxAttempts Maximum retry attempts for data binding
+ * @param fixedBackoffMillis Fixed backoff time in milliseconds between retries
+ * @param sendValidationInfo Should we send validation info to the LLM in every request,
+ * even before a validation error occurs?
  */
 @ConfigurationProperties(prefix = "embabel.agent.platform.llm-operations.data-binding")
-class LlmDataBindingProperties : RetryTemplateProvider {
+class LlmDataBindingProperties(
+    override val maxAttempts: Int = 10,
+    val fixedBackoffMillis: Long = 30L,
+    val sendValidationInfo: Boolean = false,
+) : RetryTemplateProvider {
 
     private val logger = LoggerFactory.getLogger(LlmDataBindingProperties::class.java)
-
-    /**
-     * Maximum retry attempts for data binding
-     */
-    override val maxAttempts: Int = 10
-
-    /**
-     * Fixed backoff time in milliseconds between retries
-     */
-    val fixedBackoffMillis: Long = 30L
-
-    /**
-     * Should we send validation info to the LLM in every request,
-     * even before a validation error occurs?
-     */
-    val sendValidationInfo: Boolean = false
 
     override fun retryTemplate(name: String): RetryTemplate {
         return RetryTemplate.builder()

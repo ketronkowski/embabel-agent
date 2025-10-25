@@ -40,8 +40,7 @@ import io.mockk.mockk
 import io.mockk.slot
 import jakarta.validation.Validation
 import jakarta.validation.constraints.Pattern
-import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Assertions.fail
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.springframework.ai.chat.messages.AssistantMessage
@@ -108,7 +107,10 @@ class ChatClientLlmOperationsTest {
         val mutableLlmInvocationHistory: MutableLlmInvocationHistory,
     )
 
-    private fun createChatClientLlmOperations(fakeChatModel: FakeChatModel): Setup {
+    private fun createChatClientLlmOperations(
+        fakeChatModel: FakeChatModel,
+        dataBindingProperties: LlmDataBindingProperties = LlmDataBindingProperties(),
+    ): Setup {
         val ese = EventSavingAgenticEventListener()
         val mutableLlmInvocationHistory = MutableLlmInvocationHistory()
         val mockProcessContext = mockk<ProcessContext>()
@@ -134,12 +136,13 @@ class ChatClientLlmOperationsTest {
         val fakeLlm = Llm("fake", "provider", fakeChatModel, DefaultOptionsConverter)
         every { mockModelProvider.getLlm(capture(crit)) } returns fakeLlm
         val cco = ChatClientLlmOperations(
-            mockModelProvider,
-            DefaultToolDecorator(),
+            modelProvider = mockModelProvider,
+            toolDecorator = DefaultToolDecorator(),
             validator = Validation.buildDefaultValidatorFactory().validator,
             validationPromptGenerator = DefaultValidationPromptGenerator(),
             templateRenderer = JinjavaTemplateRenderer(),
-            objectMapper = jacksonObjectMapper().registerModule(JavaTimeModule())
+            objectMapper = jacksonObjectMapper().registerModule(JavaTimeModule()),
+            dataBindingProperties = dataBindingProperties,
         )
         return Setup(cco, mockAgentProcess, mutableLlmInvocationHistory)
     }
@@ -693,6 +696,107 @@ class ChatClientLlmOperationsTest {
                 assertEquals(invalidHusky, e.returnedObject, "Invalid response should have been corrected")
                 assertTrue(e.constraintViolations.isNotEmpty())
             }
+        }
+
+        @Test
+        fun `passes correct description of violation to LLM`() {
+            // Picky eater
+            data class BorderCollie(
+                val name: String,
+                @field:Pattern(regexp = "^mince$", message = "eats field must be 'mince'")
+                val eats: String,
+            )
+
+            val invalidHusky = BorderCollie("Husky", eats = "kibble")
+            val validHusky = BorderCollie("Husky", eats = "mince")
+            val fakeChatModel = FakeChatModel(
+                responses = listOf(
+                    jacksonObjectMapper().writeValueAsString(invalidHusky),
+                    jacksonObjectMapper().writeValueAsString(validHusky),
+                )
+            )
+            val prompt =
+                "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+            val setup = createChatClientLlmOperations(fakeChatModel)
+            val createdDog = setup.llmOperations.createObject(
+                messages = listOf(UserMessage(prompt)),
+                interaction = LlmInteraction(
+                    id = InteractionId("id"), llm = LlmOptions()
+                ),
+                outputClass = BorderCollie::class.java,
+                action = SimpleTestAgent.actions.first(),
+                agentProcess = setup.mockAgentProcess,
+            )
+            val secondPrompt = fakeChatModel.promptsPassed[1].toString()
+            assertTrue(secondPrompt.contains("eats field must be 'mince'"), "Prompt mentions validation violation")
+
+            assertEquals(validHusky, createdDog, "Invalid response should have been corrected")
+        }
+
+        @Test
+        fun `doesnt pass description of validation rules to LLM if so configured`() {
+            // Picky eater
+            data class BorderCollie(
+                val name: String,
+                @field:Pattern(regexp = "^mince$", message = "eats field must be 'mince'")
+                val eats: String,
+            )
+
+            val validHusky = BorderCollie("Husky", eats = "mince")
+            val fakeChatModel = FakeChatModel(
+                jacksonObjectMapper().writeValueAsString(validHusky)
+            )
+            val prompt =
+                "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+            val setup = createChatClientLlmOperations(fakeChatModel)
+            val createdDog = setup.llmOperations.createObject(
+                messages = listOf(UserMessage(prompt)),
+                interaction = LlmInteraction(
+                    id = InteractionId("id"), llm = LlmOptions()
+                ),
+                outputClass = BorderCollie::class.java,
+                action = SimpleTestAgent.actions.first(),
+                agentProcess = setup.mockAgentProcess,
+            )
+            val firstPrompt = fakeChatModel.promptsPassed[0].toString()
+            assertFalse(firstPrompt.contains("eats field must be 'mince'"), "Prompt mentions validation violation")
+            assertEquals(validHusky, createdDog, "Invalid response should have been corrected")
+        }
+
+        @Test
+        fun `passes correct description of validation rules to LLM if so configured`() {
+            // Picky eater
+            data class BorderCollie(
+                val name: String,
+                @field:Pattern(regexp = "^mince$", message = "eats field must be 'mince'")
+                val eats: String,
+            )
+
+            val validHusky = BorderCollie("Husky", eats = "mince")
+            val fakeChatModel = FakeChatModel(
+                jacksonObjectMapper().writeValueAsString(validHusky)
+            )
+            val prompt =
+                "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+            val setup = createChatClientLlmOperations(
+                fakeChatModel = fakeChatModel,
+                dataBindingProperties = LlmDataBindingProperties(
+                    sendValidationInfo = true,
+                )
+            )
+            val createdDog = setup.llmOperations.createObject(
+                messages = listOf(UserMessage(prompt)),
+                interaction = LlmInteraction(
+                    id = InteractionId("id"), llm = LlmOptions()
+                ),
+                outputClass = BorderCollie::class.java,
+                action = SimpleTestAgent.actions.first(),
+                agentProcess = setup.mockAgentProcess,
+            )
+            val firstPrompt = fakeChatModel.promptsPassed[0].toString()
+            assertTrue(firstPrompt.contains("eats field must be 'mince'"), "Prompt mentions validation violation")
+
+            assertEquals(validHusky, createdDog, "Invalid response should have been corrected")
         }
     }
 
