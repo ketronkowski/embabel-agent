@@ -129,19 +129,22 @@ When there are multiple candidates the most recent one is provided.
 It is also possible to assign a keyed name to blackboard items.
 Example:
 
-    @Action
-    public Person extractPerson(UserInput userInput, OperationContext context) {
-        PersonImpl maybeAPerson = context.promptRunner().withLlm(LlmOptions.fromModel(OpenAiModels.GPT_41)).createObjectIfPossible(
-                """
-                        Create a person from this user input, extracting their name:
-                        %s""".formatted(userInput.getContent()),
-                PersonImpl.class
-        );
-        if (maybeAPerson != null) {
-            context.bind("user", maybeAPerson);
-        }
-        return maybeAPerson;
+[source,java]
+----
+@Action
+public Person extractPerson(UserInput userInput, OperationContext context) {
+    PersonImpl maybeAPerson = context.promptRunner().withLlm(LlmOptions.fromModel(OpenAiModels.GPT_41)).createObjectIfPossible(
+            """
+            Create a person from this user input, extracting their name:
+            %s""".formatted(userInput.getContent()),
+            PersonImpl.class
+    );
+    if (maybeAPerson != null) {
+        context.bind("user", maybeAPerson);
     }
+    return maybeAPerson;
+}
+----
 
 TIP: When routing flows by type, the name is not important, but for reference the default name is 'it'.
 

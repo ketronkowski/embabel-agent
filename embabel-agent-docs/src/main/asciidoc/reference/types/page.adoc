@@ -119,7 +119,7 @@ var story = context.ai()
 
 **Validation**
 
-Embabel supports JSR-380 bean validation annotations on domain objects.
+Embabel supports https://beanvalidation.org/2.0-jsr380/[JSR-380] bean validation annotations on domain objects.
 When creating objects via `PromptRunner.createObject` or `createObjectIfPossible`, validation is automatically performed after deserialization.
 If validation fails, Embabel transparently retries the LLM call to obtain a valid object,
 describing the validation errors to the LLM to help it correct its response.
@@ -155,5 +155,58 @@ public class User {
     // standard setters and getters
 }
 ----
+
+You can also use custom annotations with validators that will be injected by Spring. For example:
+
+[source,java]
+----
+@Target({ElementType.FIELD, ElementType.PARAMETER}) // <1>
+@Retention(RetentionPolicy.RUNTIME)
+@Constraint(validatedBy = PalindromeValidator.class)
+public @interface MustBePalindrome {
+    String message() default "Must be a palindrome";
+    Class<?>[] groups() default {};
+    Class<? extends Payload>[] payload() default {};
+}
+
+public class Palindromic {
+    @MustBePalindrome // <2>
+    private String eats;
+
+    public Palindromic(String eats) {
+        this.eats = eats;
+    }
+
+    public String getEats() {
+        return eats;
+    }
+}
+
+@Component // <3>
+public class PalindromeValidator implements ConstraintValidator<MustBePalindrome, String> {
+
+    private final Ai ai; // <4>
+
+    public PalindromeValidator(Ai ai) {
+        this.ai = ai;
+    }
+
+    @Override
+    public boolean isValid(String field, ConstraintValidatorContext context) {
+        if (field == null) {
+            return false;
+        }
+        return field.equals(new StringBuilder(field).reverse().toString());
+    }
+}
+----
+
+<1> Define the custom annotation
+<2> Apply the annotation to a field
+<3> Implement the validator as a Spring component. Note the `@Component` annotation.
+<4> Spring will inject the validator with dependencies, such as the `Ai` instance in this case
+
+Thus we have standard JSR-280 validation with full Spring dependency injection support.
+
 
 // TODO: (jasper notes) Add links to subagent and evaluateCondition
