@@ -30,6 +30,12 @@ interface SystemInput : Timestamped
 interface UserContent : HasContent
 
 /**
+ * Superinterface for all inputs that come from AI assistants
+ * This can be useful to drive guardrails
+ */
+interface AssistantContent : HasContent
+
+/**
  * Special class that represents a single user input
  * Starting point for many flows.
  */

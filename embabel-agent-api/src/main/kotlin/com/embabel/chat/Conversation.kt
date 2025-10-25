@@ -15,6 +15,7 @@
  */
 package com.embabel.chat
 
+import com.embabel.agent.domain.io.AssistantContent
 import com.embabel.agent.domain.io.UserContent
 import com.embabel.agent.domain.library.HasContent
 import com.embabel.common.ai.prompt.PromptContributor
@@ -106,7 +107,7 @@ open class AssistantMessage @JvmOverloads constructor(
     content: String,
     name: String? = null,
     override val timestamp: Instant = Instant.now(),
-) : Message(role = Role.ASSISTANT, content = content, name = name, timestamp = timestamp) {
+) : Message(role = Role.ASSISTANT, content = content, name = name, timestamp = timestamp), AssistantContent {
 
     override fun toString(): String {
         return "AssistantMessage(from='${sender}', content='${trim(content, 80, 10)}')"
