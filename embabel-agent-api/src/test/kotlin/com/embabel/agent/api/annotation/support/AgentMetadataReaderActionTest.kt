@@ -235,380 +235,379 @@ class AgentMetadataReaderActionTest {
         assertEquals(IoBinding.DEFAULT_BINDING, action.outputs.single().name)
     }
 
-    @Test
-    fun `transformer action invocation`() {
-        val reader = AgentMetadataReader()
-        val metadata = reader.createAgentMetadata(OneTransformerActionOnly())
-        assertNotNull(metadata)
-        assertEquals(1, metadata!!.actions.size)
-        val action = metadata.actions.first()
-        val agent = mockk<CoreAgent>()
-        every { agent.domainTypes } returns listOf(
-            PersonWithReverseTool::class.java,
-            UserInput::class.java,
-        ).map { JvmType(it) }
+    @Nested
+    inner class Invocation {
 
-        val dummyPlatformServices = dummyPlatformServices()
-        val pc = ProcessContext(
-            platformServices = dummyPlatformServices,
-            agentProcess = dummyAgentProcessRunning(metadata as com.embabel.agent.core.Agent, dummyPlatformServices),
-            outputChannel = DevNullOutputChannel,
-        )
-        pc.agentProcess.bind(IoBinding.DEFAULT_BINDING, UserInput("John Doe"))
-        val result = action.execute(pc)
-        assertEquals(ActionStatusCode.SUCCEEDED, result.status)
-        assertEquals(PersonWithReverseTool("John Doe"), pc.blackboard.lastResult())
-    }
-
-    @Test
-    fun `action invocation with nullable parameter, passing no value`() {
-        val reader = AgentMetadataReader()
-        val metadata = reader.createAgentMetadata(OneTransformerActionWithNullableParameter())
-        assertNotNull(metadata)
-        assertEquals(
-            1, metadata!!.actions.size,
-            "Should have exactly 1 action",
-        )
-        val action = metadata.actions.first()
-        val agent = mockk<CoreAgent>()
-        every { agent.jvmTypes } returns listOf(SnakeMeal::class.java, UserInput::class.java).map { JvmType(it) }
-        val mockAgentProcess = mockk<AgentProcess>()
-        every { mockAgentProcess.agent } returns agent
-        val mockPlatformServices = mockk<PlatformServices>()
-        every { mockPlatformServices.llmOperations } returns mockk()
-        every { mockPlatformServices.eventListener } returns DevNull
-        val blackboard = InMemoryBlackboard().bind(IoBinding.DEFAULT_BINDING, UserInput("John Doe"))
-        every { mockAgentProcess.hasValue(any(), any(), any()) } answers {
-            blackboard.hasValue(
-                firstArg(),
-                secondArg(),
-                thirdArg(),
+        @Test
+        fun `action invocation with nullable parameter, passing no value`() {
+            val reader = AgentMetadataReader()
+            val metadata = reader.createAgentMetadata(OneTransformerActionWithNullableParameter())
+            assertNotNull(metadata)
+            assertEquals(
+                1, metadata!!.actions.size,
+                "Should have exactly 1 action",
             )
-        }
-        every { mockAgentProcess.getValue(any(), any(), any()) } answers {
-            blackboard.getValue(
-                firstArg(),
-                secondArg(),
-                thirdArg(),
+            val action = metadata.actions.first()
+            val agent = mockk<CoreAgent>()
+            every { agent.jvmTypes } returns listOf(SnakeMeal::class.java, UserInput::class.java).map { JvmType(it) }
+            val mockAgentProcess = mockk<AgentProcess>()
+            every { mockAgentProcess.agent } returns agent
+            val mockPlatformServices = mockk<PlatformServices>()
+            every { mockPlatformServices.llmOperations } returns mockk()
+            every { mockPlatformServices.eventListener } returns DevNull
+            val blackboard = InMemoryBlackboard().bind(IoBinding.DEFAULT_BINDING, UserInput("John Doe"))
+            every { mockAgentProcess.hasValue(any(), any(), any()) } answers {
+                blackboard.hasValue(
+                    firstArg(),
+                    secondArg(),
+                    thirdArg(),
+                )
+            }
+            every { mockAgentProcess.getValue(any(), any(), any()) } answers {
+                blackboard.getValue(
+                    firstArg(),
+                    secondArg(),
+                    thirdArg(),
+                )
+            }
+            every { mockAgentProcess[any()] = any() } answers {
+                blackboard[firstArg()] = secondArg()
+            }
+            every { mockAgentProcess.lastResult() } returns PersonWithReverseTool("John Doe")
+
+            val pc = ProcessContext(
+                platformServices = mockPlatformServices,
+                agentProcess = mockAgentProcess,
+                outputChannel = DevNullOutputChannel,
             )
+            val result = action.execute(pc)
+            assertEquals(ActionStatusCode.SUCCEEDED, result.status)
+            assertEquals(PersonWithReverseTool("John Doe"), pc.blackboard.lastResult())
         }
-        every { mockAgentProcess.set(any(), any()) } answers {
-            blackboard.set(
-                firstArg(),
-                secondArg(),
+        
+        @Test
+        fun `action invocation with nullable parameter, passing value`() {
+            val reader = AgentMetadataReader()
+            val metadata = reader.createAgentMetadata(OneTransformerActionWithNullableParameter())
+            assertNotNull(metadata)
+            assertEquals(
+                1, metadata!!.actions.size,
+                "Should have exactly 1 action",
             )
-        }
-        every { mockAgentProcess.lastResult() } returns PersonWithReverseTool("John Doe")
+            val action = metadata.actions.first()
+            val agent = CoreAgent(
+                name = "name",
+                provider = "provider",
+                actions = listOf(action),
+                domainTypes = emptyList(),
+                goals = emptySet(),
+                description = "whatever",
+            )
+            val platformServices = dummyPlatformServices()
 
-        val pc = ProcessContext(
-            platformServices = mockPlatformServices,
-            agentProcess = mockAgentProcess,
-            outputChannel = DevNullOutputChannel,
-        )
-        val result = action.execute(pc)
-        assertEquals(ActionStatusCode.SUCCEEDED, result.status)
-        assertEquals(PersonWithReverseTool("John Doe"), pc.blackboard.lastResult())
-    }
-
-    @Test
-    fun `action invocation with nullable parameter, passing value`() {
-        val reader = AgentMetadataReader()
-        val metadata = reader.createAgentMetadata(OneTransformerActionWithNullableParameter())
-        assertNotNull(metadata)
-        assertEquals(
-            1, metadata!!.actions.size,
-            "Should have exactly 1 action",
-        )
-        val action = metadata.actions.first()
-        val agent = CoreAgent(
-            name = "name",
-            provider = "provider",
-            actions = listOf(action),
-            domainTypes = emptyList(),
-            goals = emptySet(),
-            description = "whatever",
-        )
-        val platformServices = dummyPlatformServices()
-
-        val pc = ProcessContext(
-            agentProcess = SimpleAgentProcess(
-                id = "test",
-                agent = agent,
+            val pc = ProcessContext(
+                agentProcess = SimpleAgentProcess(
+                    id = "test",
+                    agent = agent,
+                    platformServices = platformServices,
+                    processOptions = ProcessOptions(),
+                    blackboard = InMemoryBlackboard(),
+                    parentId = null,
+                ),
                 platformServices = platformServices,
-                processOptions = ProcessOptions(),
-                blackboard = InMemoryBlackboard(),
-                parentId = null,
-            ),
-            platformServices = platformServices,
-        )
-        pc.blackboard += UserInput("John Doe")
-        pc.blackboard += SnakeMeal(emptyList())
-        val result = action.execute(pc)
-        assertEquals(ActionStatusCode.SUCCEEDED, result.status)
-        assertEquals(PersonWithReverseTool("John Doe and tasty!"), pc.blackboard.lastResult())
-    }
-
-    @Test
-    fun `transformer action invocation with payload`() {
-        val reader = AgentMetadataReader()
-        val metadata = reader.createAgentMetadata(OneTransformerActionTakingPayloadOnly())
-        assertNotNull(metadata)
-        assertEquals(1, metadata!!.actions.size)
-        val action = metadata.actions.first()
-        assertEquals(
-            1,
-            action.inputs.size,
-            "Should not consider payload as input: ${action.inputs}",
-        )
-        assertEquals(
-            UserInput::class.java.name,
-            action.inputs.single().type,
-            "Should not consider payload as input: ${action.inputs}",
-        )
-        val agent = mockk<CoreAgent>()
-        every { agent.jvmTypes } returns listOf(PersonWithReverseTool::class.java, UserInput::class.java).map {
-            JvmType(it)
-        }
-        val mockAgentProcess = mockk<AgentProcess>()
-        every { mockAgentProcess.agent } returns agent
-        val mockPlatformServices = mockk<PlatformServices>()
-        every { mockPlatformServices.llmOperations } returns mockk()
-        every { mockPlatformServices.eventListener } returns DevNull
-        val blackboard = InMemoryBlackboard().bind(IoBinding.DEFAULT_BINDING, UserInput("John Doe"))
-        every { mockAgentProcess.hasValue(any(), any(), any()) } answers {
-            blackboard.hasValue(
-                firstArg(),
-                secondArg(),
-                thirdArg(),
             )
+            pc.blackboard += UserInput("John Doe")
+            pc.blackboard += SnakeMeal(emptyList())
+            val result = action.execute(pc)
+            assertEquals(ActionStatusCode.SUCCEEDED, result.status)
+            assertEquals(PersonWithReverseTool("John Doe and tasty!"), pc.blackboard.lastResult())
         }
-        every { mockAgentProcess.getValue(any(), any(), any()) } answers {
-            blackboard.getValue(
-                firstArg(),
-                secondArg(),
-                thirdArg(),
+
+        @Test
+        fun `transformer action invocation`() {
+            val reader = AgentMetadataReader()
+            val metadata = reader.createAgentMetadata(OneTransformerActionOnly())
+            assertNotNull(metadata)
+            assertEquals(1, metadata!!.actions.size)
+            val action = metadata.actions.first()
+            val agent = mockk<CoreAgent>()
+            every { agent.domainTypes } returns listOf(
+                PersonWithReverseTool::class.java,
+                UserInput::class.java,
+            ).map { JvmType(it) }
+
+            val dummyPlatformServices = dummyPlatformServices()
+            val pc = ProcessContext(
+                platformServices = dummyPlatformServices,
+                agentProcess = dummyAgentProcessRunning(
+                    metadata as com.embabel.agent.core.Agent,
+                    dummyPlatformServices
+                ),
+                outputChannel = DevNullOutputChannel,
             )
+            pc.agentProcess.bind(IoBinding.DEFAULT_BINDING, UserInput("John Doe"))
+            val result = action.execute(pc)
+            assertEquals(ActionStatusCode.SUCCEEDED, result.status)
+            assertEquals(PersonWithReverseTool("John Doe"), pc.blackboard.lastResult())
         }
-        every { mockAgentProcess.set(any(), any()) } answers {
-            blackboard.set(
-                firstArg(),
-                secondArg(),
+
+        @Test
+        fun `transformer action invocation with payload`() {
+            val reader = AgentMetadataReader()
+            val metadata = reader.createAgentMetadata(OneTransformerActionTakingPayloadOnly())
+            assertNotNull(metadata)
+            assertEquals(1, metadata!!.actions.size)
+            val action = metadata.actions.first()
+            assertEquals(
+                1,
+                action.inputs.size,
+                "Should not consider payload as input: ${action.inputs}",
             )
+            assertEquals(
+                UserInput::class.java.name,
+                action.inputs.single().type,
+                "Should not consider payload as input: ${action.inputs}",
+            )
+            val agent = mockk<CoreAgent>()
+            every { agent.jvmTypes } returns listOf(PersonWithReverseTool::class.java, UserInput::class.java).map {
+                JvmType(it)
+            }
+            val mockAgentProcess = mockk<AgentProcess>()
+            every { mockAgentProcess.agent } returns agent
+            val mockPlatformServices = mockk<PlatformServices>()
+            every { mockPlatformServices.llmOperations } returns mockk()
+            every { mockPlatformServices.eventListener } returns DevNull
+            val blackboard = InMemoryBlackboard().bind(IoBinding.DEFAULT_BINDING, UserInput("John Doe"))
+            every { mockAgentProcess.hasValue(any(), any(), any()) } answers {
+                blackboard.hasValue(
+                    firstArg(),
+                    secondArg(),
+                    thirdArg(),
+                )
+            }
+            every { mockAgentProcess.getValue(any(), any(), any()) } answers {
+                blackboard.getValue(
+                    firstArg(),
+                    secondArg(),
+                    thirdArg(),
+                )
+            }
+            every { mockAgentProcess.set(any(), any()) } answers {
+                blackboard.set(
+                    firstArg(),
+                    secondArg(),
+                )
+            }
+            every { mockAgentProcess.lastResult() } returns PersonWithReverseTool("John Doe")
+
+            val pc = ProcessContext(
+                platformServices = dummyPlatformServices(),
+                agentProcess = mockAgentProcess,
+            )
+            val result = action.execute(pc)
+            assertEquals(ActionStatusCode.SUCCEEDED, result.status)
+            assertEquals(PersonWithReverseTool("John Doe"), pc.blackboard.lastResult())
         }
-        every { mockAgentProcess.lastResult() } returns PersonWithReverseTool("John Doe")
 
-        val pc = ProcessContext(
-            platformServices = dummyPlatformServices(),
-            agentProcess = mockAgentProcess,
-        )
-        val result = action.execute(pc)
-        assertEquals(ActionStatusCode.SUCCEEDED, result.status)
-        assertEquals(PersonWithReverseTool("John Doe"), pc.blackboard.lastResult())
-    }
+        @Test
+        fun `action invocation with internal parameters`() {
+            val reader = AgentMetadataReader()
+            val metadata = reader.createAgentMetadata(InternalDomainClasses())
+            assertNotNull(metadata)
+            assertEquals(
+                1, metadata!!.actions.size,
+                "Should have exactly 1 action",
+            )
+            val action = metadata.actions.first()
+            val agent = CoreAgent(
+                name = "name",
+                provider = "provider",
+                actions = listOf(action),
+                domainTypes = emptyList(),
+                goals = emptySet(),
+                description = "whatever",
+            )
+            val platformServices = dummyPlatformServices()
 
-    @Test
-    fun `action invocation with internal parameters`() {
-        val reader = AgentMetadataReader()
-        val metadata = reader.createAgentMetadata(InternalDomainClasses())
-        assertNotNull(metadata)
-        assertEquals(
-            1, metadata!!.actions.size,
-            "Should have exactly 1 action",
-        )
-        val action = metadata.actions.first()
-        val agent = CoreAgent(
-            name = "name",
-            provider = "provider",
-            actions = listOf(action),
-            domainTypes = emptyList(),
-            goals = emptySet(),
-            description = "whatever",
-        )
-        val platformServices = dummyPlatformServices()
-
-        val pc = ProcessContext(
-            agentProcess = SimpleAgentProcess(
-                id = "test",
-                agent = agent,
+            val pc = ProcessContext(
+                agentProcess = SimpleAgentProcess(
+                    id = "test",
+                    agent = agent,
+                    platformServices = platformServices,
+                    processOptions = ProcessOptions(),
+                    blackboard = InMemoryBlackboard(),
+                    parentId = null,
+                ),
                 platformServices = platformServices,
-                processOptions = ProcessOptions(),
-                blackboard = InMemoryBlackboard(),
-                parentId = null,
-            ),
-            platformServices = platformServices,
-        )
-        pc.blackboard += InternalInput("John Doe")
-        val result = action.execute(pc)
-        assertEquals(ActionStatusCode.SUCCEEDED, result.status)
-        assertEquals(InternalOutput("John Doe"), pc.blackboard.lastResult())
-    }
-
-    @Test
-    fun `action invocation with OperationPayload`() {
-        val reader = AgentMetadataReader()
-        val metadata = reader.createAgentMetadata(OneTransformerActionTakingOperationPayload())
-        assertNotNull(metadata)
-        assertEquals(1, metadata!!.actions.size)
-        val action = metadata.actions.first()
-        assertEquals(
-            1,
-            action.inputs.size,
-            "Should not consider payload as input: ${action.inputs}",
-        )
-        assertEquals(
-            UserInput::class.java.name,
-            action.inputs.single().type,
-            "Should not consider payload as input",
-        )
-        val agent = mockk<CoreAgent>()
-        every { agent.jvmTypes } returns listOf(
-            PersonWithReverseTool::class.java,
-            UserInput::class.java
-        ).map { JvmType(it) }
-        val mockAgentProcess = mockk<AgentProcess>()
-        every { mockAgentProcess.agent } returns agent
-        val mockPlatformServices = mockk<PlatformServices>()
-        every { mockPlatformServices.llmOperations } returns mockk()
-        every { mockPlatformServices.eventListener } returns DevNull
-        val blackboard = InMemoryBlackboard().bind(IoBinding.DEFAULT_BINDING, UserInput("John Doe"))
-        every { mockAgentProcess.hasValue(any(), any(), any()) } answers {
-            blackboard.hasValue(
-                firstArg(),
-                secondArg(),
-                thirdArg(),
             )
+            pc.blackboard += InternalInput("John Doe")
+            val result = action.execute(pc)
+            assertEquals(ActionStatusCode.SUCCEEDED, result.status)
+            assertEquals(InternalOutput("John Doe"), pc.blackboard.lastResult())
         }
-        every { mockAgentProcess.getValue(any(), any(), any()) } answers {
-            blackboard.getValue(
-                firstArg(),
-                secondArg(),
-                thirdArg(),
-            )
-        }
-        every { mockAgentProcess.set(any(), any()) } answers {
-            blackboard.set(
-                firstArg(),
-                secondArg(),
-            )
-        }
-        every { mockAgentProcess.lastResult() } returns PersonWithReverseTool("John Doe")
 
-        val pc = ProcessContext(
-            platformServices = dummyPlatformServices(),
-            agentProcess = mockAgentProcess,
-        )
-        val result = action.execute(pc)
-        assertEquals(ActionStatusCode.SUCCEEDED, result.status)
-        assertEquals(PersonWithReverseTool("John Doe"), pc.blackboard.lastResult())
-    }
-
-    @Test
-    fun `transformer action with 2 args invocation`() {
-        val reader = AgentMetadataReader()
-        val metadata = reader.createAgentMetadata(AgentWithOneTransformerActionWith2ArgsOnly())
-        assertNotNull(metadata)
-        assertEquals(1, metadata!!.actions.size)
-        val action = metadata.actions.first()
-        val agent = mockk<CoreAgent>()
-        every { agent.jvmTypes } returns listOf(
-            PersonWithReverseTool::class.java,
-            UserInput::class.java
-        ).map { JvmType(it) }
-        val mockAgentProcess = mockk<AgentProcess>()
-        every { mockAgentProcess.agent } returns agent
-        val mockPlatformServices = mockk<PlatformServices>()
-        every { mockPlatformServices.llmOperations } returns mockk()
-        every { mockPlatformServices.eventListener } returns DevNull
-
-        val blackboard = InMemoryBlackboard()
-        blackboard += UserInput("John Doe")
-        blackboard += ("task" to Task("task"))
-        every { mockAgentProcess.hasValue(any(), any(), any()) } answers {
-            blackboard.hasValue(
-                firstArg(),
-                secondArg(),
-                thirdArg(),
+        @Test
+        fun `action invocation with OperationPayload`() {
+            val reader = AgentMetadataReader()
+            val metadata = reader.createAgentMetadata(OneTransformerActionTakingOperationPayload())
+            assertNotNull(metadata)
+            assertEquals(1, metadata!!.actions.size)
+            val action = metadata.actions.first()
+            assertEquals(
+                1,
+                action.inputs.size,
+                "Should not consider payload as input: ${action.inputs}",
             )
-        }
-        every { mockAgentProcess.getValue(any(), any(), any()) } answers {
-            blackboard.getValue(
-                firstArg(),
-                secondArg(),
-                thirdArg(),
+            assertEquals(
+                UserInput::class.java.name,
+                action.inputs.single().type,
+                "Should not consider payload as input",
             )
-        }
-        every { mockAgentProcess.set(any(), any()) } answers {
-            blackboard.set(
-                firstArg(),
-                secondArg(),
+            val agent = mockk<CoreAgent>()
+            every { agent.jvmTypes } returns listOf(
+                PersonWithReverseTool::class.java,
+                UserInput::class.java
+            ).map { JvmType(it) }
+            val mockAgentProcess = mockk<AgentProcess>()
+            every { mockAgentProcess.agent } returns agent
+            val mockPlatformServices = mockk<PlatformServices>()
+            every { mockPlatformServices.llmOperations } returns mockk()
+            every { mockPlatformServices.eventListener } returns DevNull
+            val blackboard = InMemoryBlackboard().bind(IoBinding.DEFAULT_BINDING, UserInput("John Doe"))
+            every { mockAgentProcess.hasValue(any(), any(), any()) } answers {
+                blackboard.hasValue(
+                    firstArg(),
+                    secondArg(),
+                    thirdArg(),
+                )
+            }
+            every { mockAgentProcess.getValue(any(), any(), any()) } answers {
+                blackboard.getValue(
+                    firstArg(),
+                    secondArg(),
+                    thirdArg(),
+                )
+            }
+            every { mockAgentProcess.set(any(), any()) } answers {
+                blackboard.set(
+                    firstArg(),
+                    secondArg(),
+                )
+            }
+            every { mockAgentProcess.lastResult() } returns PersonWithReverseTool("John Doe")
+
+            val pc = ProcessContext(
+                platformServices = dummyPlatformServices(),
+                agentProcess = mockAgentProcess,
             )
+            val result = action.execute(pc)
+            assertEquals(ActionStatusCode.SUCCEEDED, result.status)
+            assertEquals(PersonWithReverseTool("John Doe"), pc.blackboard.lastResult())
         }
-        every { mockAgentProcess.lastResult() } returns PersonWithReverseTool("John Doe")
 
-        val pc = ProcessContext(
-            platformServices = dummyPlatformServices(),
-            agentProcess = mockAgentProcess,
-        )
-        val result = action.execute(pc)
-        assertEquals(ActionStatusCode.SUCCEEDED, result.status)
-        assertEquals(PersonWithReverseTool("John Doe"), pc.blackboard.lastResult())
-    }
+        @Test
+        fun `transformer action with 2 args invocation`() {
+            val reader = AgentMetadataReader()
+            val metadata = reader.createAgentMetadata(AgentWithOneTransformerActionWith2ArgsOnly())
+            assertNotNull(metadata)
+            assertEquals(1, metadata!!.actions.size)
+            val action = metadata.actions.first()
+            val agent = mockk<CoreAgent>()
+            every { agent.jvmTypes } returns listOf(
+                PersonWithReverseTool::class.java,
+                UserInput::class.java
+            ).map { JvmType(it) }
+            val mockAgentProcess = mockk<AgentProcess>()
+            every { mockAgentProcess.agent } returns agent
+            val mockPlatformServices = mockk<PlatformServices>()
+            every { mockPlatformServices.llmOperations } returns mockk()
+            every { mockPlatformServices.eventListener } returns DevNull
 
-    @Test
-    fun `transformer action with 2 args invocation and ai parameter`() {
-        val reader = AgentMetadataReader()
-        val metadata = reader.createAgentMetadata(AgentWithOneTransformerActionWith2ArgsOnlyAndAiParameter())
-        assertNotNull(metadata)
-        assertEquals(1, metadata!!.actions.size)
-        val action = metadata.actions.first()
-        val agent = mockk<CoreAgent>()
-        every { agent.jvmTypes } returns listOf(
-            PersonWithReverseTool::class.java,
-            UserInput::class.java
-        ).map { JvmType(it) }
-        val mockAgentProcess = mockk<AgentProcess>()
-        every { mockAgentProcess.agent } returns agent
-        val mockPlatformServices = mockk<PlatformServices>()
-        every { mockPlatformServices.llmOperations } returns mockk()
-        every { mockPlatformServices.eventListener } returns DevNull
+            val blackboard = InMemoryBlackboard()
+            blackboard += UserInput("John Doe")
+            blackboard += ("task" to Task("task"))
+            every { mockAgentProcess.hasValue(any(), any(), any()) } answers {
+                blackboard.hasValue(
+                    firstArg(),
+                    secondArg(),
+                    thirdArg(),
+                )
+            }
+            every { mockAgentProcess.getValue(any(), any(), any()) } answers {
+                blackboard.getValue(
+                    firstArg(),
+                    secondArg(),
+                    thirdArg(),
+                )
+            }
+            every { mockAgentProcess.set(any(), any()) } answers {
+                blackboard.set(
+                    firstArg(),
+                    secondArg(),
+                )
+            }
+            every { mockAgentProcess.lastResult() } returns PersonWithReverseTool("John Doe")
 
-        val blackboard = InMemoryBlackboard()
-        blackboard += UserInput("John Doe")
-        blackboard += ("task" to Task("task"))
-        every { mockAgentProcess.hasValue(any(), any(), any()) } answers {
-            blackboard.hasValue(
-                firstArg(),
-                secondArg(),
-                thirdArg(),
+            val pc = ProcessContext(
+                platformServices = dummyPlatformServices(),
+                agentProcess = mockAgentProcess,
             )
+            val result = action.execute(pc)
+            assertEquals(ActionStatusCode.SUCCEEDED, result.status)
+            assertEquals(PersonWithReverseTool("John Doe"), pc.blackboard.lastResult())
         }
-        every { mockAgentProcess.getValue(any(), any(), any()) } answers {
-            blackboard.getValue(
-                firstArg(),
-                secondArg(),
-                thirdArg(),
-            )
-        }
-        every { mockAgentProcess.set(any(), any()) } answers {
-            blackboard.set(
-                firstArg(),
-                secondArg(),
-            )
-        }
-        every { mockAgentProcess.lastResult() } returns PersonWithReverseTool("John Doe")
 
-        val pc = ProcessContext(
-            platformServices = dummyPlatformServices(),
-            agentProcess = mockAgentProcess,
-        )
-        val result = action.execute(pc)
-        assertEquals(ActionStatusCode.SUCCEEDED, result.status)
-        assertEquals(PersonWithReverseTool("John Doe"), pc.blackboard.lastResult())
-    }
+        @Test
+        fun `transformer action with 2 args invocation and ai parameter`() {
+            val reader = AgentMetadataReader()
+            val metadata = reader.createAgentMetadata(AgentWithOneTransformerActionWith2ArgsOnlyAndAiParameter())
+            assertNotNull(metadata)
+            assertEquals(1, metadata!!.actions.size)
+            val action = metadata.actions.first()
+            val agent = mockk<CoreAgent>()
+            every { agent.jvmTypes } returns listOf(
+                PersonWithReverseTool::class.java,
+                UserInput::class.java
+            ).map { JvmType(it) }
+            val mockAgentProcess = mockk<AgentProcess>()
+            every { mockAgentProcess.agent } returns agent
+            val mockPlatformServices = mockk<PlatformServices>()
+            every { mockPlatformServices.llmOperations } returns mockk()
+            every { mockPlatformServices.eventListener } returns DevNull
 
-    @Test
-    @Disabled
-    fun `consumer action with no parameters`() {
+            val blackboard = InMemoryBlackboard()
+            blackboard += UserInput("John Doe")
+            blackboard += ("task" to Task("task"))
+            every { mockAgentProcess.hasValue(any(), any(), any()) } answers {
+                blackboard.hasValue(
+                    firstArg(),
+                    secondArg(),
+                    thirdArg(),
+                )
+            }
+            every { mockAgentProcess.getValue(any(), any(), any()) } answers {
+                blackboard.getValue(
+                    firstArg(),
+                    secondArg(),
+                    thirdArg(),
+                )
+            }
+            every { mockAgentProcess.set(any(), any()) } answers {
+                blackboard.set(
+                    firstArg(),
+                    secondArg(),
+                )
+            }
+            every { mockAgentProcess.lastResult() } returns PersonWithReverseTool("John Doe")
+
+            val pc = ProcessContext(
+                platformServices = dummyPlatformServices(),
+                agentProcess = mockAgentProcess,
+            )
+            val result = action.execute(pc)
+            assertEquals(ActionStatusCode.SUCCEEDED, result.status)
+            assertEquals(PersonWithReverseTool("John Doe"), pc.blackboard.lastResult())
+        }
     }
 
 
@@ -618,7 +617,6 @@ class AgentMetadataReaderActionTest {
         @Test
         @Disabled("not yet implemented")
         fun `handles conflicting tool definitions in multiple domain objects`() {
-
         }
 
     }
