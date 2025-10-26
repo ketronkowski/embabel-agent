@@ -75,6 +75,7 @@ interface LlmInvocationHistory {
 }
 
 /**
+ * Invocation we made to an LLM
  * @param agentName name of the agent, if known
  */
 data class LlmInvocation(
