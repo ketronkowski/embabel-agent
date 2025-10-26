@@ -22,9 +22,14 @@ import com.embabel.agent.identity.User
 /**
  * Simplest possible conversation session implementation
  * Responsible for keeping its conversation up to date
+ * via Conversation.addMessage(),
+ * and for sending messages to the OutputChannel.
  */
 interface ChatSession {
 
+    /**
+     * OutputChannel to send messages to.
+     */
     val outputChannel: OutputChannel
 
     /**

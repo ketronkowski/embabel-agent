@@ -122,7 +122,8 @@ class AgentProcessChatbot(
 }
 
 /**
- * Many instances for one AgentProcess
+ * Many instances for one AgentProcess.
+ * Stores conversation in AgentProcess blackboard.
  */
 private class AgentProcessChatSession(
     private val agentProcess: AgentProcess,
