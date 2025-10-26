@@ -56,10 +56,9 @@ class MultiTransformationAction<O : Any>(
     qos = qos,
 ) {
 
-    override val domainTypes: Collection<DomainType>
+    override val domainTypes: Collection<JvmType>
         get() = JvmType.fromClasses(inputClasses + outputClass)
 
-    @Suppress("UNCHECKED_CAST")
     override fun execute(
         processContext: ProcessContext,
     ): ActionStatus = ActionRunner.execute(processContext) {

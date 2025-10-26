@@ -23,7 +23,7 @@ class MultiTransformationActionTest {
 
     @Test
     fun `domainTypes should handle normal case correctly`() {
-        val action = MultiTransformationAction<String>(
+        val action = MultiTransformationAction(
             name = "testAction",
             inputs = emptySet(),
             inputClasses = listOf(String::class.java, Int::class.java),
@@ -33,7 +33,7 @@ class MultiTransformationActionTest {
 
         val domainTypes = action.domainTypes
         assertNotNull(domainTypes, "domainTypes should not be null")
-        assertEquals(3, domainTypes.size, "Should have 3 domain types")
+        assertEquals(2, domainTypes.size, "Should have 2 domain types")
 
         val typeNames = domainTypes.map { it.name }.toSet()
         assertTrue(typeNames.contains("java.lang.String"), "Should contain String type")

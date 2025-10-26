@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonClassDescription
 import com.fasterxml.jackson.annotation.JsonCreator
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
+import org.slf4j.LoggerFactory
 
 /**
  * Typed backed by a JVM object
@@ -29,6 +30,8 @@ data class JvmType @JsonCreator constructor(
     @param:JsonProperty("className")
     val className: String,
 ) : DomainType {
+
+    constructor(clazz: Class<*>) : this(clazz.name)
 
     @get:JsonIgnore
     override val creationPermitted: Boolean
@@ -53,8 +56,6 @@ data class JvmType @JsonCreator constructor(
     val clazz: Class<*> by lazy {
         Class.forName(className)
     }
-
-    constructor(clazz: Class<*>) : this(clazz.name)
 
     @get:JsonIgnore
     override val name: String
@@ -92,6 +93,45 @@ data class JvmType @JsonCreator constructor(
             is JvmType -> other.clazz.isAssignableFrom(clazz)
             is DynamicType -> false
         }
+
+    override fun children(additionalBasePackages: Collection<String>): Collection<JvmType> {
+        val basePackagesToUse = additionalBasePackages.ifEmpty {
+            listOf(clazz.packageName)
+        }
+        val scanner = org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider(false)
+        scanner.addIncludeFilter(org.springframework.core.type.filter.AssignableTypeFilter(clazz))
+
+        val result = mutableListOf<JvmType>()
+
+        for (packageName in basePackagesToUse) {
+            try {
+                val candidateComponents = scanner.findCandidateComponents(packageName)
+                for (beanDef in candidateComponents) {
+                    try {
+                        val className = beanDef.beanClassName
+                        if (className != null && className != clazz.name) {
+                            val candidateClass = Class.forName(className)
+                            // Exclude the class itself and ensure it's actually assignable
+                            if (candidateClass != clazz && clazz.isAssignableFrom(candidateClass)) {
+                                result.add(JvmType(candidateClass))
+                            }
+                        }
+                    } catch (e: ClassNotFoundException) {
+                        // Skip classes that can't be loaded
+                        JvmType.logger.debug("Could not load class: ${beanDef.beanClassName}", e)
+                    } catch (e: Exception) {
+                        // Skip classes that cause other issues
+                        JvmType.logger.debug("Error processing class: ${beanDef.beanClassName}", e)
+                    }
+                }
+            } catch (e: Exception) {
+                // Skip packages that can't be scanned
+                JvmType.logger.debug("Could not scan package: $packageName", e)
+            }
+        }
+
+        return result.toSet()
+    }
 
     @get:JsonIgnore
     override val ownProperties: List<PropertyDefinition>
@@ -170,22 +210,24 @@ data class JvmType @JsonCreator constructor(
 
     companion object {
 
+        private val logger = LoggerFactory.getLogger(JvmType::class.java)
+
         /**
          * May need to break up with SomeOf
          */
         fun fromClasses(
             classes: Collection<Class<*>>,
-        ): List<JvmType> {
+        ): Collection<JvmType> {
             return classes.flatMap {
                 if (SomeOf::class.java.isAssignableFrom(it)) {
-                    SomeOf.Companion.eligibleFields(it)
+                    SomeOf.eligibleFields(it)
                         .map { field ->
                             JvmType(field.type)
                         }
                 } else {
                     listOf(JvmType(it))
                 }
-            }
+            }.toSet()
         }
     }
 

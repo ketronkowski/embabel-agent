@@ -19,6 +19,7 @@ import com.embabel.agent.api.annotation.AchievesGoal
 import com.embabel.agent.api.annotation.Action
 import com.embabel.agent.api.annotation.Agent
 import com.embabel.agent.domain.io.UserInput
+import com.embabel.common.util.loggerFor
 
 sealed class Intent
 class BillingIntent : Intent()
@@ -33,36 +34,35 @@ data class IntentClassificationSuccess(val text: String)
 class IntentReceptionAgent() {
 
     @Action
-    fun classifyIntent(userInput: UserInput): Intent =
+    fun classifyIntent(userInput: UserInput): Intent? =
         when (userInput.content) {
             "billing" -> BillingIntent()
             "sales" -> SalesIntent()
             "service" -> ServiceIntent()
-            else -> throw IllegalArgumentException("Unknown desire: $userInput")
+            else -> {
+                loggerFor<IntentReceptionAgent>().warn("Unknown intent: $userInput")
+                null
+            }
         }
 
-    @Action()
+    @Action
     fun billingAction(intent: BillingIntent): IntentClassificationSuccess {
-        println("This is the billing intent: $intent")
         return IntentClassificationSuccess("billing")
     }
 
-    @Action()
+    @Action
     fun salesAction(intent: SalesIntent): IntentClassificationSuccess {
-        println("This is the sales intent: $intent")
         return IntentClassificationSuccess("sales")
     }
 
-    @Action()
+    @Action
     fun serviceAction(intent: ServiceIntent): IntentClassificationSuccess {
-        println("This is the service intent: $intent")
         return IntentClassificationSuccess("service")
     }
 
     @AchievesGoal(description = "The department has been determined")
-    @Action()
+    @Action
     fun success(success: IntentClassificationSuccess): IntentClassificationSuccess {
-        println(success)
-        return IntentClassificationSuccess("We did it")
+        return success
     }
 }

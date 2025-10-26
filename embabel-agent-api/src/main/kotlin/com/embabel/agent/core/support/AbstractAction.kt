@@ -83,13 +83,24 @@ abstract class AbstractAction(
             conditions
         }
 
-    @JsonIgnore
-    override val effects: EffectSpec = run {
-        val conditions = post.associateWith { ConditionDetermination(true) }.toMutableMap()
-        outputs.forEach { output ->
-            conditions[output.value] = ConditionDetermination(true)
+    override val effects: EffectSpec
+        get() {
+            val conditions = post.associateWith { ConditionDetermination(true) }.toMutableMap()
+            outputs.forEach { output ->
+                val jvmType = output.resolveJvmType()
+                if (jvmType == null) {
+                    // Just take the type at face value
+                    conditions[output.value] = ConditionDetermination(true)
+                } else {
+                    // We have a JVM type. We need to look for subclasses
+                    // because these are also possible outputs and hence postconditions
+                    val possibleOutputTypes = jvmType.children() + jvmType
+                    possibleOutputTypes.forEach { pot ->
+                        conditions["${output.name}:${pot.name}"] = ConditionDetermination(true)
+                    }
+                }
+            }
+            conditions += Rerun.hasRunCondition(this) to ConditionDetermination(true)
+            return conditions
         }
-        conditions += Rerun.hasRunCondition(this) to ConditionDetermination(true)
-        conditions
-    }
 }

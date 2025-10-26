@@ -68,6 +68,16 @@ sealed interface DomainType : HasInfoString, NamedAndDescribed {
     val parents: List<DomainType>
 
     /**
+     * Get all descendant types from the classpath.
+     * For JvmType: scans the classpath for classes that extend or implement this type.
+     * For DynamicType: returns empty list as dynamic types don't have classpath descendants.
+     * @param additionalBasePackages additional base packages to scan for descendants
+     * We always include the package of this type as a base package.
+     * Don't add packages near the top of the classpath, such as "com", as this can increase scan time.
+     */
+    fun children(additionalBasePackages: Collection<String> = listOf()): Collection<DomainType>
+
+    /**
      * Is instance creation permitted?
      * Or is this reference data?
      */

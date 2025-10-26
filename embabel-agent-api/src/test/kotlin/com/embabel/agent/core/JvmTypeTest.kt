@@ -17,6 +17,9 @@ package com.embabel.agent.core
 
 import com.fasterxml.jackson.annotation.JsonClassDescription
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class JvmTypeTest {
@@ -278,11 +281,114 @@ class JvmTypeTest {
         assert(labels.contains("Vehicle"))
     }
 
+    // Test classes for children method
+    abstract class TestVehicle
+
+    class TestCar : TestVehicle()
+
+    class TestMotorcycle : TestVehicle()
+
+    interface TestFlyable
+
+    class TestAirplane : TestVehicle(), TestFlyable
+
+    class TestBird : TestFlyable
+
+    @Test
+    fun `should find children classes in current package`() {
+        val vehicleType = JvmType(TestVehicle::class.java)
+        val children = vehicleType.children(listOf("com.embabel.agent.core"))
+
+        assertNotNull(children, "Children should not be null")
+        assertTrue(children.isNotEmpty(), "Should find some children")
+
+        val childrenNames = children.map { it.name }.toSet()
+        assertTrue(childrenNames.contains(TestCar::class.java.name), "Should find TestCar")
+        assertTrue(childrenNames.contains(TestMotorcycle::class.java.name), "Should find TestMotorcycle")
+        assertTrue(childrenNames.contains(TestAirplane::class.java.name), "Should find TestAirplane")
+        assertFalse(childrenNames.contains(TestVehicle::class.java.name), "Should not include the parent class itself")
+    }
+
+    @Test
+    fun `should find interface implementers`() {
+        val flyableType = JvmType(TestFlyable::class.java)
+        val children = flyableType.children(listOf("com.embabel.agent.core"))
+
+        assertNotNull(children, "Children should not be null")
+        assertTrue(children.isNotEmpty(), "Should find some children")
+
+        val childrenNames = children.map { it.name }.toSet()
+        assertTrue(childrenNames.contains(TestAirplane::class.java.name), "Should find TestAirplane")
+        assertTrue(childrenNames.contains(TestBird::class.java.name), "Should find TestBird")
+        assertFalse(childrenNames.contains(TestFlyable::class.java.name), "Should not include the interface itself")
+    }
+
+    @Test
+    fun `should return empty list for leaf classes`() {
+        val dogType = JvmType(Dog::class.java)
+        val children = dogType.children(listOf("com.embabel.agent.core"))
+
+        assertNotNull(children, "Children should not be null")
+        assertTrue(children.isEmpty(), "Leaf classes should have no children")
+    }
+
+    @Test
+    fun `should handle non-existent packages gracefully`() {
+        val vehicleType = JvmType(TestVehicle::class.java)
+        val children = vehicleType.children(listOf("com.nonexistent.package"))
+
+        assertNotNull(children, "Children should not be null")
+        assertTrue(children.isEmpty(), "Should return empty list for non-existent packages")
+    }
+
+    @Test
+    fun `should find children across multiple packages`() {
+        val vehicleType = JvmType(TestVehicle::class.java)
+        val children = vehicleType.children(listOf("com.embabel.agent.core", "com.embabel"))
+
+        assertNotNull(children, "Children should not be null")
+        // Should at least find the test classes in the current package
+        val childrenNames = children.map { it.name }.toSet()
+        assertTrue(childrenNames.contains(TestCar::class.java.name), "Should find TestCar")
+    }
+
+    @Test
+    fun `should handle java standard library classes`() {
+        val listType = JvmType(java.util.List::class.java)
+        val children = listType.children(listOf("java.util"))
+
+        assertNotNull(children, "Children should not be null")
+        // Note: Spring's classpath scanner might not find all standard library classes
+        // This is expected behavior as it's designed for application classes
+        // Just verify the method doesn't throw exceptions
+        println("Found ${children.size} children of List: ${children.map { it.name }}")
+    }
+
+    @Test
+    fun `should return distinct results`() {
+        val vehicleType = JvmType(TestVehicle::class.java)
+        // Use overlapping packages that might return duplicates
+        val children = vehicleType.children(listOf("com.embabel.agent.core", "com.embabel.agent"))
+
+        assertNotNull(children, "Children should not be null")
+        val childrenNames = children.map { it.name }
+        assertEquals(childrenNames.size, childrenNames.distinct().size, "Should not have duplicate children")
+    }
+
+    @Test
+    fun `should work with concrete parent classes`() {
+        val animalType = JvmType(Animal::class.java)
+        val children = animalType.children(listOf("com.embabel.agent.core"))
+
+        assertNotNull(children, "Children should not be null")
+        val childrenNames = children.map { it.name }.toSet()
+        assertTrue(childrenNames.contains(Horse::class.java.name), "Should find Horse as child of Animal")
+    }
+
     @Test
     fun `should capitalize label from fully qualified class name`() {
         val type = JvmType(String::class.java)
         assertEquals("String", type.ownLabel)
         assert(type.labels.contains("String"))
     }
-
 }

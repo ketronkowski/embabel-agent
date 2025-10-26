@@ -52,7 +52,7 @@ interface Action : DataFlowStep, GoapAction, ActionRunner, DataDictionary, ToolG
             (inputs + outputs)
                 .map {
                     referencedType(it, this)
-                }
+                }.toSet()
 
     private fun referencedType(
         binding: IoBinding,

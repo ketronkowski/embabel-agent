@@ -41,6 +41,11 @@ data class DynamicType(
 
     override fun isAssignableTo(other: DomainType): Boolean = other.name == name
 
+    override fun children(additionalBasePackages: Collection<String>): Collection<DomainType> {
+        // Dynamic types don't have classpath descendants
+        return emptySet()
+    }
+
     fun withProperty(
         property: PropertyDefinition,
     ): DynamicType {

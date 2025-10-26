@@ -21,13 +21,11 @@ import com.embabel.agent.core.ProcessOptions
 import com.embabel.agent.domain.io.UserInput
 import com.embabel.agent.testing.integration.IntegrationTestUtils
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
 /**
  * Test for routing via subclassing.
  */
-@Disabled("Known issue: see Issue #631")
 class RoutingViaSubclassTest {
 
     @Test
