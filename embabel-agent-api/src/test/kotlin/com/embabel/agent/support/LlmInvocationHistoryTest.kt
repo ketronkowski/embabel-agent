@@ -18,6 +18,7 @@ package com.embabel.agent.support
 import com.embabel.agent.api.common.ToolsStats
 import com.embabel.agent.core.LlmInvocation
 import com.embabel.agent.core.LlmInvocationHistory
+import com.embabel.agent.core.support.toEmbabelUsage
 import com.embabel.common.ai.model.Llm
 import com.embabel.common.ai.model.PricingModel
 import io.mockk.every
@@ -61,7 +62,7 @@ class LlmInvocationHistoryTest {
             llm = mockLlm,
             timestamp = Instant.now(),
             runningTime = Duration.ofMillis(100),
-            usage = usage,
+            usage = usage.toEmbabelUsage(),
         )
         assertEquals(0.0, llmih.cost(), "No cost as it's an all you can eat model")
         assertEquals(setOf(mockLlm), llmih.modelsUsed().toSet(), "Model used")

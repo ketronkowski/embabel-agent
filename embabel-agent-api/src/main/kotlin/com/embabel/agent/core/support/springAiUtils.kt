@@ -16,6 +16,7 @@
 package com.embabel.agent.core.support
 
 import com.embabel.agent.api.common.ToolObject
+import com.embabel.agent.core.Usage
 import org.springframework.ai.support.ToolCallbacks
 import org.springframework.ai.tool.ToolCallback
 import org.springframework.ai.tool.definition.DefaultToolDefinition
@@ -70,4 +71,12 @@ class RenamedToolCallback(
         DefaultToolDefinition(newName, delegate.toolDefinition.description(), delegate.toolDefinition.inputSchema())
 
     override fun call(toolInput: String): String = delegate.call(toolInput)
+}
+
+fun org.springframework.ai.chat.metadata.Usage.toEmbabelUsage(): Usage {
+    return Usage(
+        promptTokens = this.promptTokens,
+        completionTokens = this.completionTokens,
+        nativeUsage = this.nativeUsage,
+    )
 }

@@ -17,6 +17,7 @@ package com.embabel.agent.spi.support.springai
 
 import com.embabel.agent.core.LlmInvocation
 import com.embabel.agent.core.support.AbstractLlmOperations
+import com.embabel.agent.core.support.toEmbabelUsage
 import com.embabel.agent.event.LlmRequestEvent
 import com.embabel.agent.spi.AutoLlmSelectionCriteriaResolver
 import com.embabel.agent.spi.LlmCall
@@ -230,7 +231,7 @@ internal class ChatClientLlmOperations(
         llmRequestEvent?.let {
             val llmi = LlmInvocation(
                 llm = llm,
-                usage = chatResponse.metadata.usage,
+                usage = chatResponse.metadata.usage.toEmbabelUsage(),
                 agentName = it.agentProcess.agent.name,
                 timestamp = it.timestamp,
                 runningTime = Duration.between(it.timestamp, Instant.now()),

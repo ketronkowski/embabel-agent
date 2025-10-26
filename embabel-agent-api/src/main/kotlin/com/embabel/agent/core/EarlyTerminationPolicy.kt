@@ -114,7 +114,7 @@ private data class MaxTokensEarlyTerminationPolicy(
     private val maxTokens: Int,
 ) : EarlyTerminationPolicy {
     override fun shouldTerminate(agentProcess: AgentProcess): EarlyTermination? =
-        if (agentProcess.usage().totalTokens >= maxTokens) {
+        if ((agentProcess.usage().totalTokens ?: 0) >= maxTokens) {
             EarlyTermination(agentProcess, "Max tokens of $maxTokens reached", this)
         } else null
 

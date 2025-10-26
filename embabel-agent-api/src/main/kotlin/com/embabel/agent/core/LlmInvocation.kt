@@ -20,7 +20,6 @@ import com.embabel.common.ai.model.Llm
 import com.embabel.common.core.types.Timed
 import com.embabel.common.core.types.Timestamped
 import org.springframework.ai.chat.metadata.DefaultUsage
-import org.springframework.ai.chat.metadata.Usage
 import java.time.Duration
 import java.time.Instant
 
@@ -50,9 +49,9 @@ interface LlmInvocationHistory {
      * Look in the list for more details about what tokens were spent where.
      */
     fun usage(): Usage {
-        val promptTokens = llmInvocations.sumOf { it.usage.promptTokens }
-        val completionTokens = llmInvocations.sumOf { it.usage.completionTokens }
-        return DefaultUsage(promptTokens, completionTokens)
+        val promptTokens = llmInvocations.sumOf { it.usage.promptTokens ?: 0 }
+        val completionTokens = llmInvocations.sumOf { it.usage.completionTokens ?: 0 }
+        return Usage(promptTokens, completionTokens, null)
     }
 
     fun costInfoString(verbose: Boolean): String {
@@ -75,6 +74,22 @@ interface LlmInvocationHistory {
 }
 
 /**
+ * LLM usage data
+ */
+data class Usage(
+    val promptTokens: Int?,
+    val completionTokens: Int?,
+    val nativeUsage: Any?,
+) {
+
+    val totalTokens: Int?
+        get() = when {
+            promptTokens == null && completionTokens == null -> null
+            else -> (promptTokens ?: 0) + (completionTokens ?: 0)
+        }
+}
+
+/**
  * Invocation we made to an LLM
  * @param agentName name of the agent, if known
  */
@@ -89,5 +104,10 @@ data class LlmInvocation(
     /**
      * Dollar cost of this interaction.
      */
-    fun cost(): Double = llm.pricingModel?.costOf(usage) ?: 0.0
+    fun cost(): Double = llm.pricingModel?.costOf(
+        DefaultUsage(
+            usage.promptTokens ?: 0,
+            usage.completionTokens ?: 0,
+        )
+    ) ?: 0.0
 }
