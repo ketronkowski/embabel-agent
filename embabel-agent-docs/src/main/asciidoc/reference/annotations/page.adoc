@@ -81,7 +81,8 @@ Action methods normally return a single domain object.
 
 Nullable return types are allowed.
 Returning null will trigger replanning.
-There may or not be an alternative path from that point, but it won't be what the planner was trying to achieve.
+There may or not be an alternative path from that point, but it won't be what the planner
+was previously trying to achieve.
 
 //TODO: (jasper notes) A diagram showing this would be super cool here.
 
@@ -121,6 +122,39 @@ This enables routing scenarios in an elegant manner.
 
 TIP: Multiple fields of the `SomeOf` instance may be non-null and this is not an error.
 It may enable the most appropriate routing.
+
+Routing can also be achieved via subtypes, as in the following example:
+
+[source,kotlin]
+----
+@Action
+fun classifyIntent(userInput: UserInput): Intent? = // <1>
+    when (userInput.content) {
+        "billing" -> BillingIntent()
+        "sales" -> SalesIntent()
+        "service" -> ServiceIntent()
+        else -> {
+            loggerFor<IntentReceptionAgent>().warn("Unknown intent: $userInput")
+            null
+        }
+    }
+
+@Action
+fun billingAction(intent: BillingIntent): IntentClassificationSuccess { // <2>
+    return IntentClassificationSuccess("billing")
+}
+
+@Action
+fun salesAction(intent: SalesIntent): IntentClassificationSuccess {
+    return IntentClassificationSuccess("sales")
+}
+
+// ...
+----
+
+<1> Classification action returns supertype `Intent`. Real classification would likely use an LLM.
+<2> `billingAction` and other action methods takes a subtype of `Intent`, so will only be invoked if the classification action returned that subtype.
+
 
 ==== Action method implementation
 
