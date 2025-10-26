@@ -24,6 +24,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertNotNull
 import kotlin.test.assertTrue
 
 /**
@@ -36,6 +37,9 @@ class AgenticEventSerializationTest {
     fun `test process events can be serialized`() {
         val om = jacksonObjectMapper().registerModule(JavaTimeModule())
         val fails = mutableListOf<String>()
+        var agentProcessPlanFormulatedEventString: String? = null
+        var agentProcessCompletedEventString: String? = null
+
         val serializingListener = object : AgenticEventListener {
             var count = 0
             override fun onProcessEvent(event: AgentProcessEvent) {
@@ -47,8 +51,11 @@ class AgenticEventSerializationTest {
                 loggerFor<AgenticEventSerializationTest>().info("Serialized event: $s")
                 when (event) {
                     is AgentProcessPlanFormulatedEvent -> {
-                        assertTrue(s.contains("\"plan\""), "Plan is required")
-                        assertTrue(s.contains("\"goal\""), "Goal is required")
+                        agentProcessPlanFormulatedEventString = s
+                    }
+
+                    is AgentProcessCompletedEvent -> {
+                        agentProcessCompletedEventString = s
                     }
 
                     else -> {
@@ -58,6 +65,7 @@ class AgenticEventSerializationTest {
                 assertTrue(s.contains("\"processId\""), "Process id is required")
             }
         }
+
         val saver = EventSavingAgenticEventListener()
         val ap = dummyAgentPlatform(listener = AgenticEventListener.of(saver, serializingListener))
         // If it doesn't die we're happy
@@ -71,6 +79,25 @@ class AgenticEventSerializationTest {
             saver.processEvents.filterIsInstance<ObjectBindingEvent>().isNotEmpty(),
             "Object binding events were emitted"
         )
+
+        assertNotNull(agentProcessPlanFormulatedEventString)
+        assertTrue(
+            agentProcessPlanFormulatedEventString.contains("\"plan\""),
+            "Plan is required in $agentProcessCompletedEventString"
+        )
+        assertTrue(
+            agentProcessPlanFormulatedEventString.contains("\"goal\""),
+            "Goal is required in $agentProcessCompletedEventString"
+        )
+        assertNotNull(agentProcessCompletedEventString)
+        assertTrue(
+            agentProcessCompletedEventString.contains("\"history\""),
+            "History is required in $agentProcessCompletedEventString"
+        )
+//        assertTrue(
+//            agentProcessCompletedEventString.contains("\"goal\""),
+//            "Goal is required in $agentProcessCompletedEventString"
+//        )
     }
 
     @Test
