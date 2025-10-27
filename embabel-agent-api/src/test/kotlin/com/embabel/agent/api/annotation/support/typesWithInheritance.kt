@@ -51,6 +51,36 @@ class GetsFromBlackboardInheritedInterfaceAction : GetFromBlackboardInterfaceSup
 
 }
 
+interface GetFromBlackboardInterfaceSuperActionOverride {
+
+    @Action(post = ["done"])
+    fun frog(): Frog
+}
+
+@Agent(description = "thing")
+class GetsFromBlackboardInheritedInterfaceActionOverride : GetFromBlackboardInterfaceSuperActionOverride {
+
+    override fun frog(): Frog {
+        return Frog("Kermit")
+    }
+
+    @Condition
+    fun done(context: OperationContext): Boolean {
+        return context.last(Frog::class.java) != null
+    }
+
+    @AchievesGoal(description = "Creating a prince from a frog")
+    @Action(pre = ["done"])
+    fun toPerson(
+        context: OperationContext,
+    ): PersonWithReverseTool {
+        // Would be better to declare a Frog parameter but that's not what we are testing
+        val frog = context.last<Frog>()!!
+        return PersonWithReverseTool(frog.name)
+    }
+
+}
+
 abstract class GetFromBlackboardClassSuperAction {
 
     @Action(post = ["done"])
@@ -61,6 +91,36 @@ abstract class GetFromBlackboardClassSuperAction {
 
 @Agent(description = "thing")
 class GetsFromBlackboardInheritedClassAction : GetFromBlackboardClassSuperAction() {
+
+    @Condition
+    fun done(context: OperationContext): Boolean {
+        return context.last(Frog::class.java) != null
+    }
+
+    @AchievesGoal(description = "Creating a prince from a frog")
+    @Action(pre = ["done"])
+    fun toPerson(
+        context: OperationContext,
+    ): PersonWithReverseTool {
+        // Would be better to declare a Frog parameter but that's not what we are testing
+        val frog = context.last<Frog>()!!
+        return PersonWithReverseTool(frog.name)
+    }
+
+}
+
+abstract class GetFromBlackboardClassSuperActionOverride {
+
+    @Action(post = ["done"])
+    abstract fun frog(): Frog
+}
+
+@Agent(description = "thing")
+class GetsFromBlackboardInheritedClassActionOverride : GetFromBlackboardClassSuperActionOverride() {
+
+    override fun frog(): Frog {
+        return Frog("Kermit")
+    }
 
     @Condition
     fun done(context: OperationContext): Boolean {

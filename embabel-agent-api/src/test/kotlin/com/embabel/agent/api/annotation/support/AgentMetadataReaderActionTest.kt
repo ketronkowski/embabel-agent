@@ -997,6 +997,20 @@ class AgentMetadataReaderActionTest {
             test(GetsFromBlackboardInheritedInterfaceAction())
         }
 
+        @Nested
+        @Disabled("We need to decide whether we permit overriding or not")
+        inner class Overrides {
+            @Test
+            fun `recognises Action annotations inherited and overridden from interface`() {
+                test(GetsFromBlackboardInheritedInterfaceActionOverride())
+            }
+
+            @Test
+            fun `recognises Action annotations inherited from class override`() {
+                test(GetsFromBlackboardInheritedClassActionOverride())
+            }
+        }
+
         @Test
         fun `recognises Action annotations inherited from class`() {
             test(GetsFromBlackboardInheritedClassAction())
