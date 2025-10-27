@@ -15,16 +15,20 @@
  */
 package com.embabel.chat.agent
 
-import com.embabel.agent.api.common.SomeOf
 import com.embabel.agent.channel.LoggingOutputChannelEvent
 import com.embabel.agent.channel.OutputChannel
 import com.embabel.agent.core.*
 import com.embabel.agent.event.AgenticEventListener
 import com.embabel.agent.event.progress.OutputChannelHighlightingEventListener
 import com.embabel.agent.identity.User
-import com.embabel.chat.*
+import com.embabel.chat.ChatSession
+import com.embabel.chat.Chatbot
+import com.embabel.chat.Conversation
+import com.embabel.chat.UserMessage
 import com.embabel.chat.support.InMemoryConversation
+import com.embabel.common.util.loggerFor
 import com.fasterxml.jackson.annotation.JsonPropertyDescription
+import com.fasterxml.jackson.annotation.JsonTypeInfo
 
 fun interface AgentSource {
 
@@ -39,22 +43,27 @@ fun interface ListenerProvider {
     ): List<AgenticEventListener>
 }
 
-data class ConversationTermination(
+/**
+ * Convenient supertype for chatbot agent returns
+ */
+@JsonTypeInfo(
+    use = JsonTypeInfo.Id.SIMPLE_NAME,
+    include = JsonTypeInfo.As.PROPERTY,
+    property = "type"
+)
+sealed interface ConversationStatus
+
+object ConversationContinues : ConversationStatus
+
+data class ConversationOver(
     @get:JsonPropertyDescription("Reason for conversation termination, e.g. 'user requested end of conversation', or 'conversation unsafe'")
     val reason: String,
-)
+) : ConversationStatus
 
-/**
- * Return from a chatbot agent action method
- */
-data class ChatbotReturn(
-    val assistantMessage: AssistantMessage? = null,
-    val conversationTermination: ConversationTermination? = null,
-) : SomeOf
 
 /**
  * Chatbot implementation backed by an AgentProcess
- * The AgentProcess must react to messages and respond on its output channel
+ * The AgentProcess must react to UserMessage and respond on its output channel
  * The AgentProcess can assume that the Conversation will be available in the blackboard,
  * and the latest UserMessage.
  * Action methods will often take precondition being that the last event
@@ -161,7 +170,12 @@ private class AgentProcessChatSession(
     ) {
         conversation.addMessage(userMessage)
         agentProcess.addObject(userMessage)
-        agentProcess.run()
+        val agentProcessRun = agentProcess.run()
+        loggerFor<AgentProcessChatSession>().info(
+            "Agent process {} run completed with status {}",
+            agentProcess.id,
+            agentProcessRun.status
+        )
     }
 
     companion object {

@@ -22,8 +22,9 @@ import com.embabel.agent.domain.io.UserInput
 import com.embabel.agent.event.logging.LoggingPersonality
 import com.embabel.agent.event.logging.personality.ColorPalette
 import com.embabel.agent.shell.config.ShellProperties
-import com.embabel.chat.agent.*
-import com.embabel.chat.agent.shell.TerminalServicesProcessWaitingHandler
+import com.embabel.chat.agent.AgentProcessChatbot
+import com.embabel.chat.agent.DefaultChatAgentBuilder
+import com.embabel.chat.agent.K9
 import com.embabel.common.ai.model.LlmOptions
 import com.embabel.common.ai.model.ModelProvider
 import com.embabel.common.util.bold
@@ -44,7 +45,6 @@ import kotlin.system.exitProcess
  */
 data class ShellConfig(
     val lineLength: Int = 140,
-    val chat: ChatConfig = ChatConfig(),
 )
 
 
@@ -111,41 +111,24 @@ class ShellCommands(
 
     @ShellMethod("Chat")
     fun chat(): String {
-        val processOptions = ProcessOptions(
-            verbosity = Verbosity(
-                debug = false,
-                showPrompts = true,
-                showLlmResponses = false,
-                showPlanning = true,
-            )
-        )
-        blackboard = processOptions.blackboard
+        val chatAgent = DefaultChatAgentBuilder(
+            autonomy = autonomy,
+            llm = LlmOptions.withAutoLlm(),
+            persona = K9,
+        ).build()
+        val chatbot = AgentProcessChatbot(agentPlatform, {
+            chatAgent
+        })
+        val chatSession = chatbot.createSession(user = null, outputChannel = terminalServices.outputChannel())
 
-        val goalChoiceApprover =
-            if (shellProperties.chat.confirmGoals) terminalServices else GoalChoiceApprover.APPROVE_ALL
-
-        val chatSession = AgentPlatformChatSession(
-            user = null,
-            planLister = planLister,
-            processOptions = processOptions,
-            outputChannel = terminalServices.outputChannel(),
-            responseGenerator = if (shellProperties.chat.bindConversation) AgentResponseGenerator(
-                agentPlatform = agentPlatform,
-                agent = DefaultChatAgentBuilder(
-                    autonomy = autonomy,
-                    persona = K9,
-                    llm = LlmOptions
-                        .withModel(shellProperties.chat.model)
-                        .withTemperature(null)
-                ).build()
-            ) else AutonomyResponseGenerator(
-                autonomy = autonomy,
-                goalChoiceApprover = goalChoiceApprover,
-                processWaitingHandler = TerminalServicesProcessWaitingHandler(terminalServices),
-                chatConfig = shellProperties.chat,
-            ),
-        )
-        return terminalServices.chat(chatSession = chatSession, welcome = null, colorPalette = colorPalette)
+        // Redirect logging to file during chat
+        val logRestorer = terminalServices.redirectLoggingToFile("chat-session")
+        try {
+            return terminalServices.chat(chatSession = chatSession, welcome = null, colorPalette = colorPalette)
+        } finally {
+            // Restore regular logging when chat exits
+            logRestorer()
+        }
     }
 
     @ShellMethod("List agents")
