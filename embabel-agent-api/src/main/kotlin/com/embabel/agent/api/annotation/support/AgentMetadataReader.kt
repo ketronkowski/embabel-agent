@@ -107,8 +107,8 @@ data class AgenticInfo(
 class AgentMetadataReader(
     private val actionMethodManager: ActionMethodManager = DefaultActionMethodManager(),
     private val nameGenerator: MethodDefinedOperationNameGenerator = MethodDefinedOperationNameGenerator(),
-    private val agentStructureValidator: AgentStructureValidator,
-    private val goapPathToCompletionValidator: GoapPathToCompletionValidator,
+    agentStructureValidator: AgentStructureValidator,
+    goapPathToCompletionValidator: GoapPathToCompletionValidator,
 ) {
     // test-friendly constructor
     constructor() : this(
@@ -129,7 +129,6 @@ class AgentMetadataReader(
 
     fun createAgentScopes(vararg instances: Any): List<AgentScope> =
         instances.mapNotNull { createAgentMetadata(it) }
-
 
     /**
      * Given this configured instance, find all the methods annotated with @Action and @Condition
@@ -232,10 +231,8 @@ class AgentMetadataReader(
         ReflectionUtils.doWithMethods(
             type,
             { method -> conditionMethods.add(method) },
-            // Make sure we only get annotated methods from this type, not supertypes
             { method ->
-                method.isAnnotationPresent(Condition::class.java) &&
-                        type.declaredMethods.contains(method)
+                isConditionMethod(method, type)
             })
         return conditionMethods
     }
@@ -245,18 +242,67 @@ class AgentMetadataReader(
         ReflectionUtils.doWithMethods(
             type,
             { method -> actionMethods.add(method) },
-            // Make sure we only get annotated methods from this type, not supertypes
-            { method ->
-                method.isAnnotationPresent(Action::class.java) &&
-                        type.declaredMethods.contains(method) &&
-                        (!method.returnType.isInterface || hasRequiredJsonDeserializeAnnotationOnInterfaceReturnType(
-                            method
-                        ))
-            })
+            // Get annotated methods from this type and interfaces
+            { method -> isActionMethod(method, type) })
         if (actionMethods.isEmpty()) {
             logger.debug("No methods annotated with @{} found in {}", Action::class.simpleName, type)
         }
         return actionMethods
+    }
+
+    private fun isActionMethod(
+        method: Method,
+        type: Class<*>,
+    ): Boolean {
+        return method.isAnnotationPresent(Action::class.java) &&
+                (type.declaredMethods.contains(method) || isMethodFromSupertype(method, type)) &&
+                (!method.returnType.isInterface || hasRequiredJsonDeserializeAnnotationOnInterfaceReturnType(
+                    method
+                ))
+    }
+
+    private fun isConditionMethod(
+        method: Method,
+        type: Class<*>,
+    ): Boolean {
+        return method.isAnnotationPresent(Condition::class.java) &&
+                (type.declaredMethods.contains(method) || isMethodFromSupertype(method, type))
+    }
+
+    private fun isMethodFromSupertype(
+        method: Method,
+        type: Class<*>,
+    ): Boolean {
+        // Check interfaces
+        if (type.interfaces.any { interfaceType ->
+                interfaceType.declaredMethods.any { interfaceMethod ->
+                    methodSignaturesMatch(method, interfaceMethod)
+                }
+            }) {
+            return true
+        }
+
+        // Check superclasses
+        var superclass = type.superclass
+        while (superclass != null && superclass != Any::class.java) {
+            if (superclass.declaredMethods.any { superMethod ->
+                    methodSignaturesMatch(method, superMethod)
+                }) {
+                return true
+            }
+            superclass = superclass.superclass
+        }
+
+        return false
+    }
+
+    private fun methodSignaturesMatch(
+        method1: Method,
+        method2: Method,
+    ): Boolean {
+        return method1.name == method2.name &&
+                method1.parameterTypes.contentEquals(method2.parameterTypes) &&
+                method1.returnType == method2.returnType
     }
 
     private fun findGoalGetters(type: Class<*>): List<Method> {

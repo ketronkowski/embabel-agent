@@ -990,6 +990,62 @@ class AgentMetadataReaderActionTest {
     }
 
     @Nested
+    inner class AnnotationInheritance {
+
+        @Test
+        fun `recognises Action annotations inherited from interface`() {
+            test(GetsFromBlackboardInheritedInterfaceAction())
+        }
+
+        @Test
+        fun `recognises Action annotations inherited from class`() {
+            test(GetsFromBlackboardInheritedClassAction())
+        }
+
+        @Test
+        fun `recognises Goal annotation inherited from interface`() {
+            test(GetsGoalFromBlackboardInheritedInterfaceAction())
+        }
+
+        @Test
+        fun `recognises Goal annotation inherited from class`() {
+            test(GetsGoalFromBlackboardInheritedClassAction())
+        }
+
+        @Test
+        fun `recognises Condition annotation inherited from interface`() {
+            test(GetsConditionFromBlackboardInheritedInterfaceAction())
+        }
+
+        @Test
+        fun `recognises Condition annotation inherited from class`() {
+            test(GetsConditionFromBlackboardInheritedClassAction())
+        }
+
+        private fun test(instance: Any) {
+            val reader = AgentMetadataReader()
+            val metadata =
+                reader.createAgentMetadata(
+                    instance
+                )
+            assertNotNull(metadata)
+            assertEquals(2, metadata!!.actions.size)
+
+            val ap = IntegrationTestUtils.dummyAgentPlatform()
+            val agent = metadata as CoreAgent
+            val agentProcess =
+                ap.runAgentFrom(
+                    agent,
+                    ProcessOptions(),
+                    emptyMap(),
+                )
+            assertEquals(AgentProcessStatusCode.COMPLETED, agentProcess.status)
+            assertEquals(PersonWithReverseTool("Kermit"), agentProcess.lastResult())
+        }
+
+    }
+
+    @Nested
     inner class AwaitableTest {
 
         @Test

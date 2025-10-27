@@ -6,7 +6,7 @@ This is the recommended model to use in Java, and remains compelling in Kotlin.
 
 ==== The `@Agent` annotation
 
-This is used on a class to define an agent.
+This annotation is used on a class to define an agent.
 It is a Spring stereotype annotation, so it triggers Spring component scanning.
 Your agent class will automatically be registered as a Spring bean.
 It will also be registered with the agent framework, so it can be used in agent processes.
@@ -42,6 +42,8 @@ If they take domain object parameters, the condition will automatically be false
 This is important because they may be called multiple times.
 
 //TODO (jasper notes) Provide a simple illustrative example with story-telling and supporting code example.
+
+> Both Action and Condition methods may be inherited from superclasses. That is, annotated methods on superclasses will be treated as actions on a subclass instance.
 
 ==== Parameters
 
