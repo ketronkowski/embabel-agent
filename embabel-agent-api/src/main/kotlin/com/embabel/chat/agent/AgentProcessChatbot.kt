@@ -122,10 +122,14 @@ class AgentProcessChatbot(
             listenerProvider: ListenerProvider = ListenerProvider { _, outputChannel ->
                 listOf(OutputChannelHighlightingEventListener(outputChannel))
             },
-        ): Chatbot = AgentProcessChatbot(agentPlatform, {
-            agentPlatform.agents().find { it.name == agentName }
-                ?: throw IllegalArgumentException("No agent found with name $agentName")
-        }, listenerProvider)
+        ): Chatbot = AgentProcessChatbot(
+            agentPlatform = agentPlatform,
+            agentSource = {
+                agentPlatform.agents().find { it.name == agentName }
+                    ?: throw IllegalArgumentException("No agent found with name $agentName")
+            },
+            listenerProvider = listenerProvider,
+        )
     }
 
 }

@@ -39,7 +39,7 @@ import com.embabel.common.ai.model.LlmOptions
 class DefaultChatAgentBuilder(
     autonomy: Autonomy,
     private val llm: LlmOptions,
-    private val persona: Persona = K9,
+    private val persona: Persona = MARVIN,
     private val promptTemplate: String = "chat/default_chat",
     private val blackboardFormatter: BlackboardFormatter = DefaultBlackboardFormatter(),
 ) {

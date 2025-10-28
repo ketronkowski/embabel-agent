@@ -33,7 +33,7 @@ class DefaultChatAgentBuilderTest {
         val cab = DefaultChatAgentBuilder(
             mockk(),
             llm = LlmOptions(),
-            persona = K9,
+            persona = MARVIN,
         )
         val chatAgent = cab.build()
         val m = UserMessage("Hello")

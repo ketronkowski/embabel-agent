@@ -22,15 +22,17 @@ import com.embabel.agent.domain.io.UserInput
 import com.embabel.agent.event.logging.LoggingPersonality
 import com.embabel.agent.event.logging.personality.ColorPalette
 import com.embabel.agent.shell.config.ShellProperties
+import com.embabel.chat.Chatbot
 import com.embabel.chat.agent.AgentProcessChatbot
 import com.embabel.chat.agent.DefaultChatAgentBuilder
-import com.embabel.chat.agent.K9
+import com.embabel.chat.agent.MARVIN
 import com.embabel.common.ai.model.LlmOptions
 import com.embabel.common.ai.model.ModelProvider
 import com.embabel.common.util.bold
 import com.embabel.common.util.color
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.slf4j.Logger
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.SpringApplication
 import org.springframework.context.ConfigurableApplicationContext
 import org.springframework.core.env.ConfigurableEnvironment
@@ -39,13 +41,6 @@ import org.springframework.shell.standard.ShellMethod
 import org.springframework.shell.standard.ShellOption
 import java.util.concurrent.CompletableFuture
 import kotlin.system.exitProcess
-
-/**
- * Shell configuration for the shell module (duplicate of API's ShellConfig for independence)
- */
-data class ShellConfig(
-    val lineLength: Int = 140,
-)
 
 
 /**
@@ -64,7 +59,10 @@ class ShellCommands(
     private val toolsStats: ToolsStats,
     private val context: ConfigurableApplicationContext,
     private val shellProperties: ShellProperties = ShellProperties(),
-) {
+    @param:Autowired(required = false)
+    private val chatbot: Chatbot? = null,
+
+    ) {
 
     private val logger: Logger = loggingPersonality.logger
 
@@ -109,19 +107,25 @@ class ShellCommands(
         return "Active profiles: ${profiles.joinToString()}"
     }
 
-    @ShellMethod("Chat")
-    fun chat(): String {
+    private fun createDefaultChatbot(): Chatbot {
+        val persona = MARVIN
+        logger.info("Creating default chatbot with persona {}", persona.name)
         val chatAgent = DefaultChatAgentBuilder(
             autonomy = autonomy,
             llm = LlmOptions.withAutoLlm(),
-            persona = K9,
+            persona = persona,
         ).build()
-        val chatbot = AgentProcessChatbot(agentPlatform, {
-            chatAgent
-        })
-        val chatSession = chatbot.createSession(user = null, outputChannel = terminalServices.outputChannel())
+        return AgentProcessChatbot(
+            agentPlatform = agentPlatform,
+            agentSource = {
+                chatAgent
+            })
+    }
 
-        // Redirect logging to file during chat
+    @ShellMethod("Chat")
+    fun chat(): String {
+        val chatbot = chatbot ?: createDefaultChatbot()
+        val chatSession = chatbot.createSession(user = null, outputChannel = terminalServices.outputChannel())
         val logRestorer = terminalServices.redirectLoggingToFile("chat-session")
         try {
             return terminalServices.chat(chatSession = chatSession, welcome = null, colorPalette = colorPalette)
