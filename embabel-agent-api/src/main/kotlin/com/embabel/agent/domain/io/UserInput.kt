@@ -27,13 +27,13 @@ interface SystemInput : Timestamped
  * Superinterface for all inputs that come from users
  * This can be useful to drive guardrails
  */
-interface UserContent : HasContent
+interface UserContent : HasContent, Timestamped
 
 /**
  * Superinterface for all inputs that come from AI assistants
  * This can be useful to drive guardrails
  */
-interface AssistantContent : HasContent
+interface AssistantContent : HasContent, Timestamped
 
 /**
  * Special class that represents a single user input
