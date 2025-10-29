@@ -42,8 +42,6 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import java.nio.file.Files
 import java.nio.file.Paths
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 import ch.qos.logback.classic.Logger as LogbackLogger
 
 
@@ -269,7 +267,10 @@ class TerminalServices(
      * Redirects all logging to a file and returns a function to restore the original logging configuration.
      * This is useful during interactive chat sessions to prevent log output from interfering with the UI.
      */
-    fun redirectLoggingToFile(filename: String): () -> Unit {
+    fun redirectLoggingToFile(
+        filename: String,
+        dir: String,
+    ): () -> Unit {
         val loggerContext = LoggerFactory.getILoggerFactory() as LoggerContext
         val rootLogger = loggerContext.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME) as LogbackLogger
 
@@ -283,10 +284,11 @@ class TerminalServices(
         }
 
         // Create a file appender for logs during chat
-        val logsDir = Paths.get(System.getProperty("user.home"), ".embabel", "logs")
+        val logsDir = Paths.get(dir, "logs")
         Files.createDirectories(logsDir)
-        val timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"))
-        val logFile = logsDir.resolve("$filename-$timestamp.log")
+        val logFile = logsDir.resolve("$filename.log")
+
+        println("Redirecting logging during chat session to $logFile")
 
         val fileAppender = FileAppender<ILoggingEvent>().apply {
             context = loggerContext
@@ -318,7 +320,7 @@ class TerminalServices(
                 rootLogger.addAppender(appender)
             }
 
-            loggerFor<TerminalServices>().info("Logging to console resotred. Logs are available at: $logFile")
+            loggerFor<TerminalServices>().info("Logging to console restored. Logs are available at: $logFile")
         }
     }
 
