@@ -89,7 +89,7 @@ class DefaultChatAgentBuilder(
             conversation.addMessage(assistantMessage)
             context.sendMessage(assistantMessage)
             // Will always get stuck but that's OK
-            ConversationContinues
+            ConversationContinues(assistantMessage)
         }
 
         goal(

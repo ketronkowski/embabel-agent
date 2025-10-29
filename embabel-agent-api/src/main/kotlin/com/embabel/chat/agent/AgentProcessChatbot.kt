@@ -27,8 +27,6 @@ import com.embabel.chat.Conversation
 import com.embabel.chat.UserMessage
 import com.embabel.chat.support.InMemoryConversation
 import com.embabel.common.util.loggerFor
-import com.fasterxml.jackson.annotation.JsonPropertyDescription
-import com.fasterxml.jackson.annotation.JsonTypeInfo
 
 fun interface AgentSource {
 
@@ -42,23 +40,6 @@ fun interface ListenerProvider {
         outputChannel: OutputChannel,
     ): List<AgenticEventListener>
 }
-
-/**
- * Convenient supertype for chatbot agent returns
- */
-@JsonTypeInfo(
-    use = JsonTypeInfo.Id.SIMPLE_NAME,
-    include = JsonTypeInfo.As.PROPERTY,
-    property = "type"
-)
-sealed interface ConversationStatus
-
-object ConversationContinues : ConversationStatus
-
-data class ConversationOver(
-    @get:JsonPropertyDescription("Reason for conversation termination, e.g. 'user requested end of conversation', or 'conversation unsafe'")
-    val reason: String,
-) : ConversationStatus
 
 
 /**

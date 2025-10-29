@@ -45,6 +45,8 @@ This is important because they may be called multiple times.
 
 > Both Action and Condition methods may be inherited from superclasses. That is, annotated methods on superclasses will be treated as actions on a subclass instance.
 
+> Give your Action and Condition methods unique names, so the planner can distinguish between them.
+
 ==== Parameters
 
 `@Action` methods must have at least one parameter.
