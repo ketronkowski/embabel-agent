@@ -15,154 +15,16 @@
  */
 package com.embabel.agent.support
 
-import com.embabel.agent.api.annotation.support.PersonWithReverseTool
-import com.embabel.agent.core.DataDictionaryImpl
-import com.embabel.agent.core.IoBinding
-import com.embabel.agent.core.JvmType
+import com.embabel.agent.core.Blackboard
 import com.embabel.agent.core.support.InMemoryBlackboard
-import com.embabel.agent.domain.io.UserInput
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNull
-import org.junit.jupiter.api.Nested
-import org.junit.jupiter.api.Test
-import java.awt.Point
-import kotlin.test.assertNotNull
 
-class BlackboardTest {
+/**
+ * Tests for InMemoryBlackboard implementation.
+ */
+class BlackboardTest : AbstractBlackboardTest() {
 
-    @Nested
-    inner class AggregationHandling {
-        @Test
-        fun `empty blackboard`() {
-            val bb = InMemoryBlackboard()
-            assertNull(
-                bb.getValue(
-                    IoBinding.DEFAULT_BINDING,
-                    "AllOfTheAbove",
-                    DataDictionaryImpl(
-                        listOf(
-                            AllOfTheAbove::class.java,
-                            UserInput::class.java,
-                            PersonWithReverseTool::class.java
-                        ).map { JvmType(it) },
-                    )
-                )
-            )
-        }
-
-        @Test
-        fun `not satisfied`() {
-            val bb = InMemoryBlackboard()
-            bb += UserInput("John is a man")
-            assertNull(
-                bb.getValue(
-                    IoBinding.DEFAULT_BINDING,
-                    "AllOfTheAbove",
-
-                    DataDictionaryImpl(
-                        AllOfTheAbove::class.java,
-                        UserInput::class.java,
-                        PersonWithReverseTool::class.java
-                    ),
-                )
-            )
-        }
-
-        @Test
-        fun satisfied() {
-            val bb = InMemoryBlackboard()
-            bb += UserInput("John is a man")
-            bb += PersonWithReverseTool("John")
-            val aota = bb.getValue(
-                IoBinding.DEFAULT_BINDING,
-                "AllOfTheAbove",
-                DataDictionaryImpl(AllOfTheAbove::class.java, UserInput::class.java, PersonWithReverseTool::class.java),
-            )
-            assertNotNull(aota)
-            aota as AllOfTheAbove
-            assertEquals("John", aota.person.name)
-            assertEquals("John is a man", aota.userInput.content)
-
-        }
-
-    }
-
-    @Nested
-    inner class TypeResolution {
-
-        @Test
-        fun `empty blackboard, no domain objects`() {
-            val bb = InMemoryBlackboard()
-            assertNull(bb.getValue(IoBinding.DEFAULT_BINDING, "Person", DataDictionaryImpl()))
-        }
-
-        @Test
-        fun `empty blackboard, relevant domain object`() {
-            val bb = InMemoryBlackboard()
-            assertNull(
-                bb.getValue(
-                    IoBinding.DEFAULT_BINDING,
-                    "Person",
-                    DataDictionaryImpl(PersonWithReverseTool::class.java)
-                )
-            )
-        }
-
-        @Test
-        fun `exact type match on it`() {
-            val bb = InMemoryBlackboard()
-            val john = PersonWithReverseTool("John")
-            bb += john
-            assertEquals(
-                john,
-                bb.getValue(
-                    IoBinding.DEFAULT_BINDING,
-                    PersonWithReverseTool::class.java.simpleName,
-                    DataDictionaryImpl(PersonWithReverseTool::class.java)
-                )
-            )
-        }
-
-        @Test
-        fun `exact type match on variable name`() {
-            val bb = InMemoryBlackboard()
-            val duke = Dog("Duke")
-            bb += duke
-            assertEquals(duke, bb.getValue(IoBinding.DEFAULT_BINDING, "Dog", DataDictionaryImpl(Dog::class.java)))
-        }
-
-
-        @Test
-        fun `interface type match on variable name`() {
-            val bb = InMemoryBlackboard()
-            val duke = Dog("Duke")
-            bb += duke
-            assertEquals(duke, bb.getValue(IoBinding.DEFAULT_BINDING, "Organism", DataDictionaryImpl(Dog::class.java)))
-        }
-
-        @Test
-        fun `superclass type match on variable name`() {
-            val bb = InMemoryBlackboard()
-            val duke = Dog("Duke")
-            bb += duke
-            assertEquals(duke, bb.getValue(IoBinding.DEFAULT_BINDING, "Animal", DataDictionaryImpl(Dog::class.java)))
-        }
-
-        @Test
-        fun `no type match`() {
-            val bb = InMemoryBlackboard()
-            val john = PersonWithReverseTool("John")
-            bb += john
-            assertNull(
-                bb.getValue(
-                    "person",
-                    "Point",
-                    DataDictionaryImpl(PersonWithReverseTool::class.java, Point::class.java)
-                )
-            )
-        }
-
-
+    override fun createBlackboard(): Blackboard {
+        return InMemoryBlackboard()
     }
 }
 

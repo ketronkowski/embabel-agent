@@ -41,6 +41,12 @@ This section covers common issues you might encounter when developing with Embab
 |Familiarize yourself with custom conditions for complex flow control. For common behavior patterns, consider using atomic actions with Embabel's typesafe custom builders such as `ScatterGatherBuilder` and `RepeatUntilBuilder` instead of trying to express everything through individual actions.
 |<<reference.dsl,DSL and Builders>>
 
+|**Custom conditions not working as expected**
+|Remember that you must declare `post` conditions on `@Action` methods that may set your custom condition,
+as well as `pre` conditions on actions that depend on them. Otherwise the planner
+will assume that the conditions are never set and your plan will not execute as expected.
+|<<overview__concepts,Type-Driven Flow>>
+
 |**Your Agent Has No Goals and Cannot Execute**
 |Look at the `@AchievesGoal` annotation and ensure your terminal action is annotated with it. Every agent needs at least one action marked with `@AchievesGoal` to define what constitutes completion of the agent's work.
 |<<reference.annotations,Annotations>>

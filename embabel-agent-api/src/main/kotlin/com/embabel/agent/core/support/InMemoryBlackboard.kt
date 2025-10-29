@@ -31,6 +31,7 @@ class InMemoryBlackboard(
 
     private val _map: MutableMap<String, Any> = ConcurrentHashMap()
     private val _entries: MutableList<Any> = Collections.synchronizedList(mutableListOf())
+    private val hiddens: MutableSet<Any> = Collections.synchronizedSet(mutableSetOf())
 
     override fun spawn(): Blackboard {
         return InMemoryBlackboard().apply {
@@ -41,12 +42,24 @@ class InMemoryBlackboard(
         }
     }
 
+    override fun hide(what: Any) {
+        hiddens += what
+    }
+
+    fun isHidden(what: Any): Boolean = hiddens.contains(what)
+
     override val objects: List<Any>
         get() = synchronized(_entries) {
-            _entries.toList() // Return a snapshot to avoid concurrent modification
+            (_entries - hiddens).toList() // Return a snapshot to avoid concurrent modification
         }
 
-    override fun get(name: String): Any? = _map[name]
+    override fun get(name: String): Any? {
+        val f = _map[name] ?: return null
+        if (isHidden(f)) {
+            return null
+        }
+        return f
+    }
 
     override fun bind(
         key: String,

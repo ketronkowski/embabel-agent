@@ -91,6 +91,10 @@ interface MayHaveLastResult {
 /**
  * A Blackboard is how an AgentProcess maintains context.
  * Blackboard operations are threadsafe.
+ * Blackboards are immutable in the sense that once an object has been
+ * added it cannot be removed. However, objects can be hidden
+ * so they are no longer visible to retrieval operations
+ * (e.g. driving planning).
  */
 interface Blackboard : Bindable, MayHaveLastResult, HasInfoString {
 
@@ -106,6 +110,12 @@ interface Blackboard : Bindable, MayHaveLastResult, HasInfoString {
      * Does not limit return via type information.
      */
     operator fun get(name: String): Any?
+
+    /**
+     * Hide this object. Does not remove it from the blackboard
+     * but will prevent it being retrieved.
+     */
+    fun hide(what: Any)
 
     /**
      * Threadsafe get or put
