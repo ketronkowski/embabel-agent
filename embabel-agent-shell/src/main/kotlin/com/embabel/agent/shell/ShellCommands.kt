@@ -126,13 +126,18 @@ class ShellCommands(
     fun chat(): String {
         val chatbot = chatbot ?: createDefaultChatbot()
         val chatSession = chatbot.createSession(user = null, outputChannel = terminalServices.outputChannel())
-        val logRestorer =
-            terminalServices.redirectLoggingToFile(filename = "chat-session", dir = System.getProperty("user.dir"))
-        try {
-            return terminalServices.chat(chatSession = chatSession, welcome = null, colorPalette = colorPalette)
-        } finally {
-            // Restore regular logging when chat exits
-            logRestorer()
+
+        return if (shellProperties.redirectLogToFile) {
+            val logRestorer =
+                terminalServices.redirectLoggingToFile(filename = "chat-session", dir = System.getProperty("user.dir"))
+            try {
+                terminalServices.chat(chatSession = chatSession, welcome = null, colorPalette = colorPalette)
+            } finally {
+                // Restore regular logging when chat exits
+                logRestorer()
+            }
+        } else {
+            terminalServices.chat(chatSession = chatSession, welcome = null, colorPalette = colorPalette)
         }
     }
 

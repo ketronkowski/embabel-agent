@@ -19,5 +19,13 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 
 @ConfigurationProperties(prefix = "embabel.agent.shell")
 class ShellProperties {
+
     var lineLength: Int = 140
+
+    /**
+     * If this is true we redirect all log output to a file
+     * when the user chats
+     */
+    var redirectLogToFile: Boolean = false
+
 }
