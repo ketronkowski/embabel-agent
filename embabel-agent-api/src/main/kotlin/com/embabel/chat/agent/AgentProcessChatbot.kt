@@ -77,8 +77,12 @@ class AgentProcessChatbot(
             ),
             bindings = emptyMap(),
         )
-        // We don't yet start the process. It will be started when the first message is received
-        return AgentProcessChatSession(agentProcess)
+        // We start the AgentProcess. It's likely to do nothing until
+        // we receive a UserMessage, but that's fine as we may want to do some
+        // work in the meantime
+        return AgentProcessChatSession(agentProcess).apply {
+            agentProcess.run()
+        }
     }
 
     override fun findSession(conversationId: String): ChatSession? {
