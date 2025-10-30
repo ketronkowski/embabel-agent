@@ -35,6 +35,20 @@ open class Actor<T : PromptContributor> @JvmOverloads constructor(
 ) : PromptContributor by persona {
 
     /**
+     * Construct an Actor with a simple instruction as persona.
+     */
+    @JvmOverloads
+    constructor(
+        instruction: String,
+        llm: LlmOptions,
+        toolGroups: Set<String> = emptySet(),
+    ) : this(
+        persona = Instruction(instruction) as T,
+        llm = llm,
+        toolGroups = toolGroups,
+    )
+
+    /**
      * Return a PromptRunner configured with this Actor's persona, LLM, and tools.
      * The caller can continue to customize this PromptRunner before using it
      * to create objects or generate text.
@@ -55,23 +69,4 @@ open class Actor<T : PromptContributor> @JvmOverloads constructor(
 
     override fun toString(): String = "Actor(persona=${persona}, llm=$llm, toolGroups=$toolGroups)"
 
-    companion object {
-
-        @JvmStatic
-        fun withLlm(llm: LlmOptions): ActorBuilder = ActorBuilder(llm)
-    }
-}
-
-/**
- * Support fluent API for programmatic Actor creation from Java.
- */
-class ActorBuilder(private val llm: LlmOptions) {
-
-    fun withPersona(persona: PromptContributor): Actor<PromptContributor> {
-        return Actor(persona, llm)
-    }
-
-    fun withInstruction(instruction: String): Actor<PromptContributor> {
-        return Actor(persona = Instruction(instruction), llm)
-    }
 }
