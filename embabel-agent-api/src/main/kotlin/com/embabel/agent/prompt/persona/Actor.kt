@@ -54,4 +54,24 @@ open class Actor<T : PromptContributor> @JvmOverloads constructor(
     fun promptRunner(context: OperationContext) = promptRunner(context.ai())
 
     override fun toString(): String = "Actor(persona=${persona}, llm=$llm, toolGroups=$toolGroups)"
+
+    companion object {
+
+        @JvmStatic
+        fun withLlm(llm: LlmOptions): ActorBuilder = ActorBuilder(llm)
+    }
+}
+
+/**
+ * Support fluent API for programmatic Actor creation from Java.
+ */
+class ActorBuilder(private val llm: LlmOptions) {
+
+    fun withPersona(persona: PromptContributor): Actor<PromptContributor> {
+        return Actor(persona, llm)
+    }
+
+    fun withInstruction(instruction: String): Actor<PromptContributor> {
+        return Actor(persona = Instruction(instruction), llm)
+    }
 }
