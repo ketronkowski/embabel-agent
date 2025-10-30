@@ -31,7 +31,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore
  * so ensure that it is clear and unambiguous.
  * @param pre preconditions for the goal, as a set of strings. These are the conditions that must be true before the goal can be achieved.
  * @param inputs inputs required for the goal, as a set of IoBinding objects. These are the inputs that must be provided to achieve the goal.
- * @param outputType if this goal returns a single instance of a Java class, this is the class that will be returned.
+ * @param outputType if this goal returns a single instance of a domain type, this is the class that will be returned.
  * @param value value of the goal, as a ZeroToOne. This is the value of achieving the goal.
  * @param tags Set of tags describing classes or capabilities for this specific skill.
  *    example: ["cooking", "customer support", "billing"]
@@ -70,7 +70,7 @@ data class Goal(
     @JsonIgnore
     override val preconditions: EffectSpec =
         run {
-            val conditions = pre.associate { it to ConditionDetermination(true) }.toMutableMap()
+            val conditions = pre.associateWith { ConditionDetermination(true) }.toMutableMap()
             inputs.forEach { input ->
                 conditions[input.value] = ConditionDetermination(true)
             }

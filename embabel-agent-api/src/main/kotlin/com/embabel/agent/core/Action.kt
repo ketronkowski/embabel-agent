@@ -37,7 +37,7 @@ interface Action : DataFlowStep, GoapAction, ActionRunner, DataDictionary, ToolG
     override val cost: ZeroToOne get() = 0.0
 
     /**
-     * Can this action be run again if it has already run?
+     * Can this action be run again if it has already run in the given AgentProcess?
      * Must be set to true to allow looping style behavior.
      */
     val canRerun: Boolean
