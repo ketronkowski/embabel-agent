@@ -64,7 +64,7 @@ data class RepeatUntil(
     inline fun <reified INPUT, reified RESULT : Any> build(
         noinline task: (RepeatUntilActionContext<INPUT, RESULT>) -> RESULT,
         noinline acceptanceCriteria: (RepeatUntilActionContext<INPUT, RESULT>) -> Boolean,
-        inputClass: Class<INPUT>? = null,
+        inputClass: Class<INPUT>,
     ): AgentScopeBuilder<RESULT> =
         build(
             task = task,
@@ -78,7 +78,7 @@ data class RepeatUntil(
         task: (RepeatUntilActionContext<INPUT, RESULT>) -> RESULT,
         accept: (RepeatUntilActionContext<INPUT, RESULT>) -> Boolean,
         resultClass: Class<RESULT>,
-        inputClass: Class<out INPUT>? = null,
+        inputClass: Class<out INPUT>,
     ): AgentScopeBuilder<RESULT> {
 
         fun findOrBindResultHistory(context: OperationContext): ResultHistory<RESULT> {
@@ -97,20 +97,22 @@ data class RepeatUntil(
             post = listOf(RESULT_WAS_BOUND_LAST_CONDITION, ACCEPTABLE_CONDITION),
             cost = 0.0,
             value = 0.0,
-            pre = listOfNotNull(inputClass).map { IoBinding(type = it).value },
+            pre = listOfNotNull(inputClass)
+                .filterNot { it == Unit::class.java }
+                .map { IoBinding(type = it).value },
             canRerun = true,
             outputClass = resultClass,
-            inputClass = inputClass ?: Unit::class.java,
+            inputClass = inputClass,
             toolGroups = emptySet(),
         ) { context ->
             val resultHistory = findOrBindResultHistory(context)
 
             @Suppress("UNCHECKED_CAST")
             val tac = RepeatUntilActionContext(
-                input = context.input as? INPUT,
+                input = context.input as INPUT,
                 processContext = context.processContext,
                 action = context.action,
-                inputClass = inputClass as? Class<INPUT> ?: Unit::class.java as Class<INPUT>,
+                inputClass = inputClass as Class<INPUT>,
                 outputClass = resultClass,
                 history = resultHistory,
             )
@@ -148,10 +150,10 @@ data class RepeatUntil(
                     true
                 } else {
                     @Suppress("UNCHECKED_CAST")
-                    val input: INPUT? = if (inputClass != null) {
-                        context.last(inputClass) as? INPUT
+                    val input: INPUT = if (inputClass != Unit::class.java) {
+                        context.last(inputClass) as INPUT
                     } else {
-                        null
+                        Unit as INPUT
                     }
                     val tac = RepeatUntilActionContext<INPUT, RESULT>(
                         input = input,
@@ -220,7 +222,7 @@ data class RepeatUntil(
 }
 
 data class RepeatUntilActionContext<INPUT, RESULT : Any>(
-    override val input: INPUT?,
+    override val input: INPUT,
     override val processContext: ProcessContext,
     override val action: Action,
     val inputClass: Class<INPUT>,

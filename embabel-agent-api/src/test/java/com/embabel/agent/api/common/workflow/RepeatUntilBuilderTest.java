@@ -354,4 +354,86 @@ class RepeatUntilBuilderTest {
         }
 
     }
+
+    @Nested
+    class EdgeCases {
+
+        @Test
+        void maxIterationsIsRespected() {
+            final int[] callCount = {0};
+            var agent = RepeatUntilBuilder
+                    .returning(Report.class)
+                    .withMaxIterations(3)
+                    .repeating(
+                            tac -> {
+                                callCount[0]++;
+                                return new Report("attempt-" + callCount[0]);
+                            })
+                    .until(ctx -> false) // Never accept, should hit max iterations
+                    .buildAgent("maxIterTest", "Test max iterations");
+
+            var ap = IntegrationTestUtils.dummyAgentPlatform();
+            var result = ap.runAgentFrom(
+                    agent,
+                    ProcessOptions.DEFAULT,
+                    Map.of("it", new UserInput("input"))
+            );
+
+            assertEquals(AgentProcessStatusCode.COMPLETED, result.getStatus());
+            assertEquals(3, callCount[0], "Should have been called exactly maxIterations times");
+        }
+
+        @Test
+        void historyTracksAllAttempts() {
+            final int[] callCount = {0};
+            var agent = RepeatUntilBuilder
+                    .returning(Report.class)
+                    .withMaxIterations(5)
+                    .repeating(
+                            tac -> {
+                                callCount[0]++;
+                                var history = tac.getHistory();
+                                assertEquals(callCount[0] - 1, history.attemptCount(),
+                                        "History should have previous attempts");
+                                return new Report("attempt-" + callCount[0]);
+                            })
+                    .until(ctx -> ctx.getHistory().attemptCount() >= 3)
+                    .buildAgent("historyTest", "Test history tracking");
+
+            var ap = IntegrationTestUtils.dummyAgentPlatform();
+            var result = ap.runAgentFrom(
+                    agent,
+                    ProcessOptions.DEFAULT,
+                    Map.of("it", new UserInput("input"))
+            );
+
+            assertEquals(AgentProcessStatusCode.COMPLETED, result.getStatus());
+            assertEquals(3, callCount[0], "Should have been called 3 times");
+        }
+
+        @Test
+        void acceptsOnFirstAttempt() {
+            final int[] callCount = {0};
+            var agent = RepeatUntilBuilder
+                    .returning(Report.class)
+                    .withMaxIterations(5)
+                    .repeating(
+                            tac -> {
+                                callCount[0]++;
+                                return new Report("attempt-" + callCount[0]);
+                            })
+                    .until(ctx -> true) // Accept immediately
+                    .buildAgent("immediateAcceptTest", "Test immediate acceptance");
+
+            var ap = IntegrationTestUtils.dummyAgentPlatform();
+            var result = ap.runAgentFrom(
+                    agent,
+                    ProcessOptions.DEFAULT,
+                    Map.of("it", new UserInput("input"))
+            );
+
+            assertEquals(AgentProcessStatusCode.COMPLETED, result.getStatus());
+            assertEquals(1, callCount[0], "Should have been called exactly once");
+        }
+    }
 }

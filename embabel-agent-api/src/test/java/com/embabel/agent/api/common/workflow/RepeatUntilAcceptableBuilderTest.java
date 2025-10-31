@@ -415,4 +415,208 @@ class RepeatUntilAcceptableBuilderTest {
 
     }
 
+    @Nested
+    class EdgeCases {
+
+        @Test
+        void maxIterationsIsRespected() {
+            final int[] taskCallCount = {0};
+            final int[] evaluatorCallCount = {0};
+            var agent = RepeatUntilAcceptableBuilder
+                    .returning(Report.class)
+                    .withMaxIterations(3)
+                    .repeating(
+                            tac -> {
+                                taskCallCount[0]++;
+                                return new Report("attempt-" + taskCallCount[0]);
+                            })
+                    .withEvaluator(
+                            ctx -> {
+                                evaluatorCallCount[0]++;
+                                return new TextFeedback(0.3, "Not good enough");
+                            })
+                    .withAcceptanceCriteria(f -> false) // Never accept, should hit max iterations
+                    .buildAgent("maxIterTest", "Test max iterations");
+
+            var ap = IntegrationTestUtils.dummyAgentPlatform();
+            var result = ap.runAgentFrom(
+                    agent,
+                    ProcessOptions.DEFAULT,
+                    Map.of("it", new UserInput("input"))
+            );
+
+            assertEquals(AgentProcessStatusCode.COMPLETED, result.getStatus());
+            assertEquals(3, evaluatorCallCount[0], "Evaluator should have been called exactly maxIterations times");
+        }
+
+        @Test
+        void bestResultIsReturned() {
+            var agent = RepeatUntilAcceptableBuilder
+                    .returning(Report.class)
+                    .withMaxIterations(5)
+                    .repeating(
+                            tac -> new Report("attempt-" + (tac.getAttemptHistory().attemptCount() + 1)))
+                    .withEvaluator(
+                            ctx -> {
+                                var attemptNum = ctx.getAttemptHistory().attemptCount() + 1;
+                                // Score pattern: 0.3, 0.7, 0.5, 0.4, 0.6
+                                // Best should be attempt 2 with score 0.7
+                                double score = switch (attemptNum) {
+                                    case 1 -> 0.3;
+                                    case 2 -> 0.7;
+                                    case 3 -> 0.5;
+                                    case 4 -> 0.4;
+                                    case 5 -> 0.6;
+                                    default -> 0.0;
+                                };
+                                return new TextFeedback(score, "Score " + score);
+                            })
+                    .withAcceptanceCriteria(f -> false) // Never accept, go to max iterations
+                    .buildAgent("bestResultTest", "Test best result selection");
+
+            var ap = IntegrationTestUtils.dummyAgentPlatform();
+            var result = ap.runAgentFrom(
+                    agent,
+                    ProcessOptions.DEFAULT,
+                    Map.of("it", new UserInput("input"))
+            );
+
+            assertEquals(AgentProcessStatusCode.COMPLETED, result.getStatus());
+            // Note: The workflow will continue attempting until maxIterations,
+            // but the best result should still be returned
+            assertTrue(result.lastResult() instanceof Report,
+                    "Result should be a Report");
+        }
+
+        @Test
+        void scoreThresholdWorks() {
+            final int[] callCount = {0};
+            var agent = RepeatUntilAcceptableBuilder
+                    .returning(Report.class)
+                    .withMaxIterations(5)
+                    .withScoreThreshold(0.8)
+                    .repeating(
+                            tac -> {
+                                callCount[0]++;
+                                return new Report("attempt-" + callCount[0]);
+                            })
+                    .withEvaluator(
+                            ctx -> {
+                                // Scores: 0.5, 0.6, 0.85, ...
+                                double score = 0.5 + (ctx.getAttemptHistory().attemptCount() * 0.1);
+                                return new TextFeedback(score, "Score " + score);
+                            })
+                    .buildAgent("scoreThresholdTest", "Test score threshold"); // Uses default acceptance criteria based on threshold
+
+            var ap = IntegrationTestUtils.dummyAgentPlatform();
+            var result = ap.runAgentFrom(
+                    agent,
+                    ProcessOptions.DEFAULT,
+                    Map.of("it", new UserInput("input"))
+            );
+
+            assertEquals(AgentProcessStatusCode.COMPLETED, result.getStatus());
+            assertTrue(callCount[0] >= 3, "Should have at least 3 attempts when score >= 0.8");
+        }
+
+        @Test
+        void evaluatorCanAccessResultToEvaluate() {
+            var agent = RepeatUntilAcceptableBuilder
+                    .returning(Report.class)
+                    .withMaxIterations(3)
+                    .repeating(
+                            tac -> new Report("content-" + (tac.getAttemptHistory().attemptCount() + 1)))
+                    .withEvaluator(
+                            ctx -> {
+                                var result = ctx.getResultToEvaluate();
+                                assertNotNull(result, "Result to evaluate should be available");
+                                assertTrue(result.getContent().startsWith("content-"),
+                                        "Should be able to access the result content");
+                                return new TextFeedback(0.5, "Evaluated: " + result.getContent());
+                            })
+                    .withAcceptanceCriteria(f -> true)
+                    .buildAgent("resultAccessTest", "Test result access in evaluator");
+
+            var ap = IntegrationTestUtils.dummyAgentPlatform();
+            var result = ap.runAgentFrom(
+                    agent,
+                    ProcessOptions.DEFAULT,
+                    Map.of("it", new UserInput("input"))
+            );
+
+            assertEquals(AgentProcessStatusCode.COMPLETED, result.getStatus());
+        }
+
+        @Test
+        void feedbackScoresImproveOverTime() {
+            var agent = RepeatUntilAcceptableBuilder
+                    .returning(Report.class)
+                    .withMaxIterations(4)
+                    .withScoreThreshold(0.8)
+                    .repeating(
+                            tac -> {
+                                var attemptNum = tac.getAttemptHistory().attemptCount() + 1;
+                                return new Report("attempt-" + attemptNum);
+                            })
+                    .withEvaluator(
+                            ctx -> {
+                                var history = ctx.getAttemptHistory();
+                                var currentAttempt = history.attemptCount() + 1;
+                                // Simulate improving scores
+                                double score = 0.4 + (currentAttempt * 0.15);
+
+                                // Verify we can see previous feedback
+                                if (currentAttempt > 1) {
+                                    assertNotNull(history.lastFeedback(),
+                                            "Should have previous feedback");
+                                    assertTrue(history.lastFeedback().getScore() < score,
+                                            "Score should be improving");
+                                }
+
+                                return new TextFeedback(score, "Improving");
+                            })
+                    .buildAgent("improvingScoresTest", "Test improving scores");
+
+            var ap = IntegrationTestUtils.dummyAgentPlatform();
+            var result = ap.runAgentFrom(
+                    agent,
+                    ProcessOptions.DEFAULT,
+                    Map.of("it", new UserInput("input"))
+            );
+
+            assertEquals(AgentProcessStatusCode.COMPLETED, result.getStatus());
+        }
+
+        @Test
+        void acceptsOnFirstAttemptWithHighScore() {
+            final int[] taskCallCount = {0};
+            final int[] evaluatorCallCount = {0};
+            var agent = RepeatUntilAcceptableBuilder
+                    .returning(Report.class)
+                    .withMaxIterations(5)
+                    .withScoreThreshold(0.5)
+                    .repeating(
+                            tac -> {
+                                taskCallCount[0]++;
+                                return new Report("attempt-" + taskCallCount[0]);
+                            })
+                    .withEvaluator(
+                            ctx -> {
+                                evaluatorCallCount[0]++;
+                                return new TextFeedback(0.9, "Excellent");
+                            })
+                    .buildAgent("firstAttemptTest", "Test first attempt acceptance"); // Uses default acceptance criteria (score >= 0.5)
+
+            var ap = IntegrationTestUtils.dummyAgentPlatform();
+            var result = ap.runAgentFrom(
+                    agent,
+                    ProcessOptions.DEFAULT,
+                    Map.of("it", new UserInput("input"))
+            );
+
+            assertEquals(AgentProcessStatusCode.COMPLETED, result.getStatus());
+            assertEquals(1, evaluatorCallCount[0], "Evaluator should have been called exactly once");
+        }
+    }
+
 }

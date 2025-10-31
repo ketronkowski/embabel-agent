@@ -25,7 +25,7 @@ import com.embabel.agent.api.dsl.AgentScopeBuilder
  */
 data class RepeatUntilBuilder<INPUT, RESULT : Any>(
     private val resultClass: Class<RESULT>,
-    private val inputClass: Class<out INPUT>? = null,
+    private val inputClass: Class<out INPUT>,
     private val maxIterations: Int = DEFAULT_MAX_ITERATIONS,
 ) : WorkFlowBuilderConsuming {
 
@@ -38,7 +38,7 @@ data class RepeatUntilBuilder<INPUT, RESULT : Any>(
          */
         @JvmStatic
         override fun <RESULT : Any> returning(resultClass: Class<RESULT>): RepeatUntilBuilder<Any?, RESULT> {
-            return RepeatUntilBuilder(resultClass = resultClass)
+            return RepeatUntilBuilder(resultClass = resultClass, inputClass = Unit::class.java)
         }
     }
 

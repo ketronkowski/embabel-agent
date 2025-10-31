@@ -42,7 +42,7 @@ data class Attempt<RESULT : Any, FEEDBACK : Feedback>(
  */
 data class AttemptHistory<INPUT, RESULT : Any, FEEDBACK : Feedback>(
     @get:JvmName("getInput")
-    val input: INPUT?,
+    val input: INPUT,
     private val _attempts: MutableList<Attempt<RESULT, FEEDBACK>> = mutableListOf(),
     private var lastResult: RESULT? = null,
     override val timestamp: Instant = Instant.now(),
@@ -100,7 +100,7 @@ data class RepeatUntilAcceptable(
         noinline task: (RepeatUntilAcceptableActionContext<INPUT, RESULT, FEEDBACK>) -> RESULT,
         noinline evaluator: (EvaluationActionContext<INPUT, RESULT, FEEDBACK>) -> FEEDBACK,
         noinline acceptanceCriteria: (FEEDBACK) -> Boolean = { it.score >= scoreThreshold },
-        inputClass: Class<INPUT>? = null,
+        inputClass: Class<INPUT>,
     ): AgentScopeBuilder<RESULT> =
         build(
             task = task,
@@ -118,18 +118,12 @@ data class RepeatUntilAcceptable(
         acceptanceCriteria: (FEEDBACK) -> Boolean,
         resultClass: Class<RESULT>,
         feedbackClass: Class<FEEDBACK>,
-        inputClass: Class<out INPUT>? = null,
+        inputClass: Class<out INPUT>,
     ): AgentScopeBuilder<RESULT> {
 
-        fun findOrBindAttemptHistory(context: OperationContext): AttemptHistory<INPUT, RESULT, FEEDBACK> {
+        fun findOrBindAttemptHistory(context: OperationContext, input: INPUT): AttemptHistory<INPUT, RESULT, FEEDBACK> {
             return context.last<AttemptHistory<INPUT, RESULT, FEEDBACK>>()
                 ?: run {
-                    @Suppress("UNCHECKED_CAST")
-                    val input: INPUT? = if (inputClass != null) {
-                        context.last(inputClass) as? INPUT
-                    } else {
-                        null
-                    }
                     val ah = AttemptHistory<INPUT, RESULT, FEEDBACK>(input = input)
                     context += ah
                     logger.info("Bound new AttemptHistory")
@@ -143,19 +137,23 @@ data class RepeatUntilAcceptable(
             post = listOf(RESULT_WAS_BOUND_LAST_CONDITION),
             cost = 0.0,
             value = 0.0,
-            pre = listOfNotNull(inputClass).map { com.embabel.agent.core.IoBinding(type = it).value },
+            pre = listOfNotNull(inputClass)
+                .filterNot { it == Unit::class.java }
+                .map { com.embabel.agent.core.IoBinding(type = it).value },
             canRerun = true,
-            inputClass = inputClass ?: Unit::class.java,
+            inputClass = inputClass,
             outputClass = resultClass,
             toolGroups = emptySet(),
         ) { context ->
-            val attemptHistory = findOrBindAttemptHistory(context)
+            @Suppress("UNCHECKED_CAST")
+            val input = context.input as INPUT
+            val attemptHistory = findOrBindAttemptHistory(context, input)
 
             val tac = RepeatUntilAcceptableActionContext(
-                input = attemptHistory.input,
+                input = input,
                 processContext = context.processContext,
                 action = context.action,
-                inputClass = inputClass as? Class<INPUT> ?: Unit::class.java as Class<INPUT>,
+                inputClass = inputClass as Class<INPUT>,
                 outputClass = resultClass,
                 attemptHistory = attemptHistory,
             )
@@ -182,13 +180,16 @@ data class RepeatUntilAcceptable(
             outputClass = feedbackClass,
             toolGroups = emptySet(),
         ) { context ->
-            val attemptHistory = findOrBindAttemptHistory(context)
+            // AttemptHistory was already bound by taskAction, so we retrieve it
+            val attemptHistory = context.last<AttemptHistory<INPUT, RESULT, FEEDBACK>>()
+                ?: error("AttemptHistory should have been bound by task action")
 
+            @Suppress("UNCHECKED_CAST")
             val tac = EvaluationActionContext(
                 input = attemptHistory.input,
                 processContext = context.processContext,
                 action = context.action,
-                inputClass = inputClass as? Class<INPUT> ?: Unit::class.java as Class<INPUT>,
+                inputClass = inputClass as Class<INPUT>,
                 outputClass = feedbackClass,
                 attemptHistory = attemptHistory,
             )
@@ -297,7 +298,7 @@ data class RepeatUntilAcceptable(
 }
 
 open class RepeatUntilAcceptableActionContext<INPUT, RESULT : Any, FEEDBACK : Feedback>(
-    override val input: INPUT?,
+    override val input: INPUT,
     override val processContext: ProcessContext,
     override val action: Action,
     val inputClass: Class<INPUT>,
@@ -318,7 +319,7 @@ open class RepeatUntilAcceptableActionContext<INPUT, RESULT : Any, FEEDBACK : Fe
 }
 
 open class EvaluationActionContext<INPUT, RESULT : Any, FEEDBACK : Feedback>(
-    override val input: INPUT?,
+    override val input: INPUT,
     override val processContext: ProcessContext,
     override val action: Action,
     val inputClass: Class<INPUT>,

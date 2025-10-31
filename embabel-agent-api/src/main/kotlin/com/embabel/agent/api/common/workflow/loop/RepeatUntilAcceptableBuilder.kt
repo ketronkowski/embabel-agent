@@ -25,7 +25,7 @@ import com.embabel.agent.api.dsl.AgentScopeBuilder
  */
 data class RepeatUntilAcceptableBuilder<INPUT, RESULT : Any, FEEDBACK : Feedback>(
     private val resultClass: Class<RESULT>,
-    private val inputClass: Class<out INPUT>? = null,
+    private val inputClass: Class<out INPUT>,
     private val feedbackClass: Class<FEEDBACK> = Feedback::class.java as Class<FEEDBACK>,
     private val maxIterations: Int = DEFAULT_MAX_ITERATIONS,
     private val scoreThreshold: Double = DEFAULT_SCORE_THRESHOLD,
@@ -42,7 +42,7 @@ data class RepeatUntilAcceptableBuilder<INPUT, RESULT : Any, FEEDBACK : Feedback
          */
         @JvmStatic
         override fun <RESULT : Any> returning(resultClass: Class<RESULT>): RepeatUntilAcceptableBuilder<Any?, RESULT, TextFeedback> {
-            return RepeatUntilAcceptableBuilder(resultClass = resultClass, feedbackClass = TextFeedback::class.java)
+            return RepeatUntilAcceptableBuilder(resultClass = resultClass, inputClass = Unit::class.java, feedbackClass = TextFeedback::class.java)
         }
     }
 
