@@ -24,12 +24,12 @@ import com.embabel.agent.core.IoBinding
 /**
  * Ensure consistent naming convention for workflow builders that return a given result type.
  */
-interface WorkFlowBuilderReturning {
+interface WorkflowBuilderReturning {
 
     fun <RESULT : Any> returning(resultClass: Class<RESULT>): Any
 }
 
-interface WorkFlowBuilderWithInput {
+interface WorkflowBuilderWithInput {
 
     /**
      * Specify an input class for this workflow agent.
@@ -51,7 +51,7 @@ interface WorkFlowBuilderConsuming {
  */
 abstract class WorkflowBuilder<RESULT : Any>(
     private val resultClass: Class<RESULT>,
-    private val inputClasses: List<Class<out Any>>,
+    private val inputClass: Class<out Any>?,
 ) {
 
     abstract fun build(): AgentScopeBuilder<RESULT>
@@ -81,7 +81,7 @@ abstract class WorkflowBuilder<RESULT : Any>(
     fun asSubProcess(
         context: ActionContext,
     ): RESULT {
-        val preconditions = inputClasses.map { IoBinding(type = it) }.map { it.value }
+        val preconditions = listOfNotNull(inputClass).map { IoBinding(type = it) }.map { it.value }
         val illegals = preconditions.filter { context.action?.preconditions?.contains(it) != true }
         if (illegals.isNotEmpty()) {
             error(

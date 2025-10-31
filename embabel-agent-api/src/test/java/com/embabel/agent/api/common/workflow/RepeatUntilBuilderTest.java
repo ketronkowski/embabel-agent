@@ -64,7 +64,7 @@ class RepeatUntilBuilderTest {
     void testNoExportedActionsFromWorkflow() {
         var agent = RepeatUntilBuilder
                 .returning(Report.class)
-                .withInput(Person.class)
+                .consuming(Person.class)
                 .withMaxIterations(3)
                 .repeating(
                         tac -> {
@@ -131,11 +131,13 @@ class RepeatUntilBuilderTest {
                     .withMaxIterations(3)
                     .repeating(
                             tac -> {
-                                return new Report("thing-" + tac.getInput().attempts().size());
+                                var history = tac.getAttemptHistory();
+                                return new Report("thing-" + (history != null ? history.attempts().size() : 0));
                             })
                     .withEvaluator(
                             ctx -> {
-                                assertNotNull(ctx.getInput().resultToEvaluate(),
+                                var history = ctx.getAttemptHistory();
+                                assertNotNull(history != null ? history.resultToEvaluate() : null,
                                         "Last result must be available to evaluator");
                                 return new TextFeedback(0.5, "feedback");
                             })
@@ -209,6 +211,49 @@ class RepeatUntilBuilderTest {
     @Nested
     class Consumer {
 
+        com.embabel.agent.core.Agent takesPerson = RepeatUntilBuilder
+                .returning(Report.class)
+                .consuming(Person.class)
+                .withMaxIterations(3)
+                .repeating(
+                        tac -> {
+                            var person = tac.getInput();
+                            assertNotNull(person, "Person must be provided as input");
+                            var history = tac.getHistory();
+                            if (tac.getHistory().attemptCount() > 0) {
+                                assertNotNull(tac.lastAttempt(), "Last attempt must be available");
+                            }
+                            assertNotNull(history, "History must be provided as input");
+                            return new Report(person.name + " " + person.age);
+                        })
+                .until(f -> f.getHistory().attemptCount() > 2)
+                .buildAgent("foo", "bar");
+
+        @Test
+        void terminatesItselfAgentRequiresInput() {
+            var agent = takesPerson;
+            var agentPlatform = IntegrationTestUtils.dummyAgentPlatform();
+            var agentProcess = agentPlatform.runAgentFrom(
+                    agent,
+                    ProcessOptions.DEFAULT,
+                    Map.of("it", new UserInput("input"))
+            );
+            assertEquals(AgentProcessStatusCode.STUCK, agentProcess.getStatus(),
+                    "Expected stuckness due to missing Person input");
+        }
+
+        @Test
+        void terminatesItselfAgentWithInput() {
+            var agent = takesPerson;
+            var agentPlatform = IntegrationTestUtils.dummyAgentPlatform();
+            var agentProcess = agentPlatform.runAgentFrom(
+                    agent,
+                    ProcessOptions.DEFAULT,
+                    Map.of("it", new Person("greg", 50))
+            );
+            assertEquals(AgentProcessStatusCode.COMPLETED, agentProcess.getStatus(),
+                    "Expected completion with Person input");
+        }
 
         @Test
         void terminatesItselfRequiresInput() {
@@ -242,7 +287,7 @@ class RepeatUntilBuilderTest {
         void terminatesItselfWithInput() {
             var agent = RepeatUntilBuilder
                     .returning(Report.class)
-                    .withInput(Person.class)
+                    .consuming(Person.class)
                     .withMaxIterations(3)
                     .repeating(
                             tac -> {
@@ -272,7 +317,7 @@ class RepeatUntilBuilderTest {
             public Report report(UserInput userInput, ActionContext context) {
                 return RepeatUntilBuilder
                         .returning(Report.class)
-                        .withInput(Person.class)
+                        .consuming(Person.class)
                         .withMaxIterations(3)
                         .repeating(
                                 tac -> {
@@ -294,11 +339,11 @@ class RepeatUntilBuilderTest {
             public Report report(UserInput userInput, Person definesDependency, ActionContext context) {
                 return RepeatUntilBuilder
                         .returning(Report.class)
-                        .withInput(Person.class)
+                        .consuming(Person.class)
                         .withMaxIterations(3)
                         .repeating(
                                 tac -> {
-                                    var person = tac.last(Person.class);
+                                    var person = tac.getInput();
                                     assertNotNull(person, "Person must be provided as input");
                                     return new Report(person.name + " " + person.age);
                                 })
