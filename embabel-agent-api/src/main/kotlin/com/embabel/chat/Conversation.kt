@@ -15,6 +15,10 @@
  */
 package com.embabel.chat
 
+import com.embabel.agent.api.annotation.AwaitableResponseException
+import com.embabel.agent.api.common.ActionContext
+import com.embabel.agent.core.hitl.Awaitable
+import com.embabel.agent.core.hitl.ConfirmationRequest
 import com.embabel.agent.domain.io.AssistantContent
 import com.embabel.agent.domain.io.UserContent
 import com.embabel.agent.domain.library.HasContent
@@ -44,6 +48,11 @@ interface Conversation : StableIdentified, HasInfoString {
      */
     fun addMessage(message: Message): Conversation
 
+    /**
+     * Prompt contributor that represents the conversation so far.
+     * Usually we will want to add messages from the conversation
+     * instead of formatting the conversation
+     */
     fun promptContributor(
         conversationFormatter: ConversationFormatter = WindowingConversationFormatter(),
     ) = PromptContributor.dynamic({ "Conversation so far:\n" + conversationFormatter.format(this) })
@@ -102,15 +111,54 @@ class UserMessage @JvmOverloads constructor(
  * Message sent by the assistant.
  * @param content Content of the message
  * @param name Name of the assistant, if available
+ * @param awaitable Awaitable associated with this message, if any
+ * Enables forms to be put in front of users
  */
 open class AssistantMessage @JvmOverloads constructor(
     content: String,
     name: String? = null,
+    val awaitable: Awaitable<*, *>? = null,
     override val timestamp: Instant = Instant.now(),
 ) : Message(role = Role.ASSISTANT, content = content, name = name, timestamp = timestamp), AssistantContent {
 
     override fun toString(): String {
         return "AssistantMessage(from='${sender}', content='${trim(content, 80, 10)}')"
+    }
+
+    companion object {
+
+        @JvmStatic
+        @JvmOverloads
+        fun <P : Any> confirmationRequest(
+            confirmationRequest: ConfirmationRequest<P>,
+            conversation: Conversation,
+            context: ActionContext,
+            name: String? = null,
+        ): P {
+            val assistantMessage = AssistantMessage(
+                content = confirmationRequest.message,
+                name = name,
+                awaitable = confirmationRequest,
+            )
+            conversation.addMessage(assistantMessage)
+            context.sendMessage(assistantMessage)
+            throw AwaitableResponseException(
+                awaitable = confirmationRequest,
+            )
+        }
+
+//        @JvmStatic
+//        @JvmOverloads
+//        fun ofFormSubmission(
+//            form: FormBindingRequest<*>,
+//            name: String? = null,
+//        ): AssistantMessage {
+//            return AssistantMessage(
+//                content = form.payload.title,
+//                name = name,
+//                awaitable = form,
+//            )
+//        }
     }
 }
 

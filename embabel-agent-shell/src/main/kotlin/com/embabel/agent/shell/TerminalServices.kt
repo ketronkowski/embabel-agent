@@ -22,10 +22,12 @@ import ch.qos.logback.core.Appender
 import ch.qos.logback.core.FileAppender
 import com.embabel.agent.api.common.autonomy.*
 import com.embabel.agent.channel.*
+import com.embabel.agent.core.AgentPlatform
 import com.embabel.agent.core.hitl.*
 import com.embabel.agent.event.logging.personality.ColorPalette
 import com.embabel.agent.event.logging.personality.DefaultColorPalette
 import com.embabel.agent.shell.config.ShellProperties
+import com.embabel.chat.AssistantMessage
 import com.embabel.chat.ChatSession
 import com.embabel.chat.UserMessage
 import com.embabel.common.util.AnsiColor
@@ -102,18 +104,18 @@ class TerminalServices(
      * Handle the process waiting exception request
      * @return null if the operation was cancelled by the user
      */
-    fun handleProcessWaitingException(processWaitingException: ProcessWaitingException): AwaitableResponse? {
-        val awaitableResponse = when (processWaitingException.awaitable) {
+    fun handleAwaitable(awaitable: Awaitable<*, *>): AwaitableResponse? {
+        val awaitableResponse = when (awaitable) {
             is ConfirmationRequest<*> -> {
-                confirmationResponseFromUserInput(processWaitingException.awaitable as ConfirmationRequest<*>)
+                confirmationResponseFromUserInput(awaitable)
             }
 
             is FormBindingRequest<*> -> {
-                formBindingResponseFromUserInput(processWaitingException.awaitable as FormBindingRequest<*>)
+                formBindingResponseFromUserInput(awaitable)
             }
 
             else -> {
-                TODO("Unhandled awaitable: ${processWaitingException.awaitable.infoString()}")
+                TODO("Unhandled awaitable: ${awaitable.infoString()}")
             }
         }
         return awaitableResponse
@@ -228,9 +230,11 @@ class TerminalServices(
 
     }
 
-    fun outputChannel(): OutputChannel = TerminalOutputChannel()
+    fun outputChannel(agentPlatform: AgentPlatform): OutputChannel =
+        TerminalOutputChannel(agentPlatform)
 
-    inner class TerminalOutputChannel(
+    private inner class TerminalOutputChannel(
+        private val agentPlatform: AgentPlatform,
         private val colorPalette: ColorPalette = DefaultColorPalette(),
     ) : OutputChannel {
 
@@ -242,6 +246,20 @@ class TerminalServices(
                         shellProperties.lineLength,
                     )
                     println(formattedResponse)
+                    val agentProcess = agentPlatform.getAgentProcess(event.processId)
+                        ?: throw IllegalStateException("Process not found: ${event.processId}")
+
+                    (event.message as? AssistantMessage)?.awaitable?.let { awaitable ->
+                        val awaitableResponse = handleAwaitable(awaitable)
+                        if (awaitableResponse == null) {
+                            TODO()
+                        }
+                        (awaitable as Awaitable<*, AwaitableResponse>).onResponse(
+                            response = awaitableResponse,
+                            agentProcess = agentProcess,
+                        )
+                        agentProcess.run()
+                    }
                 }
 
                 is ContentOutputChannelEvent -> {

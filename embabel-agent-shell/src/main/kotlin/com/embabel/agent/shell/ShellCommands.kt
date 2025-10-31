@@ -49,13 +49,12 @@ import kotlin.system.exitProcess
 @ShellComponent
 class ShellCommands(
     private val autonomy: Autonomy,
-    private val planLister: PlanLister,
     private val modelProvider: ModelProvider,
     private val terminalServices: TerminalServices,
     private val environment: ConfigurableEnvironment,
     private val objectMapper: ObjectMapper,
     private val colorPalette: ColorPalette,
-    private val loggingPersonality: LoggingPersonality,
+    loggingPersonality: LoggingPersonality,
     private val toolsStats: ToolsStats,
     private val context: ConfigurableApplicationContext,
     private val shellProperties: ShellProperties = ShellProperties(),
@@ -127,7 +126,10 @@ class ShellCommands(
 
         fun runChat(): String {
             val chatbot = chatbot ?: createDefaultChatbot()
-            val chatSession = chatbot.createSession(user = null, outputChannel = terminalServices.outputChannel())
+            val chatSession = chatbot.createSession(
+                user = null,
+                outputChannel = terminalServices.outputChannel(agentPlatform)
+            )
             return terminalServices.chat(chatSession = chatSession, welcome = null, colorPalette = colorPalette)
         }
 
@@ -449,10 +451,7 @@ class ShellCommands(
             return "The process was terminated. Not my fault.\n\t${pete.detail.color(colorPalette.color2)}\n"
         } catch (pwe: ProcessWaitingException) {
             recordAgentProcess(pwe.agentProcess)
-            val awaitableResponse = terminalServices.handleProcessWaitingException(pwe)
-            if (awaitableResponse == null) {
-                return "Operation cancelled.\n"
-            }
+            val awaitableResponse = terminalServices.handleAwaitable(pwe.awaitable) ?: return "Operation cancelled.\n"
             pwe.awaitable.onResponse(
                 response = awaitableResponse,
                 agentProcess = pwe.agentProcess,

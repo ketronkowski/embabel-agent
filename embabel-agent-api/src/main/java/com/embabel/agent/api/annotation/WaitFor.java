@@ -34,12 +34,12 @@ public class WaitFor {
      */
     @NonNull
     public static <T> T formSubmission(@NonNull String title, @NonNull Class<T> clazz) {
-        return com.embabel.agent.api.annotation.WaitKt.fromForm(title, clazz);
+        return WaitKt.fromForm(title, clazz);
     }
 
     @NonNull
     public static <P> P confirmation(@NonNull P what, @NonNull String description) {
-        return com.embabel.agent.api.annotation.WaitKt.confirm(what, description);
+        return WaitKt.confirm(what, description);
     }
 
     @NonNull

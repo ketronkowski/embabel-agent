@@ -46,4 +46,12 @@ data class ConversationContinues(
 data class ConversationOver(
     @get:JsonPropertyDescription("Reason for conversation termination, e.g. 'user requested end of conversation', or 'conversation unsafe'")
     val reason: String,
-) : ConversationStatus
+) : ConversationStatus {
+
+    companion object {
+
+        @JvmStatic
+        fun because(reason: String): ConversationOver =
+            ConversationOver(reason)
+    }
+}

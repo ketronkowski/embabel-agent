@@ -30,8 +30,13 @@ interface ValidationError
  * Present the user with a form
  * and bind it to the given class
  * @param O the class to bind the form submission to
+ * @param form the form to present to the user
+ * @param outputClass the class to bind the form submission to
+ * @param population an optional instance to pre-populate the form
+ * @param validationErrors optional validation errors to display on the form
+ * @param persistent whether this request should be persisted
  */
-class FormBindingRequest<O : Any>(
+class FormBindingRequest<O : Any> @JvmOverloads constructor(
     form: Form,
     val outputClass: Class<O>,
     val population: O? = null,
@@ -57,7 +62,10 @@ class FormBindingRequest<O : Any>(
         return bind(boundInstance, agentProcess)
     }
 
-    fun bind(boundInstance: O, agentProcess: AgentProcess): ResponseImpact {
+    fun bind(
+        boundInstance: O,
+        agentProcess: AgentProcess,
+    ): ResponseImpact {
         logger.info("Bound form submission to {}", boundInstance)
         agentProcess += boundInstance
         return ResponseImpact.UPDATED
@@ -66,6 +74,9 @@ class FormBindingRequest<O : Any>(
     override fun toString(): String = infoString(verbose = false)
 }
 
+/**
+ * Response from the UX
+ */
 data class FormResponse(
     override val id: String = UUID.randomUUID().toString(),
     override val awaitableId: String,
