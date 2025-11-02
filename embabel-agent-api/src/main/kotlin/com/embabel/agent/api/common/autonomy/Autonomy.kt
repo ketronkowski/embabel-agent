@@ -17,7 +17,6 @@ package com.embabel.agent.api.common.autonomy
 
 import com.embabel.agent.api.common.support.destructureAndBindIfNecessary
 import com.embabel.agent.common.Constants
-import com.embabel.agent.spi.config.spring.AgentPlatformProperties
 import com.embabel.agent.core.*
 import com.embabel.agent.domain.io.UserInput
 import com.embabel.agent.event.DynamicAgentCreationEvent
@@ -25,11 +24,13 @@ import com.embabel.agent.event.RankingChoiceRequestEvent
 import com.embabel.agent.spi.Ranker
 import com.embabel.agent.spi.Ranking
 import com.embabel.agent.spi.Rankings
+import com.embabel.agent.spi.config.spring.AgentPlatformProperties
 import com.embabel.common.core.types.ZeroToOne
 import com.embabel.common.util.indent
 import com.embabel.common.util.loggerFor
 import com.embabel.plan.goap.AStarGoapPlanner
 import com.embabel.plan.goap.ConditionDetermination
+import com.embabel.plan.goap.GoapPlanningSystem
 import com.embabel.plan.goap.WorldStateDeterminer
 import org.springframework.stereotype.Component
 import org.springframework.stereotype.Service
@@ -375,6 +376,11 @@ class Autonomy(
      * Agent with only relevant actions
      */
     private fun Agent.prune(userInput: UserInput): Agent {
+        val planningSystem = this.planningSystem
+        if (planningSystem !is GoapPlanningSystem) {
+            logger.warn("Pruning is only supported for GoapPlanningSystem. Skipping pruning.")
+            return this
+        }
         logger.debug(
             "Raw agent: {}",
             infoString(),

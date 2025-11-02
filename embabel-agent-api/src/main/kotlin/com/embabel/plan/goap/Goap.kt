@@ -195,7 +195,7 @@ data class GoapPlanningSystem(
         return actions.flatMap { it.effects.keys }.toSet()
     }
 
-    fun knownConditions(): Set<String> {
+    override fun knownConditions(): Set<String> {
         return knownPreconditions() + knownEffects()
     }
 

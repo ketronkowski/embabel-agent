@@ -27,6 +27,8 @@ interface PlanningSystem : HasInfoString {
     val actions: Set<Action>
 
     val goals: Set<Goal>
+
+    fun knownConditions(): Set<String>
 }
 
 /**
@@ -60,7 +62,7 @@ interface Planner<S : PlanningSystem, W : WorldState, P : Plan> {
      * Return the best plan to each goal from the present world state.
      * The plans (one for each goal) are sorted by net value, descending.
      */
-    fun plansToGoals(system: S): List<P> =
+    fun plansToGoals(system: PlanningSystem): List<P> =
         system.goals.mapNotNull { goal ->
             val plan = planToGoal(system.actions, goal)
             if (plan != null) {
@@ -81,7 +83,7 @@ interface Planner<S : PlanningSystem, W : WorldState, P : Plan> {
     /**
      * Return the best plan to any goal
      */
-    fun bestValuePlanToAnyGoal(system: S): P? =
+    fun bestValuePlanToAnyGoal(system: PlanningSystem): P? =
         plansToGoals(system).firstOrNull()
 
     /**

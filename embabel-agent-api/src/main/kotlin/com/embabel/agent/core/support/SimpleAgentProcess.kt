@@ -21,6 +21,7 @@ import com.embabel.agent.event.AgentProcessPlanFormulatedEvent
 import com.embabel.agent.event.GoalAchievedEvent
 import com.embabel.common.util.indentLines
 import com.embabel.plan.Plan
+import com.embabel.plan.Planner
 import com.embabel.plan.WorldState
 import com.embabel.plan.goap.AStarGoapPlanner
 import com.embabel.plan.goap.WorldStateDeterminer
@@ -51,7 +52,7 @@ open class SimpleAgentProcess(
 
     override val worldStateDeterminer: WorldStateDeterminer = BlackboardWorldStateDeterminer(processContext)
 
-    override val planner = AStarGoapPlanner(worldStateDeterminer)
+    override val planner: Planner<*, *, *> = AStarGoapPlanner(worldStateDeterminer)
 
     override fun recordLlmInvocation(llmInvocation: LlmInvocation) {
         _llmInvocations.add(llmInvocation)

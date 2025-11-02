@@ -19,6 +19,7 @@ import com.embabel.agent.api.common.StuckHandler
 import com.embabel.common.core.types.*
 import com.embabel.common.util.ComputerSaysNoSerializer
 import com.embabel.common.util.indentLines
+import com.embabel.plan.PlanningSystem
 import com.embabel.plan.goap.GoapPlanningSystem
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import org.slf4j.LoggerFactory
@@ -94,7 +95,7 @@ data class Agent(
             }.toSet(),
         )
 
-    val planningSystem: GoapPlanningSystem
+    val planningSystem: PlanningSystem
         get() {
             val actions = actions.toSet()
             logger.debug(infoString())
