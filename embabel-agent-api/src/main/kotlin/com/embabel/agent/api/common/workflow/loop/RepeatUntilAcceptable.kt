@@ -41,7 +41,6 @@ data class Attempt<RESULT : Any, FEEDBACK : Feedback>(
  * Mutable object. We only bind this once
  */
 data class AttemptHistory<INPUT, RESULT : Any, FEEDBACK : Feedback>(
-    @get:JvmName("getInput")
     val input: INPUT,
     private val _attempts: MutableList<Attempt<RESULT, FEEDBACK>> = mutableListOf(),
     private var lastResult: RESULT? = null,
@@ -99,7 +98,7 @@ data class RepeatUntilAcceptable(
     inline fun <reified INPUT, reified RESULT : Any, reified FEEDBACK : Feedback> build(
         noinline task: (RepeatUntilAcceptableActionContext<INPUT, RESULT, FEEDBACK>) -> RESULT,
         noinline evaluator: (EvaluationActionContext<INPUT, RESULT, FEEDBACK>) -> FEEDBACK,
-        noinline acceptanceCriteria: (FEEDBACK) -> Boolean = { it.score >= scoreThreshold },
+        noinline acceptanceCriteria: (AcceptanceActionContext<INPUT, RESULT, FEEDBACK>) -> Boolean = { it.feedback.score >= scoreThreshold },
         inputClass: Class<INPUT>,
     ): AgentScopeBuilder<RESULT> =
         build(
@@ -115,13 +114,16 @@ data class RepeatUntilAcceptable(
     fun <INPUT, RESULT : Any, FEEDBACK : Feedback> build(
         task: (RepeatUntilAcceptableActionContext<INPUT, RESULT, FEEDBACK>) -> RESULT,
         evaluator: (EvaluationActionContext<INPUT, RESULT, FEEDBACK>) -> FEEDBACK,
-        acceptanceCriteria: (FEEDBACK) -> Boolean,
+        acceptanceCriteria: (AcceptanceActionContext<INPUT, RESULT, FEEDBACK>) -> Boolean,
         resultClass: Class<RESULT>,
         feedbackClass: Class<FEEDBACK>,
         inputClass: Class<out INPUT>,
     ): AgentScopeBuilder<RESULT> {
 
-        fun findOrBindAttemptHistory(context: OperationContext, input: INPUT): AttemptHistory<INPUT, RESULT, FEEDBACK> {
+        fun findOrBindAttemptHistory(
+            context: OperationContext,
+            input: INPUT,
+        ): AttemptHistory<INPUT, RESULT, FEEDBACK> {
             return context.last<AttemptHistory<INPUT, RESULT, FEEDBACK>>()
                 ?: run {
                     val ah = AttemptHistory<INPUT, RESULT, FEEDBACK>(input = input)
@@ -224,7 +226,7 @@ data class RepeatUntilAcceptable(
 
         val acceptableCondition = ComputedBooleanCondition(
             name = ACCEPTABLE_CONDITION,
-            evaluator = { context, _ ->
+            evaluator = { context, action ->
                 val attemptHistory = context.last<AttemptHistory<INPUT, RESULT, FEEDBACK>>()
                 if (attemptHistory?.lastAttempt() == null) {
                     false
@@ -237,7 +239,12 @@ data class RepeatUntilAcceptable(
                     true
                 } else {
                     val lastFeedback = attemptHistory.lastAttempt()!!.feedback
-                    val isAcceptable = acceptanceCriteria(lastFeedback)
+                    val acceptanceContext = AcceptanceActionContext(
+                        input = attemptHistory.input,
+                        attemptHistory = attemptHistory,
+                        feedback = lastFeedback,
+                    )
+                    val isAcceptable = acceptanceCriteria(acceptanceContext)
                     logger.info(
                         "Condition '{}', iterations={}: Feedback acceptable={}: {}",
                         ACCEPTABLE_CONDITION,
@@ -335,6 +342,17 @@ open class EvaluationActionContext<INPUT, RESULT : Any, FEEDBACK : Feedback>(
 
     val resultToEvaluate: RESULT = attemptHistory.resultToEvaluate() ?: error("No result available in AttemptHistory")
 
+    /**
+     * Get the last attempt if available.
+     */
+    fun lastAttempt(): Attempt<RESULT, FEEDBACK>? = attemptHistory.lastAttempt()
+}
+
+data class AcceptanceActionContext<INPUT, RESULT : Any, FEEDBACK : Feedback>(
+    val input: INPUT,
+    val attemptHistory: AttemptHistory<INPUT, RESULT, FEEDBACK>,
+    val feedback: FEEDBACK,
+) {
     /**
      * Get the last attempt if available.
      */

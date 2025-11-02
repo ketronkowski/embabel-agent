@@ -247,7 +247,7 @@ class RepeatUntilAcceptableBuilderTest {
                                         "Last result must be available to evaluator");
                                 return new TextFeedback(0.5 + history.attempts().size() / 10.0, "feedback");
                             })
-                    .withAcceptanceCriteria(f -> f.getScore() > .5)
+                    .withAcceptanceCriteria(f -> f.getFeedback().getScore() > .5)
                     .buildAgent("myAgent", "This is a very good agent");
 
             var ap = IntegrationTestUtils.dummyAgentPlatform();

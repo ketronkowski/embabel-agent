@@ -108,7 +108,7 @@ data class RepeatUntilAcceptableBuilder<INPUT, RESULT : Any, FEEDBACK : Feedback
          * This will determine when the generated result is considered acceptable.
          */
         fun withAcceptanceCriteria(
-            accept: (f: FEEDBACK) -> Boolean,
+            accept: (AcceptanceActionContext<INPUT, RESULT, FEEDBACK>) -> Boolean,
         ): Emitter {
             return Emitter(generator, evaluator, accept)
         }
@@ -118,7 +118,7 @@ data class RepeatUntilAcceptableBuilder<INPUT, RESULT : Any, FEEDBACK : Feedback
          * based on threshold score
          */
         override fun build(): AgentScopeBuilder<RESULT> {
-            return withAcceptanceCriteria { it.score >= scoreThreshold }
+            return withAcceptanceCriteria { it.feedback.score >= scoreThreshold }
                 .build()
         }
     }
@@ -126,7 +126,7 @@ data class RepeatUntilAcceptableBuilder<INPUT, RESULT : Any, FEEDBACK : Feedback
     inner class Emitter(
         private val generator: (RepeatUntilAcceptableActionContext<INPUT, RESULT, FEEDBACK>) -> RESULT,
         private val evaluator: (EvaluationActionContext<INPUT, RESULT, FEEDBACK>) -> FEEDBACK,
-        private val accept: (f: FEEDBACK) -> Boolean,
+        private val accept: (AcceptanceActionContext<INPUT, RESULT, FEEDBACK>) -> Boolean,
     ) : WorkflowBuilder<RESULT>(resultClass = resultClass, inputClass = inputClass) {
 
         /**
