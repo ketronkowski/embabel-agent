@@ -15,6 +15,7 @@
  */
 package com.embabel.agent.api.annotation
 
+import com.embabel.agent.api.common.PlannerType
 import com.embabel.agent.core.IoBinding
 import com.embabel.common.core.types.Semver.Companion.DEFAULT_VERSION
 import com.embabel.common.core.types.ZeroToOne
@@ -38,19 +39,6 @@ import org.springframework.stereotype.Component
 annotation class AgentCapabilities(
     val scan: Boolean = true,
 )
-
-/**
- * Specifies the type of planner that an agent uses.
- */
-enum class Planner {
-
-    /**
-     * Goal Oriented Action Planning.
-     * This is the default planner.
-     * It uses goals, actions and conditions to plan actions.
-     */
-    GOAP,
-}
 
 /**
  * Indicates that this class is an agent.
@@ -79,7 +67,7 @@ annotation class Agent(
     val provider: String = "",
     val description: String,
     val version: String = DEFAULT_VERSION,
-    val planner: Planner = Planner.GOAP,
+    val planner: PlannerType = PlannerType.GOAP,
     val scan: Boolean = true,
     @get:AliasFor(annotation = Component::class, attribute = "value")
     val beanName: String = "",
@@ -159,6 +147,6 @@ annotation class Action(
 @Target(AnnotationTarget.VALUE_PARAMETER)
 @Retention(AnnotationRetention.RUNTIME)
 @MustBeDocumented
-annotation class RequireNameMatch (
-    val value: String = ""
+annotation class RequireNameMatch(
+    val value: String = "",
 )
