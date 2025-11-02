@@ -19,11 +19,11 @@ import com.embabel.agent.api.common.PlatformServices
 import com.embabel.agent.core.*
 import com.embabel.agent.event.AgentProcessPlanFormulatedEvent
 import com.embabel.agent.event.GoalAchievedEvent
+import com.embabel.agent.spi.PlannerFactory
 import com.embabel.common.util.indentLines
 import com.embabel.plan.Plan
 import com.embabel.plan.Planner
 import com.embabel.plan.WorldState
-import com.embabel.plan.goap.AStarGoapPlanner
 import com.embabel.plan.goap.WorldStateDeterminer
 import java.time.Instant
 
@@ -34,6 +34,7 @@ open class SimpleAgentProcess(
     processOptions: ProcessOptions,
     blackboard: Blackboard,
     platformServices: PlatformServices,
+    plannerFactory: PlannerFactory,
     timestamp: Instant = Instant.now(),
 ) : AbstractAgentProcess(
     id = id,
@@ -52,7 +53,7 @@ open class SimpleAgentProcess(
 
     override val worldStateDeterminer: WorldStateDeterminer = BlackboardWorldStateDeterminer(processContext)
 
-    override val planner: Planner<*, *, *> = AStarGoapPlanner(worldStateDeterminer)
+    override val planner: Planner<*, *, *> = plannerFactory.createPlanner(processOptions, worldStateDeterminer)
 
     override fun recordLlmInvocation(llmInvocation: LlmInvocation) {
         _llmInvocations.add(llmInvocation)

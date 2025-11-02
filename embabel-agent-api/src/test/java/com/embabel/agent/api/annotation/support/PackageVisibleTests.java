@@ -28,6 +28,7 @@ import com.embabel.agent.core.ProcessContext;
 import com.embabel.agent.core.ProcessOptions;
 import com.embabel.agent.core.support.InMemoryBlackboard;
 import com.embabel.agent.core.support.SimpleAgentProcess;
+import com.embabel.agent.spi.support.GoapPlannerFactory;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
@@ -77,6 +78,7 @@ class PackageVisibleTests {
                         processOptions,
                         new InMemoryBlackboard(),
                         platformServices,
+                        GoapPlannerFactory.INSTANCE,
                         Instant.now()
                 )
         );
@@ -109,6 +111,7 @@ class PackageVisibleTests {
                         processOptions,
                         new InMemoryBlackboard(),
                         platformServices,
+                        GoapPlannerFactory.INSTANCE,
                         Instant.now()
                 )
         );

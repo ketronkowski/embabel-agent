@@ -18,6 +18,7 @@ package com.embabel.agent.core.support
 
 import com.embabel.agent.api.common.PlatformServices
 import com.embabel.agent.core.*
+import com.embabel.agent.spi.PlannerFactory
 import com.embabel.plan.WorldState
 import com.embabel.plan.goap.GoapWorldState
 import kotlinx.coroutines.future.await
@@ -37,6 +38,7 @@ open class ConcurrentAgentProcess(
     processOptions: ProcessOptions,
     blackboard: Blackboard,
     platformServices: PlatformServices,
+    plannerFactory: PlannerFactory,
     timestamp: Instant = Instant.now(),
     val callbacks: List<AgentProcessCallback> = emptyList(),
 ) : SimpleAgentProcess(
@@ -46,6 +48,7 @@ open class ConcurrentAgentProcess(
     processOptions = processOptions,
     blackboard = blackboard,
     platformServices = platformServices,
+    plannerFactory = plannerFactory,
     timestamp = timestamp,
 ) {
     override fun formulateAndExecutePlan(worldState: WorldState): AgentProcess {

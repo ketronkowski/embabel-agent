@@ -17,19 +17,18 @@ package com.embabel.agent.core.support
 
 import com.embabel.agent.api.common.Asyncer
 import com.embabel.agent.channel.OutputChannel
-import com.embabel.agent.spi.config.spring.AgentPlatformProperties
 import com.embabel.agent.core.*
 import com.embabel.agent.event.AgentDeploymentEvent
 import com.embabel.agent.event.AgentProcessCreationEvent
 import com.embabel.agent.event.AgenticEventListener
 import com.embabel.agent.spi.*
+import com.embabel.agent.spi.config.spring.AgentPlatformProperties
+import com.embabel.agent.spi.support.GoapPlannerFactory
 import com.embabel.agent.spi.support.InMemoryAgentProcessRepository
 import com.embabel.agent.spi.support.InMemoryContextRepository
 import com.embabel.agent.spi.support.SpringContextPlatformServices
 import com.embabel.common.textio.template.TemplateRenderer
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
-import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
@@ -64,7 +63,7 @@ open class DefaultAgentPlatform(
 
     private val logger = LoggerFactory.getLogger(DefaultAgentPlatform::class.java)
 
-    private val yamlObjectMapper = ObjectMapper(YAMLFactory()).registerKotlinModule()
+    private val plannerFactory: PlannerFactory = GoapPlannerFactory
 
     private val agents: MutableMap<String, Agent> = ConcurrentHashMap()
 
@@ -176,6 +175,7 @@ open class DefaultAgentPlatform(
                 id = id,
                 parentId = null,
                 processOptions = processOptions,
+                plannerFactory = plannerFactory,
             )
 
             AgentPlatformProperties.ProcessType.CONCURRENT -> ConcurrentAgentProcess(
@@ -185,6 +185,7 @@ open class DefaultAgentPlatform(
                 id = id,
                 parentId = null,
                 processOptions = processOptions,
+                plannerFactory = plannerFactory,
                 callbacks = callbacks,
             )
         }
@@ -212,6 +213,7 @@ open class DefaultAgentPlatform(
             }",
             parentId = parentAgentProcess.id,
             processOptions = processOptions,
+            plannerFactory = plannerFactory,
         )
         logger.debug("👶 Creating child process {} from {}", childAgentProcess.id, parentAgentProcess.id)
         agentProcessRepository.save(childAgentProcess)

@@ -27,6 +27,7 @@ import com.embabel.agent.domain.io.UserInput
 import com.embabel.agent.event.AgenticEventListener.Companion.DevNull
 import com.embabel.agent.spi.LlmInteraction
 import com.embabel.agent.spi.LlmOperations
+import com.embabel.agent.spi.support.GoapPlannerFactory
 import com.embabel.agent.support.Dog
 import com.embabel.agent.testing.integration.IntegrationTestUtils
 import com.embabel.agent.testing.integration.IntegrationTestUtils.dummyAgentProcessRunning
@@ -312,6 +313,7 @@ class AgentMetadataReaderActionTest {
                     platformServices = platformServices,
                     processOptions = ProcessOptions(),
                     blackboard = InMemoryBlackboard(),
+                    plannerFactory = GoapPlannerFactory,
                     parentId = null,
                 ),
                 platformServices = platformServices,
@@ -436,6 +438,7 @@ class AgentMetadataReaderActionTest {
                     platformServices = platformServices,
                     processOptions = ProcessOptions(),
                     blackboard = InMemoryBlackboard(),
+                    plannerFactory = GoapPlannerFactory,
                     parentId = null,
                 ),
                 platformServices = platformServices,

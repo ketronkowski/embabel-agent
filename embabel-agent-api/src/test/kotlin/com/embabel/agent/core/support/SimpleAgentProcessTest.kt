@@ -32,6 +32,7 @@ import com.embabel.agent.domain.io.UserInput
 import com.embabel.agent.domain.library.Person
 import com.embabel.agent.event.ObjectAddedEvent
 import com.embabel.agent.event.ObjectBoundEvent
+import com.embabel.agent.spi.support.GoapPlannerFactory
 import com.embabel.agent.support.Dog
 import com.embabel.agent.support.SimpleTestAgent
 import com.embabel.agent.testing.common.EventSavingAgenticEventListener
@@ -137,6 +138,7 @@ class SimpleAgentProcessTest {
                 processOptions = ProcessOptions(),
                 blackboard = InMemoryBlackboard(),
                 platformServices = dummyPlatformServices(),
+                plannerFactory = GoapPlannerFactory,
                 parentId = null,
             )
             assertThrows<IOException> {
@@ -178,6 +180,7 @@ class SimpleAgentProcessTest {
                 processOptions = ProcessOptions(),
                 blackboard = blackboard,
                 platformServices = dummyPlatformServices,
+                plannerFactory = GoapPlannerFactory,
                 parentId = null,
             )
             val agentStatus = agentProcess.tick()
@@ -196,6 +199,7 @@ class SimpleAgentProcessTest {
                 processOptions = ProcessOptions(),
                 blackboard = blackboard,
                 platformServices = dummyPlatformServices,
+                plannerFactory = GoapPlannerFactory,
                 parentId = null,
             )
             val agentStatus = agentProcess.run()
@@ -270,6 +274,7 @@ class SimpleAgentProcessTest {
                 processOptions = ProcessOptions(),
                 blackboard = blackboard,
                 platformServices = dummyPlatformServices,
+                plannerFactory = GoapPlannerFactory,
                 parentId = null,
             )
             return agentProcess.run()
@@ -291,6 +296,7 @@ class SimpleAgentProcessTest {
                 processOptions = ProcessOptions(),
                 blackboard = blackboard,
                 platformServices = dummyPlatformServices,
+                plannerFactory = GoapPlannerFactory,
                 parentId = null,
             )
             val person = LocalPerson("John")
@@ -309,6 +315,7 @@ class SimpleAgentProcessTest {
                 processOptions = ProcessOptions(),
                 blackboard = blackboard,
                 platformServices = dummyPlatformServices,
+                plannerFactory = GoapPlannerFactory,
                 parentId = null,
             )
             val person = LocalPerson("John")
@@ -326,6 +333,7 @@ class SimpleAgentProcessTest {
                 processOptions = ProcessOptions(),
                 blackboard = blackboard,
                 platformServices = dummyPlatformServices,
+                plannerFactory = GoapPlannerFactory,
                 parentId = null,
             )
             val person = LocalPerson("John")
@@ -344,6 +352,7 @@ class SimpleAgentProcessTest {
                 processOptions = ProcessOptions(),
                 blackboard = blackboard,
                 platformServices = dummyPlatformServices,
+                plannerFactory = GoapPlannerFactory,
                 parentId = null,
             )
             val person = LocalPerson("John")
@@ -370,6 +379,7 @@ class SimpleAgentProcessTest {
                 processOptions = ProcessOptions(),
                 blackboard = blackboard,
                 platformServices = dummyPlatformServices,
+                plannerFactory = GoapPlannerFactory,
                 parentId = null,
             )
             assertEquals(0, agentProcess.toolsStats.toolsStats.size, "No tools called yet")
@@ -390,6 +400,7 @@ class SimpleAgentProcessTest {
                 processOptions = ProcessOptions(),
                 blackboard = blackboard,
                 platformServices = dummyPlatformServices,
+                plannerFactory = GoapPlannerFactory,
                 parentId = null,
             )
             assertEquals(AgentProcessStatusCode.NOT_STARTED, agentProcess.status)

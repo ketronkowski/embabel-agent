@@ -15,24 +15,18 @@
  */
 package com.embabel.agent.core.support
 
-import com.embabel.agent.api.annotation.AchievesGoal
-import com.embabel.agent.api.annotation.Action
-import com.embabel.agent.api.annotation.confirm
 import com.embabel.agent.api.annotation.support.AgentMetadataReader
-import com.embabel.agent.api.annotation.waitFor
 import com.embabel.agent.api.common.StuckHandler
 import com.embabel.agent.api.common.StuckHandlerResult
 import com.embabel.agent.api.common.StuckHandlingResultCode
 import com.embabel.agent.api.dsl.Frog
-import com.embabel.agent.api.dsl.agent
 import com.embabel.agent.api.dsl.evenMoreEvilWizard
 import com.embabel.agent.core.*
 import com.embabel.agent.core.hitl.ConfirmationRequest
 import com.embabel.agent.domain.io.UserInput
-import com.embabel.agent.domain.library.Person
 import com.embabel.agent.event.ObjectAddedEvent
 import com.embabel.agent.event.ObjectBoundEvent
-import com.embabel.agent.support.Dog
+import com.embabel.agent.spi.support.GoapPlannerFactory
 import com.embabel.agent.support.SimpleTestAgent
 import com.embabel.agent.testing.common.EventSavingAgenticEventListener
 import com.embabel.agent.testing.integration.IntegrationTestUtils.dummyPlatformServices
@@ -58,6 +52,7 @@ class ConcurrentAgentProcessTest {
                 blackboard = InMemoryBlackboard(),
                 platformServices = dummyPlatformServices(),
                 parentId = null,
+                plannerFactory = GoapPlannerFactory,
             )
             assertThrows<IOException> {
                 jacksonObjectMapper().writeValueAsString(cap)
@@ -99,6 +94,7 @@ class ConcurrentAgentProcessTest {
                 blackboard = blackboard,
                 platformServices = dummyPlatformServices,
                 parentId = null,
+                plannerFactory = GoapPlannerFactory,
             )
             val agentStatus = agentProcess.tick()
             assertEquals(AgentProcessStatusCode.WAITING, agentStatus.status)
@@ -117,6 +113,7 @@ class ConcurrentAgentProcessTest {
                 blackboard = blackboard,
                 platformServices = dummyPlatformServices,
                 parentId = null,
+                plannerFactory = GoapPlannerFactory,
             )
             val agentStatus = agentProcess.run()
             assertEquals(AgentProcessStatusCode.WAITING, agentStatus.status)
@@ -191,6 +188,7 @@ class ConcurrentAgentProcessTest {
                 blackboard = blackboard,
                 platformServices = dummyPlatformServices,
                 parentId = null,
+                plannerFactory = GoapPlannerFactory,
             )
             return agentProcess.run()
         }
@@ -211,6 +209,7 @@ class ConcurrentAgentProcessTest {
                 processOptions = ProcessOptions(),
                 blackboard = blackboard,
                 platformServices = dummyPlatformServices,
+                plannerFactory = GoapPlannerFactory,
                 parentId = null,
             )
             val person = LocalPerson("John")
@@ -229,6 +228,7 @@ class ConcurrentAgentProcessTest {
                 processOptions = ProcessOptions(),
                 blackboard = blackboard,
                 platformServices = dummyPlatformServices,
+                plannerFactory = GoapPlannerFactory,
                 parentId = null,
             )
             val person = LocalPerson("John")
@@ -246,6 +246,7 @@ class ConcurrentAgentProcessTest {
                 processOptions = ProcessOptions(),
                 blackboard = blackboard,
                 platformServices = dummyPlatformServices,
+                plannerFactory = GoapPlannerFactory,
                 parentId = null,
             )
             val person = LocalPerson("John")
@@ -264,6 +265,7 @@ class ConcurrentAgentProcessTest {
                 processOptions = ProcessOptions(),
                 blackboard = blackboard,
                 platformServices = dummyPlatformServices,
+                plannerFactory = GoapPlannerFactory,
                 parentId = null,
             )
             val person = LocalPerson("John")
@@ -290,6 +292,7 @@ class ConcurrentAgentProcessTest {
                 processOptions = ProcessOptions(),
                 blackboard = blackboard,
                 platformServices = dummyPlatformServices,
+                plannerFactory = GoapPlannerFactory,
                 parentId = null,
             )
             assertEquals(0, agentProcess.toolsStats.toolsStats.size, "No tools called yet")
@@ -310,6 +313,7 @@ class ConcurrentAgentProcessTest {
                 processOptions = ProcessOptions(),
                 blackboard = blackboard,
                 platformServices = dummyPlatformServices,
+                plannerFactory = GoapPlannerFactory,
                 parentId = null,
             )
             assertEquals(AgentProcessStatusCode.NOT_STARTED, agentProcess.status)
