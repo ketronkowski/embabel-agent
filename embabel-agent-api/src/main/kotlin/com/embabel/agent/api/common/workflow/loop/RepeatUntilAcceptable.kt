@@ -304,7 +304,7 @@ data class RepeatUntilAcceptable(
 
 }
 
-open class RepeatUntilAcceptableActionContext<INPUT, RESULT : Any, FEEDBACK : Feedback>(
+abstract class RepeatUntilContext<INPUT, RESULT : Any, FEEDBACK : Feedback>(
     override val input: INPUT,
     override val processContext: ProcessContext,
     override val action: Action,
@@ -314,39 +314,69 @@ open class RepeatUntilAcceptableActionContext<INPUT, RESULT : Any, FEEDBACK : Fe
 ) : InputActionContext<INPUT?>, Blackboard by processContext.agentProcess,
     AgenticEventListener by processContext {
 
+    /**
+     * Get the last attempt if available.
+     */
+    fun lastAttempt(): Attempt<RESULT, FEEDBACK>? = attemptHistory.lastAttempt()
+
+    /**
+     * Convenience method to get result from last attempt or return default
+     * Easy to embed in prompts
+     */
+    fun lastAttemptOr(defaultValue: String): String {
+        return lastAttempt()?.result?.toString() ?: defaultValue
+    }
+
+    /**
+     * Convenience method to get feedback from last attempt or return default
+     */
+    fun lastFeedbackOr(defaultValue: String): String {
+        return lastAttempt()?.feedback?.toString() ?: defaultValue
+    }
+
     override val toolGroups: Set<ToolGroupRequirement>
         get() = action.toolGroups
 
     override val operation = action
 
-    /**
-     * Get the last attempt if available.
-     */
-    fun lastAttempt(): Attempt<RESULT, FEEDBACK>? = attemptHistory.lastAttempt()
 }
+
+open class RepeatUntilAcceptableActionContext<INPUT, RESULT : Any, FEEDBACK : Feedback>(
+    input: INPUT,
+    processContext: ProcessContext,
+    action: Action,
+    inputClass: Class<INPUT>,
+    outputClass: Class<*>,
+    attemptHistory: AttemptHistory<INPUT, RESULT, FEEDBACK>,
+) : RepeatUntilContext<INPUT, RESULT, FEEDBACK>(
+    input = input,
+    processContext = processContext,
+    action = action,
+    inputClass = inputClass,
+    outputClass = outputClass,
+    attemptHistory = attemptHistory,
+)
+
 
 open class EvaluationActionContext<INPUT, RESULT : Any, FEEDBACK : Feedback>(
-    override val input: INPUT,
-    override val processContext: ProcessContext,
-    override val action: Action,
-    val inputClass: Class<INPUT>,
-    val outputClass: Class<*>,
-    val attemptHistory: AttemptHistory<INPUT, RESULT, FEEDBACK>,
-) : InputActionContext<INPUT?>, Blackboard by processContext.agentProcess,
-    AgenticEventListener by processContext {
-
-    override val toolGroups: Set<ToolGroupRequirement>
-        get() = action.toolGroups
-
-    override val operation = action
-
+    input: INPUT,
+    processContext: ProcessContext,
+    action: Action,
+    inputClass: Class<INPUT>,
+    outputClass: Class<*>,
+    attemptHistory: AttemptHistory<INPUT, RESULT, FEEDBACK>,
+) : RepeatUntilContext<INPUT, RESULT, FEEDBACK>(
+    input = input,
+    processContext = processContext,
+    action = action,
+    inputClass = inputClass,
+    outputClass = outputClass,
+    attemptHistory = attemptHistory,
+) {
     val resultToEvaluate: RESULT = attemptHistory.resultToEvaluate() ?: error("No result available in AttemptHistory")
 
-    /**
-     * Get the last attempt if available.
-     */
-    fun lastAttempt(): Attempt<RESULT, FEEDBACK>? = attemptHistory.lastAttempt()
 }
+
 
 data class AcceptanceActionContext<INPUT, RESULT : Any, FEEDBACK : Feedback>(
     val input: INPUT,

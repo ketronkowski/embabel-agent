@@ -15,13 +15,13 @@
  */
 package com.embabel.agent.api.common.workflow.loop
 
-import com.embabel.agent.api.common.workflow.WorkFlowBuilderConsuming
 import com.embabel.agent.api.common.workflow.WorkflowBuilder
+import com.embabel.agent.api.common.workflow.WorkflowBuilderConsuming
 import com.embabel.agent.api.common.workflow.WorkflowBuilderReturning
 import com.embabel.agent.api.dsl.AgentScopeBuilder
 
 /**
- * Java friendly builder for RepeatUntil workflow.
+ * Java friendly builder for RepeatUntilAcceptable workflow.
  */
 data class RepeatUntilAcceptableBuilder<INPUT, RESULT : Any, FEEDBACK : Feedback>(
     private val resultClass: Class<RESULT>,
@@ -29,7 +29,7 @@ data class RepeatUntilAcceptableBuilder<INPUT, RESULT : Any, FEEDBACK : Feedback
     private val feedbackClass: Class<FEEDBACK> = Feedback::class.java as Class<FEEDBACK>,
     private val maxIterations: Int = DEFAULT_MAX_ITERATIONS,
     private val scoreThreshold: Double = DEFAULT_SCORE_THRESHOLD,
-) : WorkFlowBuilderConsuming {
+) : WorkflowBuilderConsuming {
 
     companion object : WorkflowBuilderReturning {
 
@@ -42,7 +42,11 @@ data class RepeatUntilAcceptableBuilder<INPUT, RESULT : Any, FEEDBACK : Feedback
          */
         @JvmStatic
         override fun <RESULT : Any> returning(resultClass: Class<RESULT>): RepeatUntilAcceptableBuilder<Any?, RESULT, TextFeedback> {
-            return RepeatUntilAcceptableBuilder(resultClass = resultClass, inputClass = Unit::class.java, feedbackClass = TextFeedback::class.java)
+            return RepeatUntilAcceptableBuilder(
+                resultClass = resultClass,
+                inputClass = Unit::class.java,
+                feedbackClass = TextFeedback::class.java
+            )
         }
     }
 

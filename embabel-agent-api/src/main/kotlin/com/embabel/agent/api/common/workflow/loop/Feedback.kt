@@ -16,11 +16,19 @@
 package com.embabel.agent.api.common.workflow.loop
 
 import com.embabel.common.core.types.ZeroToOne
+import com.fasterxml.jackson.annotation.JsonPropertyDescription
 
+/**
+ * Feedback on a generated output
+ */
 interface Feedback {
+    @get:JsonPropertyDescription("Feedback score between 0.0 and 1.0 where 0.0 is worst and 1.0 is best")
     val score: ZeroToOne
 }
 
+/**
+ * Convenient implementation of [Feedback] that contains textual feedback.
+ */
 data class TextFeedback(
     override val score: ZeroToOne,
     val feedback: String,

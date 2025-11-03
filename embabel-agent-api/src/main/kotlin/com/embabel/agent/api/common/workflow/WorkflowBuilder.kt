@@ -29,19 +29,15 @@ interface WorkflowBuilderReturning {
     fun <RESULT : Any> returning(resultClass: Class<RESULT>): Any
 }
 
-interface WorkflowBuilderWithInput {
-
-    /**
-     * Specify an input class for this workflow agent.
-     */
-    fun withInput(inputClass: Class<out Any>): Any
-}
-
 /**
  * Ensure consistent naming convention for workflow builders that consume a given input type.
  */
-interface WorkFlowBuilderConsuming {
+interface WorkflowBuilderConsuming {
 
+    /**
+     * Specify the input type for this workflow.
+     * Return a builder
+     */
     fun <INPUT : Any> consuming(inputClass: Class<INPUT>): Any
 }
 

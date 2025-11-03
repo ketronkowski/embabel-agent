@@ -15,8 +15,8 @@
  */
 package com.embabel.agent.api.common.workflow.loop
 
-import com.embabel.agent.api.common.workflow.WorkFlowBuilderConsuming
 import com.embabel.agent.api.common.workflow.WorkflowBuilder
+import com.embabel.agent.api.common.workflow.WorkflowBuilderConsuming
 import com.embabel.agent.api.common.workflow.WorkflowBuilderReturning
 import com.embabel.agent.api.dsl.AgentScopeBuilder
 
@@ -27,7 +27,7 @@ data class RepeatUntilBuilder<INPUT, RESULT : Any>(
     private val resultClass: Class<RESULT>,
     private val inputClass: Class<out INPUT>,
     private val maxIterations: Int = DEFAULT_MAX_ITERATIONS,
-) : WorkFlowBuilderConsuming {
+) : WorkflowBuilderConsuming {
 
     companion object : WorkflowBuilderReturning {
 

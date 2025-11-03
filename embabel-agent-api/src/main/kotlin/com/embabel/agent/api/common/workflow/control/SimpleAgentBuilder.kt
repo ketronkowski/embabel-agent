@@ -19,10 +19,9 @@ import com.embabel.agent.api.common.SupplierActionContext
 import com.embabel.agent.api.common.TransformationActionContext
 import com.embabel.agent.api.common.support.SupplierAction
 import com.embabel.agent.api.common.support.TransformationAction
-import com.embabel.agent.api.common.workflow.WorkFlowBuilderConsuming
 import com.embabel.agent.api.common.workflow.WorkflowBuilder
+import com.embabel.agent.api.common.workflow.WorkflowBuilderConsuming
 import com.embabel.agent.api.common.workflow.WorkflowBuilderReturning
-import com.embabel.agent.api.common.workflow.WorkflowBuilderWithInput
 import com.embabel.agent.api.dsl.AgentScopeBuilder
 import com.embabel.agent.core.Goal
 import com.embabel.agent.core.IoBinding
@@ -35,7 +34,7 @@ import com.embabel.common.core.MobyNameGenerator
 data class SimpleAgentBuilder<RESULT : Any>(
     private val resultClass: Class<RESULT>,
     private val inputClass: Class<out Any>? = null,
-) : WorkFlowBuilderConsuming, WorkflowBuilderWithInput {
+) : WorkflowBuilderConsuming {
 
     companion object : WorkflowBuilderReturning {
 
@@ -53,16 +52,13 @@ data class SimpleAgentBuilder<RESULT : Any>(
         }
     }
 
-    override fun withInput(inputClass: Class<out Any>): SimpleAgentBuilder<RESULT> {
-        return copy(inputClass = inputClass)
-    }
-
     override fun <INPUT : Any> consuming(inputClass: Class<INPUT>): SimpleAgentConsumer<INPUT> {
         return SimpleAgentConsumer(inputClass)
     }
 
     /**
-     * Provide a function the agent will perform.
+     * Provide a function the agent will perform to generate
+     * a draft on each iteration
      */
     fun running(
         generator: (SupplierActionContext<RESULT>) -> RESULT,
