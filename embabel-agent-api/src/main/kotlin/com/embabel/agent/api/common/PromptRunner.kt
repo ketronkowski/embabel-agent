@@ -22,6 +22,7 @@ import com.embabel.agent.core.ToolGroup
 import com.embabel.agent.core.ToolGroupRequirement
 import com.embabel.agent.prompt.element.ContextualPromptElement
 import com.embabel.agent.spi.LlmUse
+import com.embabel.chat.AssistantMessage
 import com.embabel.chat.Message
 import com.embabel.common.ai.model.LlmOptions
 import com.embabel.common.ai.prompt.PromptContributor
@@ -332,6 +333,16 @@ interface PromptRunner : LlmUse, PromptRunnerOperations {
      */
     fun <T> creating(outputClass: Class<T>): ObjectCreator<T>
 
+    override fun respond(
+        messages: List<Message>,
+    ): AssistantMessage =
+        AssistantMessage(
+            createObject(
+                messages = this.messages + messages,
+                outputClass = String::class.java,
+            )
+        )
+
 }
 
 /**
@@ -356,11 +367,11 @@ inline fun <reified T> TemplateOperations.createObject(
     createObject(outputClass = T::class.java, model = model)
 
 fun PromptRunner.withProperties(
-    vararg properties: KProperty<Any>
+    vararg properties: KProperty<Any>,
 ): PromptRunner =
     withProperties(*properties.map { it.name }.toTypedArray())
 
 fun PromptRunner.withoutProperties(
-    vararg properties: KProperty<Any>
+    vararg properties: KProperty<Any>,
 ): PromptRunner =
     withoutProperties(*properties.map { it.name }.toTypedArray())

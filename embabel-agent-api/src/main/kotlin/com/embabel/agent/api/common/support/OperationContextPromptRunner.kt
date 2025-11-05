@@ -72,17 +72,18 @@ internal data class OperationContextPromptRunner(
         messages: List<Message>,
         outputClass: Class<T>,
     ): T {
+        val allPromptContributors = promptContributors + contextualPromptContributors.map {
+            it.toPromptContributor(
+                context
+            )
+        }
         return context.processContext.createObject(
             messages = this.messages + messages,
             interaction = LlmInteraction(
                 llm = llm,
                 toolGroups = this.toolGroups + toolGroups,
                 toolCallbacks = safelyGetToolCallbacks(toolObjects) + otherToolCallbacks,
-                promptContributors = promptContributors + contextualPromptContributors.map {
-                    it.toPromptContributor(
-                        context
-                    )
-                },
+                promptContributors = allPromptContributors,
                 id = interactionId ?: idForPrompt(messages, outputClass),
                 generateExamples = generateExamples,
                 propertyFilter = propertyFilter,

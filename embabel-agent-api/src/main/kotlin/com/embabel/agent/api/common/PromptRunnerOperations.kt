@@ -80,13 +80,7 @@ interface PromptRunnerOperations {
      */
     fun respond(
         messages: List<Message>,
-    ): AssistantMessage =
-        AssistantMessage(
-            createObject(
-                messages = messages,
-                outputClass = String::class.java,
-            )
-        )
+    ): AssistantMessage
 
     /**
      * Use operations from a given template
