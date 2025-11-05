@@ -304,7 +304,7 @@ data class RepeatUntilAcceptable(
 
 }
 
-abstract class RepeatUntilContext<INPUT, RESULT : Any, FEEDBACK : Feedback>(
+abstract class RepeatUntilAcceptableContext<INPUT, RESULT : Any, FEEDBACK : Feedback>(
     override val input: INPUT,
     override val processContext: ProcessContext,
     override val action: Action,
@@ -348,7 +348,7 @@ open class RepeatUntilAcceptableActionContext<INPUT, RESULT : Any, FEEDBACK : Fe
     inputClass: Class<INPUT>,
     outputClass: Class<*>,
     attemptHistory: AttemptHistory<INPUT, RESULT, FEEDBACK>,
-) : RepeatUntilContext<INPUT, RESULT, FEEDBACK>(
+) : RepeatUntilAcceptableContext<INPUT, RESULT, FEEDBACK>(
     input = input,
     processContext = processContext,
     action = action,
@@ -365,7 +365,7 @@ open class EvaluationActionContext<INPUT, RESULT : Any, FEEDBACK : Feedback>(
     inputClass: Class<INPUT>,
     outputClass: Class<*>,
     attemptHistory: AttemptHistory<INPUT, RESULT, FEEDBACK>,
-) : RepeatUntilContext<INPUT, RESULT, FEEDBACK>(
+) : RepeatUntilAcceptableContext<INPUT, RESULT, FEEDBACK>(
     input = input,
     processContext = processContext,
     action = action,
