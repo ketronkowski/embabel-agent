@@ -748,7 +748,10 @@ class ChatClientLlmOperationsTest {
             )
             val prompt =
                 "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
-            val setup = createChatClientLlmOperations(fakeChatModel)
+            val setup = createChatClientLlmOperations(
+                fakeChatModel,
+                LlmDataBindingProperties(sendValidationInfo = false)
+            )
             val createdDog = setup.llmOperations.createObject(
                 messages = listOf(UserMessage(prompt)),
                 interaction = LlmInteraction(

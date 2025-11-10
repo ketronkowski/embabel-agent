@@ -75,16 +75,17 @@ abstract class AbstractLlmOperations(
             })
 
         val (createdObject, ms) = time {
-            val initialMessages = if (dataBindingProperties.sendValidationInfo) {
-                messages + UserMessage(
-                    validationPromptGenerator.generateRequirementsPrompt(
-                        validator = validator,
-                        outputClass = outputClass,
+            val initialMessages =
+                if (validator.getConstraintsForClass(outputClass).isBeanConstrained && dataBindingProperties.sendValidationInfo) {
+                    messages + UserMessage(
+                        validationPromptGenerator.generateRequirementsPrompt(
+                            validator = validator,
+                            outputClass = outputClass,
+                        )
                     )
-                )
-            } else {
-                messages
-            }
+                } else {
+                    messages
+                }
 
             var candidate = doTransform(
                 messages = initialMessages,

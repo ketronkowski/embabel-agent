@@ -36,7 +36,7 @@ import java.time.Duration
 class LlmDataBindingProperties(
     override val maxAttempts: Int = 10,
     val fixedBackoffMillis: Long = 30L,
-    val sendValidationInfo: Boolean = false,
+    val sendValidationInfo: Boolean = true,
 ) : RetryTemplateProvider {
 
     private val logger = LoggerFactory.getLogger(LlmDataBindingProperties::class.java)
