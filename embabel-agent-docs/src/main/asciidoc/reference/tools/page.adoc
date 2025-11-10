@@ -91,14 +91,15 @@ For example:
 ----
 embabel:
 
-  agent:
+    agent:
     platform:
       tools:
         includes:
-          linked-in:
+          weather:
+            description: Get weather for location
+            provider: Docker
             tools:
-              - get_person_profile
-              - get_company_profile
+              - weather
 ----
 
 ===== Configuring Tool Groups in Spring @Configuration
