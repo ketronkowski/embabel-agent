@@ -8,6 +8,7 @@ The easiest way to get started with Embabel Agent is to add the Spring Boot star
 Add the appropriate Embabel Agent Spring Boot starter to your `pom.xml` depending on your application type:
 
 ===== Shell Starter
+
 Starts the application in console mode with an interactive shell powered by Embabel.
 
 [source,xml]
@@ -28,6 +29,7 @@ Starts the application in console mode with an interactive shell powered by Emba
 * ✅ Development-friendly error handling
 
 ===== MCP Server Starter
+
 Starts the application with HTTP listener where agents are autodiscovered and registered as MCP servers, available for integration via SSE protocol.
 
 [source,xml]
@@ -48,7 +50,9 @@ Starts the application with HTTP listener where agents are autodiscovered and re
 * ✅️ Security and sandboxing
 
 ===== Basic Agent Platform Starter
-Initializes Embabel Agent Platform in the Spring Container. Platform beans are available via Spring Dependency Injection mechanism.
+
+Initializes Embabel Agent Platform in the Spring Container.
+Platform beans are available via Spring Dependency Injection mechanism.
 Application startup mode (web, console, microservice, etc.) is determined by the Application Designer.
 
 [source,xml]
@@ -68,8 +72,8 @@ Application startup mode (web, console, microservice, etc.) is determined by the
 * ✅️ Progress tracking and logging
 * ✅️ Development-friendly error handling
 
-
-You'll also need to add the Embabel repository to your `pom.xml`:
+Embabel release binaries are in Maven Central.
+If you want to use Embabel snapshots, you'll need to add the Embabel repository to your `pom.xml`:
 
 [source,xml]
 ----
@@ -104,7 +108,7 @@ You'll also need to add the Embabel repository to your `pom.xml`:
 </repositories>
 ----
 
-==== Gradle
+==== Gradle (for Embabel snapshots)
 
 Add the required repositories to your `build.gradle.kts`:
 
@@ -178,6 +182,7 @@ dependencies {
 Before running your application, you'll need to set up your environment with API keys for the LLM providers you plan to use.
 
 Example `.env` file:
+
 ----
 OPENAI_API_KEY=your_openai_api_key_here
 ANTHROPIC_API_KEY=your_anthropic_api_key_here
@@ -186,20 +191,20 @@ ANTHROPIC_API_KEY=your_anthropic_api_key_here
 ===== OpenAI Compatible (GPT-4, GPT-5, etc.)
 
 * Required:
-    - `OPENAI_API_KEY`: API key for OpenAI or compatible services (e.g., Azure OpenAI, etc.)
+- `OPENAI_API_KEY`: API key for OpenAI or compatible services (e.g., Azure OpenAI, etc.)
 * Optional:
-    - `OPENAI_BASE_URL`: base URL of the OpenAI deployment (for Azure AI use `https://{resource-name}.openai.azure.com/openai`)
-    - `OPENAI_COMPLETIONS_PATH`: custom path for completions endpoint (default: `/v1/completions`)
-    - `OPENAI_EMBEDDINGS_PATH`: custom path for embeddings endpoint (default: `/v1/embeddings`)
+- `OPENAI_BASE_URL`: base URL of the OpenAI deployment (for Azure AI use `https://{resource-name}.openai.azure.com/openai`)
+- `OPENAI_COMPLETIONS_PATH`: custom path for completions endpoint (default: `/v1/completions`)
+- `OPENAI_EMBEDDINGS_PATH`: custom path for embeddings endpoint (default: `/v1/embeddings`)
 
 ===== Anthropic (Claude 3.x, etc.)
 
 * Required:
-    - `ANTHROPIC_API_KEY`: API key for Anthropic services
+- `ANTHROPIC_API_KEY`: API key for Anthropic services
 
 ===== DeepSeek
 
 * Required:
-    - `DEEPSEEK_API_KEY`: API key for DeepSeek services
+- `DEEPSEEK_API_KEY`: API key for DeepSeek services
 * Optional:
-    - `DEEPSEEK_BASE_URL`: base URL for DeepSeek API (default: `https://api.deepseek.com`)
+- `DEEPSEEK_BASE_URL`: base URL for DeepSeek API (default: `https://api.deepseek.com`)
