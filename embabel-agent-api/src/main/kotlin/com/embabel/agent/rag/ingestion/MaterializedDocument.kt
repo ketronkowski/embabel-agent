@@ -49,7 +49,7 @@ data class DefaultMaterializedContainerSection(
 ) : MaterializedContainerSection
 
 /**
- * MaterializedDocument is the in-memory representation of a document with sections.
+ * In-memory representation of a document with sections.
  */
 data class MaterializedDocument(
     override val id: String,

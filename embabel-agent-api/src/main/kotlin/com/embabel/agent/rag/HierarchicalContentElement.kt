@@ -20,6 +20,8 @@ import com.embabel.agent.domain.library.HasContent
 /**
  * ContentElement that exists in a hierarchy,
  * such as a document with sections and subsections.
+ * The hierarchy is represented by parentId references
+ * and content does not need to be held in memory.
  */
 interface HierarchicalContentElement : ContentElement {
 

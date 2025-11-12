@@ -79,7 +79,7 @@ data class DirectoryParsingResult(
 /**
  * Reads various content types using Apache Tika and extracts LeafSection objects containing the actual content.
  *
- * This reader can handle markdown, HTML, PDF, Word documents, and many other formats
+ * This reader can handle Markdown, HTML, PDF, Word documents, and many other formats
  * supported by Apache Tika and returns a list of LeafSection objects that can be processed for RAG.
  */
 class HierarchicalContentReader {
@@ -87,6 +87,9 @@ class HierarchicalContentReader {
     private val logger = LoggerFactory.getLogger(javaClass)
     private val parser = AutoDetectParser()
 
+    /**
+     * Parse content from a Spring Resource and return materialized content root
+     */
     @JvmOverloads
     fun parseResource(
         resourcePath: String,
@@ -108,7 +111,7 @@ class HierarchicalContentReader {
     ): MaterializedDocument {
         logger.debug("Parsing file: {}", file.absolutePath)
 
-        val metadata = org.apache.tika.metadata.Metadata()
+        val metadata = Metadata()
         metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, file.name)
 
         return file.inputStream().use { inputStream ->

@@ -70,8 +70,7 @@ sealed interface Datum {
 }
 
 /**
- * Structural content element that may have a parent and children.
- * Textual.
+ * Supertype for all content elements.
  */
 interface ContentElement : Datum {
 

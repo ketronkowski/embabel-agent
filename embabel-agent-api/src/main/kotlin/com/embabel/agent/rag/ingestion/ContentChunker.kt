@@ -33,6 +33,32 @@ class ContentChunker(
 
     private val logger = LoggerFactory.getLogger(javaClass)
 
+    companion object {
+        /** Metadata key for the zero-based index of this chunk within its parent section */
+        const val CHUNK_INDEX = "chunk_index"
+
+        /** Metadata key for the total number of chunks created from the parent section */
+        const val TOTAL_CHUNKS = "total_chunks"
+
+        /** Metadata key for the unique identifier of the container section */
+        const val CONTAINER_SECTION_ID = "container_section_id"
+
+        /** Metadata key for the title of the container section */
+        const val CONTAINER_SECTION_TITLE = "container_section_title"
+
+        /** Metadata key for the URI/URL of the container section */
+        const val CONTAINER_SECTION_URL = "container_section_url"
+
+        /** Metadata key for the unique identifier of the leaf section */
+        const val LEAF_SECTION_ID = "leaf_section_id"
+
+        /** Metadata key for the title of the leaf section */
+        const val LEAF_SECTION_TITLE = "leaf_section_title"
+
+        /** Metadata key for the URI/URL of the leaf section */
+        const val LEAF_SECTION_URL = "leaf_section_url"
+    }
+
     /**
      * Split a MaterializedContainerSection into one or more Chunks
      */
@@ -74,11 +100,11 @@ class ContentChunker(
 
         val combinedMetadata = mutableMapOf<String, Any?>()
         combinedMetadata.putAll(section.metadata)
-        combinedMetadata["container_section_id"] = section.id
-        combinedMetadata["container_section_title"] = section.title
-        combinedMetadata["container_section_url"] = section.uri
-        combinedMetadata["chunk_index"] = 0
-        combinedMetadata["total_chunks"] = 1
+        combinedMetadata[CONTAINER_SECTION_ID] = section.id
+        combinedMetadata[CONTAINER_SECTION_TITLE] = section.title
+        combinedMetadata[CONTAINER_SECTION_URL] = section.uri
+        combinedMetadata[CHUNK_INDEX] = 0
+        combinedMetadata[TOTAL_CHUNKS] = 1
 
         return Chunk(
             id = UUID.randomUUID().toString(),
@@ -171,11 +197,11 @@ class ContentChunker(
 
         val combinedMetadata = mutableMapOf<String, Any?>()
         combinedMetadata.putAll(containerSection.metadata)
-        combinedMetadata["container_section_id"] = containerSection.id
-        combinedMetadata["container_section_title"] = containerSection.title
-        combinedMetadata["container_section_url"] = containerSection.uri
-        combinedMetadata["chunk_index"] = 0
-        combinedMetadata["total_chunks"] = 1
+        combinedMetadata[CONTAINER_SECTION_ID] = containerSection.id
+        combinedMetadata[CONTAINER_SECTION_TITLE] = containerSection.title
+        combinedMetadata[CONTAINER_SECTION_URL] = containerSection.uri
+        combinedMetadata[CHUNK_INDEX] = 0
+        combinedMetadata[TOTAL_CHUNKS] = 1
 
         return Chunk(
             id = UUID.randomUUID().toString(),
@@ -195,13 +221,13 @@ class ContentChunker(
             id = UUID.randomUUID().toString(),
             text = content.trim(),
             metadata = leaf.metadata + mapOf(
-                "container_section_id" to containerSection.id,
-                "container_section_title" to containerSection.title,
-                "leaf_section_id" to leaf.id,
-                "leaf_section_title" to leaf.title,
-                "leaf_section_url" to leaf.uri,
-                "chunk_index" to 0,
-                "total_chunks" to 1
+                CONTAINER_SECTION_ID to containerSection.id,
+                CONTAINER_SECTION_TITLE to containerSection.title,
+                LEAF_SECTION_ID to leaf.id,
+                LEAF_SECTION_TITLE to leaf.title,
+                LEAF_SECTION_URL to leaf.uri,
+                CHUNK_INDEX to 0,
+                TOTAL_CHUNKS to 1
             ),
             parentId = leaf.id
         )
@@ -222,13 +248,13 @@ class ContentChunker(
                 id = UUID.randomUUID().toString(),
                 text = textChunk.trim(),
                 metadata = leaf.metadata + mapOf(
-                    "container_section_id" to containerSection.id,
-                    "container_section_title" to containerSection.title,
-                    "leaf_section_id" to leaf.id,
-                    "leaf_section_title" to leaf.title,
-                    "leaf_section_url" to leaf.uri,
-                    "chunk_index" to index,
-                    "total_chunks" to textChunks.size
+                    CONTAINER_SECTION_ID to containerSection.id,
+                    CONTAINER_SECTION_TITLE to containerSection.title,
+                    LEAF_SECTION_ID to leaf.id,
+                    LEAF_SECTION_TITLE to leaf.title,
+                    LEAF_SECTION_URL to leaf.uri,
+                    CHUNK_INDEX to index,
+                    TOTAL_CHUNKS to textChunks.size
                 ),
                 parentId = leaf.id
             )
