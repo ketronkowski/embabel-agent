@@ -17,7 +17,6 @@ package com.embabel.agent.config.models.ollama
 
 import com.embabel.agent.api.models.OllamaModels
 import com.embabel.common.ai.model.*
-import com.embabel.common.util.ExcludeFromJacocoGeneratedReport
 import com.fasterxml.jackson.annotation.JsonProperty
 import io.micrometer.observation.ObservationRegistry
 import jakarta.annotation.PostConstruct
@@ -26,7 +25,8 @@ import org.springframework.ai.model.tool.ToolCallingManager
 import org.springframework.ai.ollama.OllamaChatModel
 import org.springframework.ai.ollama.OllamaEmbeddingModel
 import org.springframework.ai.ollama.api.OllamaApi
-import org.springframework.ai.ollama.api.OllamaOptions
+import org.springframework.ai.ollama.api.OllamaChatOptions
+import org.springframework.ai.ollama.api.OllamaEmbeddingOptions
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.beans.factory.config.ConfigurableBeanFactory
@@ -41,7 +41,6 @@ import org.springframework.web.reactive.function.client.WebClient
  * This class will always be loaded, but models won't be loaded
  * from Ollama unless the "ollama" profile is set.
  */
-//@ExcludeFromJacocoGeneratedReport(reason = "Ollama configuration can't be unit tested")
 @Configuration(proxyBeanMethods = false)
 class OllamaModelsConfig(
     @param:Value("\${spring.ai.ollama.base-url}")
@@ -108,14 +107,17 @@ class OllamaModelsConfig(
                 logger.info("Using default Ollama instance at {}", baseUrl)
                 registerDefaultMode()
             }
+
             !hasDefaultUrl && nodes != null -> {
                 logger.info("Using {} Ollama nodes", nodes.size)
                 registerMultiNodeOnlyMode()
             }
+
             hasDefaultUrl && nodes != null -> {
                 logger.info("Using default instance + {} nodes", nodes.size)
                 registerHybridMode()
             }
+
             else -> {
                 logger.warn("No Ollama configuration found. Skipping model registration.")
             }
@@ -130,17 +132,17 @@ class OllamaModelsConfig(
                     .baseUrl(baseUrl)
                     .restClientBuilder(
                         RestClient.builder()
-                        .observationRegistry(observationRegistry.getIfUnique { ObservationRegistry.NOOP })
+                            .observationRegistry(observationRegistry.getIfUnique { ObservationRegistry.NOOP })
                     )
                     .webClientBuilder(
                         WebClient.builder()
-                        .observationRegistry(observationRegistry.getIfUnique { ObservationRegistry.NOOP })
+                            .observationRegistry(observationRegistry.getIfUnique { ObservationRegistry.NOOP })
                     )
                     .build()
             )
             .defaultOptions(
-                OllamaOptions.builder()
-                    .model(modelName)
+                OllamaChatOptions.builder()
+                    .model(uniqueModelName)
                     .build()
             )
             .observationRegistry(observationRegistry.getIfUnique { ObservationRegistry.NOOP })
@@ -165,7 +167,11 @@ class OllamaModelsConfig(
     }
 
 
-    private fun ollamaEmbeddingServiceOf(modelName: String, baseUrl: String, nodeName: String? = null): EmbeddingService {
+    private fun ollamaEmbeddingServiceOf(
+        modelName: String,
+        baseUrl: String,
+        nodeName: String? = null
+    ): EmbeddingService {
         val uniqueModelName = createUniqueModelName(modelName, nodeName)
         val springEmbeddingModel = OllamaEmbeddingModel.builder()
             .ollamaApi(
@@ -173,17 +179,17 @@ class OllamaModelsConfig(
                     .baseUrl(baseUrl)
                     .restClientBuilder(
                         RestClient.builder()
-                        .observationRegistry(observationRegistry.getIfUnique { ObservationRegistry.NOOP })
+                            .observationRegistry(observationRegistry.getIfUnique { ObservationRegistry.NOOP })
                     )
                     .webClientBuilder(
                         WebClient.builder()
-                        .observationRegistry(observationRegistry.getIfUnique { ObservationRegistry.NOOP })
+                            .observationRegistry(observationRegistry.getIfUnique { ObservationRegistry.NOOP })
                     )
                     .build()
             )
             .defaultOptions(
-                OllamaOptions.builder()
-                    .model(modelName)
+                OllamaEmbeddingOptions.builder()
+                    .model(uniqueModelName)
                     .build()
             )
             .build()
@@ -283,9 +289,9 @@ class OllamaModelsConfig(
     }
 }
 
-object OllamaOptionsConverter : OptionsConverter<OllamaOptions> {
-    override fun convertOptions(options: LlmOptions): OllamaOptions =
-        OllamaOptions.builder()
+object OllamaOptionsConverter : OptionsConverter<OllamaChatOptions> {
+    override fun convertOptions(options: LlmOptions): OllamaChatOptions =
+        OllamaChatOptions.builder()
             .temperature(options.temperature)
             .topP(options.topP)
             .presencePenalty(options.presencePenalty)
