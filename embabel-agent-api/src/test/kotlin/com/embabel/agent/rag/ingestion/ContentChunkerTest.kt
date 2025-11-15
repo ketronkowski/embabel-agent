@@ -355,8 +355,6 @@ class ContentChunkerTest {
             }
         }
 
-        println("Medium content length: ${mediumContent.length}")
-
         val leaf = LeafSection(
             id = "medium-leaf",
             title = "Medium Section",
@@ -371,11 +369,6 @@ class ContentChunkerTest {
         )
 
         val chunks = chunker.chunk(container)
-
-        println("Number of chunks created: ${chunks.size}")
-        chunks.forEachIndexed { index, chunk ->
-            println("Chunk $index size: ${chunk.text.length}")
-        }
 
         // With content around 2000-3000 chars and maxChunkSize=5000, should create fewer chunks
         assertTrue(
@@ -412,8 +405,6 @@ class ContentChunkerTest {
             }
         }
 
-        println("Large content length: ${largeContent.length}")
-
         val leaf = LeafSection(
             id = "large-leaf",
             title = "Large Section",
@@ -428,11 +419,6 @@ class ContentChunkerTest {
         )
 
         val chunks = chunker.chunk(container)
-
-        println("Number of chunks for large content: ${chunks.size}")
-        chunks.forEachIndexed { index, chunk ->
-            println("Large chunk $index size: ${chunk.text.length}")
-        }
 
         // Should create reasonable number of chunks, not over-fragment
         val expectedMaxChunks = (largeContent.length / 6000) + 2 // Rough estimate with some buffer
@@ -473,9 +459,6 @@ class ContentChunkerTest {
             )
         }
 
-        val totalContentLength = leaves.sumOf { it.content.length }
-        println("Total content length for multiple leaves: $totalContentLength")
-
         val container = MaterializedDocument(
             id = "multi-medium-container",
             title = "Multiple Medium Sections",
@@ -484,11 +467,6 @@ class ContentChunkerTest {
         )
 
         val chunks = chunker.chunk(container)
-
-        println("Number of chunks for multiple medium sections: ${chunks.size}")
-        chunks.forEachIndexed { index, chunk ->
-            println("Multi-medium chunk $index size: ${chunk.text.length}")
-        }
 
         // Should create fewer chunks by intelligently grouping leaves
         assertTrue(chunks.size >= 1, "Should create at least one chunk")
@@ -519,7 +497,6 @@ class ContentChunkerTest {
         )
 
         val totalLength = leaves.sumOf { it.content.length + it.title.length + 1 } // +1 for newline after title
-        println("Total combined length: $totalLength")
 
         val container = MaterializedDocument(
             id = "over-chunk-test",
@@ -530,16 +507,6 @@ class ContentChunkerTest {
 
         val chunks = chunker.chunk(container)
 
-        println("Over-chunking demo:")
-        println("- Total content length: $totalLength characters")
-        println("- Max chunk size: 5000 characters")
-        println("- Min chunk size: 1500 characters")
-        println("- Content could easily fit in 1 chunk, but got: ${chunks.size} chunks")
-
-        chunks.forEachIndexed { index, chunk ->
-            println("  Chunk $index: ${chunk.text.length} characters")
-        }
-
         // FIXED: Content that fits in maxChunkSize should now create a single chunk
         assertTrue(totalLength <= 5000, "Total content should fit in one chunk")
         assertEquals(1, chunks.size, "Fixed implementation should create 1 chunk for content that fits in maxChunkSize")
@@ -549,9 +516,106 @@ class ContentChunkerTest {
         assertTrue(chunk.text.contains("Section 1"), "Should contain all sections")
         assertTrue(chunk.text.contains("Section 2"), "Should contain all sections")
         assertTrue(chunk.text.contains("Section 3"), "Should contain all sections")
+    }
 
-        println("\n*** CHUNKING ISSUE FIXED ***")
-        println("Content of $totalLength chars now creates ${chunks.size} optimal chunk(s)")
-        println("This improves retrieval effectiveness and reduces storage/processing overhead")
+    @Test
+    fun `test section title is included in chunk when config is true`() {
+        val chunker = ContentChunker(
+            ContentChunker.DefaultConfig(
+                maxChunkSize = 2000,
+                overlapSize = 100,
+                includeSectionTitleInChunk = true
+            )
+        )
+
+        val leaf = LeafSection(
+            id = "leaf-1",
+            title = "Leaf Title",
+            text = "This is the leaf content."
+        )
+
+        val container = MaterializedDocument(
+            id = "container-1",
+            title = "Container Title",
+            children = listOf(leaf),
+            uri = "test-uri",
+        )
+
+        val chunks = chunker.chunk(container)
+
+        assertEquals(1, chunks.size)
+        val chunk = chunks.first()
+
+        // Verify section title is prepended
+        assertTrue(chunk.text.startsWith("Container Title\n\n"), "Chunk should start with container title")
+        assertTrue(chunk.text.contains("Leaf Title"), "Chunk should contain leaf title")
+        assertTrue(chunk.text.contains("This is the leaf content."), "Chunk should contain leaf content")
+    }
+
+    @Test
+    fun `test section title is not included when config is false`() {
+        val chunker = ContentChunker(
+            ContentChunker.DefaultConfig(
+                maxChunkSize = 2000,
+                overlapSize = 100,
+                includeSectionTitleInChunk = false
+            )
+        )
+
+        val leaf = LeafSection(
+            id = "leaf-1",
+            title = "Leaf Title",
+            text = "This is the leaf content."
+        )
+
+        val container = MaterializedDocument(
+            id = "container-1",
+            title = "Container Title",
+            children = listOf(leaf),
+            uri = "test-uri",
+        )
+
+        val chunks = chunker.chunk(container)
+
+        assertEquals(1, chunks.size)
+        val chunk = chunks.first()
+
+        // Verify section title is NOT prepended (chunk starts with leaf title instead)
+        assertFalse(chunk.text.startsWith("Container Title\n\n"), "Chunk should not start with container title")
+        assertTrue(chunk.text.startsWith("Leaf Title"), "Chunk should start with leaf title")
+    }
+
+    @Test
+    fun `test section title not included when it would exceed maxChunkSize`() {
+        val chunker = ContentChunker(
+            ContentChunker.DefaultConfig(
+                maxChunkSize = 100,
+                overlapSize = 20,
+                includeSectionTitleInChunk = true
+            )
+        )
+
+        val leaf = LeafSection(
+            id = "leaf-1",
+            title = "Short",
+            text = "This content is exactly sized to be near the limit when combined with a long container title."
+        )
+
+        val container = MaterializedDocument(
+            id = "container-1",
+            title = "Very Long Container Title That Would Cause Chunk To Exceed MaxChunkSize",
+            children = listOf(leaf),
+            uri = "test-uri",
+        )
+
+        val chunks = chunker.chunk(container)
+
+        // All chunks should respect maxChunkSize
+        chunks.forEach { chunk ->
+            assertTrue(chunk.text.length <= 100, "Chunk length ${chunk.text.length} should not exceed maxChunkSize 100")
+        }
+
+        // Section title should NOT be included because it would exceed the limit
+        assertFalse(chunks.first().text.startsWith("Very Long Container"), "Title should not be prepended when it would exceed maxChunkSize")
     }
 }

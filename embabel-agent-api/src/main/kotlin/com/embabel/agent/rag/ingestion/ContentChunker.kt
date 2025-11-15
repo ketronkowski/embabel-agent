@@ -106,6 +106,8 @@ class ContentChunker(
             if (leaf.title.isNotBlank()) "${leaf.title}\n${leaf.content}" else leaf.content
         }.trim()
 
+        val contentWithSectionTitle = prependSectionTitle(combinedContent, section.title)
+
         val combinedMetadata = mutableMapOf<String, Any?>()
         combinedMetadata.putAll(section.metadata)
         combinedMetadata[CONTAINER_SECTION_ID] = section.id
@@ -117,7 +119,7 @@ class ContentChunker(
 
         return Chunk(
             id = UUID.randomUUID().toString(),
-            text = combinedContent,
+            text = contentWithSectionTitle,
             metadata = combinedMetadata,
             parentId = section.id
         )
@@ -208,6 +210,8 @@ class ContentChunker(
             if (leaf.title.isNotBlank()) "${leaf.title}\n${leaf.content}" else leaf.content
         }.trim()
 
+        val contentWithSectionTitle = prependSectionTitle(combinedContent, containerSection.title)
+
         val combinedMetadata = mutableMapOf<String, Any?>()
         combinedMetadata.putAll(containerSection.metadata)
         combinedMetadata[CONTAINER_SECTION_ID] = containerSection.id
@@ -219,7 +223,7 @@ class ContentChunker(
 
         return Chunk(
             id = UUID.randomUUID().toString(),
-            text = combinedContent,
+            text = contentWithSectionTitle,
             metadata = combinedMetadata,
             parentId = containerSection.id
         )
@@ -231,10 +235,11 @@ class ContentChunker(
         sequenceNumber: Int,
     ): Chunk {
         val content = if (leaf.title.isNotBlank()) "${leaf.title}\n${leaf.content}" else leaf.content
+        val contentWithSectionTitle = prependSectionTitle(content.trim(), containerSection.title)
 
         return Chunk(
             id = UUID.randomUUID().toString(),
-            text = content.trim(),
+            text = contentWithSectionTitle,
             metadata = leaf.metadata + mapOf(
                 CONTAINER_SECTION_ID to containerSection.id,
                 CONTAINER_SECTION_TITLE to containerSection.title,
@@ -256,7 +261,9 @@ class ContentChunker(
     ): List<Chunk> {
         val chunks = mutableListOf<Chunk>()
         val fullContent = if (leaf.title.isNotBlank()) "${leaf.title}\n${leaf.content}" else leaf.content
-        val textChunks = splitText(fullContent.trim()).filter { it.trim().isNotEmpty() }
+        // Prepend section title before splitting, so it's only in the first chunk and accounted for in size
+        val contentWithSectionTitle = prependSectionTitle(fullContent.trim(), containerSection.title)
+        val textChunks = splitText(contentWithSectionTitle).filter { it.trim().isNotEmpty() }
 
         logger.debug("Split leaf section '{}' into {} text chunks", leaf.title, textChunks.size)
 
@@ -433,9 +440,27 @@ class ContentChunker(
         }
     }
 
+    private fun prependSectionTitle(content: String, sectionTitle: String): String {
+        // Don't prepend if config is false, section title is blank, or content is empty
+        if (!config.includeSectionTitleInChunk || sectionTitle.isBlank() || content.isBlank()) {
+            return content
+        }
+
+        val titleWithSeparator = "$sectionTitle\n\n"
+        val resultLength = titleWithSeparator.length + content.length
+
+        // Don't prepend if it would cause the chunk to exceed maxChunkSize
+        if (resultLength > config.maxChunkSize) {
+            return content
+        }
+
+        return titleWithSeparator + content
+    }
+
     interface Config {
         val maxChunkSize: Int
         val overlapSize: Int
+        val includeSectionTitleInChunk: Boolean
     }
 
     /**
@@ -444,6 +469,7 @@ class ContentChunker(
     data class DefaultConfig @JvmOverloads constructor(
         override val maxChunkSize: Int = 1500,
         override val overlapSize: Int = 200,
+        override val includeSectionTitleInChunk: Boolean = true,
     ) : Config {
         init {
             require(maxChunkSize > 0) { "maxChunkSize must be positive" }
