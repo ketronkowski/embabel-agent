@@ -1,4 +1,3 @@
-
 [[reference.integrations]]
 === Integrations
 
@@ -9,11 +8,13 @@
 
 ====== Overview
 
-Embabel Agent can expose your agents as MCP servers, making them available to external MCP clients such as Claude Desktop, VS Code extensions, or other MCP-compatible applications. The framework provides automatic publishing of agent goals as tools and prompts without requiring manual configuration.
+Embabel Agent can expose your agents as MCP servers, making them available to external MCP clients such as Claude Desktop, VS Code extensions, or other MCP-compatible applications.
+The framework provides automatic publishing of agent goals as tools and prompts without requiring manual configuration.
 
 ====== Server Configuration
 
-Configure MCP server functionality in your `application.yml`. The server type determines the execution mode:
+Configure MCP server functionality in your `application.yml`.
+The server type determines the execution mode:
 
 [source,yaml]
 ----
@@ -61,10 +62,12 @@ spring:
 ====== Automatic Publishing
 
 **Tools**::
-Agent goals are automatically published as MCP tools when annotated with `@Export(remote = true)`. The `PerGoalMcpToolExportCallbackPublisher` automatically discovers and exposes these goals without any additional configuration.
+Agent goals are automatically published as MCP tools when annotated with `@Export(remote = true)`.
+The `PerGoalMcpToolExportCallbackPublisher` automatically discovers and exposes these goals without any additional configuration.
 
 **Prompts**::
-Prompts are automatically generated for each goal's starting input types through the `PerGoalStartingInputTypesPromptPublisher`. This provides ready-to-use prompt templates based on your agent definitions.
+Prompts are automatically generated for each goal's starting input types through the `PerGoalStartingInputTypesPromptPublisher`.
+This provides ready-to-use prompt templates based on your agent definitions.
 
 ====== Exposing Agent Goals as Tools
 
@@ -124,14 +127,13 @@ Every MCP server includes a built-in `helloBanner` tool that displays server inf
   "lines": [
     "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
     "Embabel Agent MCP SYNC Server",
-    "Version: 0.1.4-SNAPSHOT",
+    "Version: 0.3.0-SNAPSHOT",
     "Java: 21.0.2+13-LTS-58",
     "Started: 2025-01-17T14:23:47.785Z",
     "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
   ]
 }
 ----
-
 
 [[reference.integrations__a2a]]
 ==== A2A
