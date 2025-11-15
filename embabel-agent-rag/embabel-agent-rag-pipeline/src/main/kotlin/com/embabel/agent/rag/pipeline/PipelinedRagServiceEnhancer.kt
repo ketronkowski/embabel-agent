@@ -25,15 +25,23 @@ import com.embabel.agent.rag.*
 import com.embabel.agent.rag.pipeline.event.InitialRequestRagPipelineEvent
 import com.embabel.agent.rag.pipeline.event.InitialResponseRagPipelineEvent
 import org.slf4j.LoggerFactory
+import org.springframework.boot.context.properties.EnableConfigurationProperties
 
 /**
  * Decorates a Rag Service with an enhancement pipeline.
  */
+@EnableConfigurationProperties(RagServiceEnhancerProperties::class)
 class PipelinedRagServiceEnhancer(
     val ragServiceEnhancerProperties: RagServiceEnhancerProperties = RagServiceEnhancerProperties(),
 ) : RagServiceEnhancer {
 
     private val logger = LoggerFactory.getLogger(PipelinedRagServiceEnhancer::class.java)
+
+    init {
+        logger.info(
+            "Using properties: {}", ragServiceEnhancerProperties
+        )
+    }
 
     override fun create(
         operationContext: OperationContext,
@@ -135,6 +143,9 @@ class PipelinedRagServiceEnhancer(
                 enhancedRagResponse.results.count { it.match is ContentElement && it.match !is Chunk },
                 enhancedRagResponse.results.count { it.match is RetrievableEntity },
             )
+            logger.info(
+                "Results: {}",
+                enhancedRagResponse.results.joinToString("\n") { "- ${it.match}" })
             return enhancedRagResponse
         }
 

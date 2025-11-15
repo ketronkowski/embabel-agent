@@ -22,14 +22,6 @@ import com.embabel.common.core.types.SimpleSimilaritySearchResult
 import com.fasterxml.jackson.annotation.JsonPropertyDescription
 import org.slf4j.LoggerFactory
 
-// TODO could we not compress all chunks together?
-
-// What about the concept of adding notes to the context
-// Keep them fixed size
-
-// Also memory of user - Note that memory is not something we normally care about
-// Maintain several named notes. They can be persisted
-
 /**
  *  Question-aware compression using an LLM call.
  *  Instantiated per operation

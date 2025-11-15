@@ -34,7 +34,7 @@ object DeduplicatingEnhancer : RagResponseEnhancer {
         }
     }
 
-    override fun estimateImpact(response: RagResponse): EnhancementEstimate? {
+    override fun estimateImpact(response: RagResponse): EnhancementEstimate {
         return EnhancementEstimate(
             expectedQualityGain = 1.0,
             estimatedLatencyMs = 0L,

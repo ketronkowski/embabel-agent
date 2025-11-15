@@ -42,4 +42,6 @@ class NeoRagServiceProperties : ContentChunker.Config {
     var ogmPackages: List<String> = listOf("not.a.real.package")
     override var maxChunkSize: Int = 1500
     override var overlapSize: Int = 200
+
+    override var includeSectionTitleInChunk: Boolean = false
 }
