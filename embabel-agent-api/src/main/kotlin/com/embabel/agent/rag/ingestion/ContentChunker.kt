@@ -22,6 +22,7 @@ import java.util.*
 
 /**
  * Converts MaterializedContainerSection objects into Chunk objects with intelligent text splitting.
+ * Created chunks contain metadata linking them back to their source sections.
  *
  * For container sections with small total content (aggregated from leaves), creates a single chunk
  * containing all leaf content. For large leaf sections within containers, splits them individually
@@ -34,6 +35,7 @@ class ContentChunker(
     private val logger = LoggerFactory.getLogger(javaClass)
 
     companion object {
+
         /** Metadata key for the zero-based index of this chunk within its parent section */
         const val CHUNK_INDEX = "chunk_index"
 
@@ -79,7 +81,7 @@ class ContentChunker(
                 "Creating single chunk for container section '{}' with {} leaves (total length: {} <= max: {})",
                 section.title, leaves.size, totalContentLength, config.maxChunkSize
             )
-            return listOf(createSingleChunkFromContainer(section, leaves, sequenceNumber = 0))
+            return listOf(createSingleChunkFromContainer(section, leaves))
         }
 
         // Strategy 2: Try to group leaves intelligently before splitting
@@ -100,7 +102,6 @@ class ContentChunker(
     private fun createSingleChunkFromContainer(
         section: MaterializedContainerSection,
         leaves: List<LeafSection>,
-        sequenceNumber: Int,
     ): Chunk {
         val combinedContent = leaves.joinToString("\n\n") { leaf ->
             if (leaf.title.isNotBlank()) "${leaf.title}\n${leaf.content}" else leaf.content
@@ -115,7 +116,7 @@ class ContentChunker(
         combinedMetadata[CONTAINER_SECTION_URL] = section.uri
         combinedMetadata[CHUNK_INDEX] = 0
         combinedMetadata[TOTAL_CHUNKS] = 1
-        combinedMetadata[SEQUENCE_NUMBER] = sequenceNumber
+        combinedMetadata[SEQUENCE_NUMBER] = 0
 
         return Chunk(
             id = UUID.randomUUID().toString(),
@@ -165,7 +166,7 @@ class ContentChunker(
 
     private fun groupLeavesForOptimalChunking(leaves: List<LeafSection>): List<List<LeafSection>> {
         val groups = mutableListOf<List<LeafSection>>()
-        var currentGroup = mutableListOf<LeafSection>()
+        val currentGroup = mutableListOf<LeafSection>()
         var currentGroupSize = 0
 
         for (leaf in leaves) {
@@ -440,13 +441,16 @@ class ContentChunker(
         }
     }
 
-    private fun prependSectionTitle(content: String, sectionTitle: String): String {
+    private fun prependSectionTitle(
+        content: String,
+        sectionTitle: String,
+    ): String {
         // Don't prepend if config is false, section title is blank, or content is empty
         if (!config.includeSectionTitleInChunk || sectionTitle.isBlank() || content.isBlank()) {
             return content
         }
 
-        val titleWithSeparator = "$sectionTitle\n\n"
+        val titleWithSeparator = "FROM: $sectionTitle\n\n"
         val resultLength = titleWithSeparator.length + content.length
 
         // Don't prepend if it would cause the chunk to exceed maxChunkSize

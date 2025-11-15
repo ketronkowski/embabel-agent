@@ -19,7 +19,7 @@ import com.embabel.common.util.indent
 import com.embabel.common.util.indentLines
 
 /**
- * Simple data type
+ * Simple data type. Enables interop with non-JVM types.
  * @param name name of the type. Should be unique within a given context
  * @param description description of the type
  * @param properties properties of the type
