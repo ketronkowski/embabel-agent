@@ -16,7 +16,6 @@
 package com.embabel.plan
 
 import com.embabel.common.core.types.HasInfoString
-import com.embabel.common.core.types.Timestamped
 import com.embabel.common.util.loggerFor
 
 /**
@@ -30,12 +29,6 @@ interface PlanningSystem : HasInfoString {
 
     fun knownConditions(): Set<String>
 }
-
-/**
- * Tag interface for WorldState
- * Different planners have different world state.
- */
-interface WorldState : HasInfoString, Timestamped
 
 /**
  * A planner is a system that can plan from a set of actions to a set of goals.

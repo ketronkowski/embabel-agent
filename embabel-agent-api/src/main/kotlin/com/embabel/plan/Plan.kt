@@ -21,6 +21,9 @@ import com.embabel.common.core.types.ZeroToOne
 import com.embabel.common.util.indent
 import com.embabel.common.util.indentLines
 
+/**
+ * Function to compute the cost or value of an action in the present environment.
+ */
 typealias CostComputation = (state: WorldState) -> ZeroToOne
 
 /**
@@ -52,6 +55,9 @@ interface Action : Step {
 
 }
 
+/**
+ * In Goal-oriented planning, this is what we want to achieve.
+ */
 interface Goal : Step
 
 /**
@@ -65,6 +71,9 @@ open class Plan(
     val goal: Goal,
 ) : HasInfoString {
 
+    /**
+     * Has this plan been completed?
+     */
     fun isComplete() = actions.isEmpty()
 
     /**

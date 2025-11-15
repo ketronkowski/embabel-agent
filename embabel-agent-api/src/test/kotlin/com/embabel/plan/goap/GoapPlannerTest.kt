@@ -16,6 +16,7 @@
 package com.embabel.plan.goap
 
 import com.embabel.common.util.time
+import com.embabel.plan.goap.astar.AStarGoapPlanner
 import io.mockk.mockk
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Nested

@@ -28,10 +28,10 @@ import com.embabel.agent.spi.config.spring.AgentPlatformProperties
 import com.embabel.common.core.types.ZeroToOne
 import com.embabel.common.util.indent
 import com.embabel.common.util.loggerFor
-import com.embabel.plan.goap.AStarGoapPlanner
 import com.embabel.plan.goap.ConditionDetermination
 import com.embabel.plan.goap.GoapPlanningSystem
 import com.embabel.plan.goap.WorldStateDeterminer
+import com.embabel.plan.goap.astar.AStarGoapPlanner
 import org.springframework.stereotype.Component
 import org.springframework.stereotype.Service
 

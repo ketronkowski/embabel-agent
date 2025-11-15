@@ -15,6 +15,7 @@
  */
 package com.embabel.plan.goap
 
+import com.embabel.plan.goap.astar.AStarGoapPlanner
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test

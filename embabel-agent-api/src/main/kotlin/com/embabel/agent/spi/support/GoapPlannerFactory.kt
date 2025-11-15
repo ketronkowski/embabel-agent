@@ -21,8 +21,8 @@ import com.embabel.plan.Plan
 import com.embabel.plan.Planner
 import com.embabel.plan.PlanningSystem
 import com.embabel.plan.WorldState
-import com.embabel.plan.goap.AStarGoapPlanner
 import com.embabel.plan.goap.WorldStateDeterminer
+import com.embabel.plan.goap.astar.AStarGoapPlanner
 
 /**
  * PlannerFactory that always creates AStarGoapPlanner

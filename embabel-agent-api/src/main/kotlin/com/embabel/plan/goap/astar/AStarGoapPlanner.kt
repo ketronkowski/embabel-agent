@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.embabel.plan.goap
+package com.embabel.plan.goap.astar
 
+import com.embabel.plan.goap.*
 import java.util.*
 
 /**
@@ -37,7 +38,7 @@ import java.util.*
  * The implementation ensures finding the optimal (lowest cost) sequence of actions
  * by properly tracking path costs and using an admissible heuristic function.
  */
-class AStarGoapPlanner(worldStateDeterminer: WorldStateDeterminer) :
+internal class AStarGoapPlanner(worldStateDeterminer: WorldStateDeterminer) :
     OptimizingGoapPlanner(worldStateDeterminer) {
 
     override fun planToGoalFrom(

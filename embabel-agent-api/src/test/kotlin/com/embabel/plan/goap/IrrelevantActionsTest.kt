@@ -15,9 +15,10 @@
  */
 package com.embabel.plan.goap
 
+import com.embabel.plan.goap.astar.AStarGoapPlanner
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.Assertions.*
 
 class IrrelevantActionsTest {
     @Nested
@@ -26,7 +27,7 @@ class IrrelevantActionsTest {
         fun `should fail if planner gets distracted by chain of irrelevant actions`() {
             val chainLength = 5
             val realChain = (1..chainLength).map { i ->
-                val prev = if (i == 1) "start" else "step${i-1}"
+                val prev = if (i == 1) "start" else "step${i - 1}"
                 val next = "step$i"
                 GoapAction(
                     name = "realAction$i",
@@ -41,7 +42,7 @@ class IrrelevantActionsTest {
             val irrelevantChain = (1..10).map { i ->
                 GoapAction(
                     name = "irrelevantChain$i",
-                    preconditions = mapOf("noise${i-1}" to ConditionDetermination.TRUE),
+                    preconditions = mapOf("noise${i - 1}" to ConditionDetermination.TRUE),
                     effects = mapOf("noise$i" to ConditionDetermination.TRUE)
                 )
             }
@@ -55,7 +56,7 @@ class IrrelevantActionsTest {
             assertNotNull(plan, "Should find a plan despite irrelevant chains")
             assertEquals(chainLength, plan!!.actions.size, "Should only use the real chain actions")
             (1..chainLength).forEach { i ->
-                assertEquals("realAction$i", plan.actions[i-1].name)
+                assertEquals("realAction$i", plan.actions[i - 1].name)
             }
         }
 
@@ -80,12 +81,21 @@ class IrrelevantActionsTest {
                 name = "goal",
                 pre = listOf("goal")
             )
-            val worldState = WorldStateDeterminer.fromMap(mapOf("start" to ConditionDetermination.TRUE, "A" to ConditionDetermination.FALSE, "goal" to ConditionDetermination.FALSE))
+            val worldState = WorldStateDeterminer.fromMap(
+                mapOf(
+                    "start" to ConditionDetermination.TRUE,
+                    "A" to ConditionDetermination.FALSE,
+                    "goal" to ConditionDetermination.FALSE
+                )
+            )
             val planner = AStarGoapPlanner(worldState)
             val plan = planner.planToGoal(listOf(actionA, actionB, actionGoal), goal)
             assertNotNull(plan, "Should find a plan")
             // Should not undo progress by including unsetA
-            assertFalse(plan!!.actions.any { it.name == "unsetA" }, "Plan should not include actions that undo required conditions")
+            assertFalse(
+                plan!!.actions.any { it.name == "unsetA" },
+                "Plan should not include actions that undo required conditions"
+            )
         }
 
         @Test
@@ -109,17 +119,25 @@ class IrrelevantActionsTest {
                 name = "goal",
                 pre = listOf("goal")
             )
-            val worldState = WorldStateDeterminer.fromMap(mapOf("start" to ConditionDetermination.TRUE, "A" to ConditionDetermination.FALSE, "goal" to ConditionDetermination.FALSE, "foo" to ConditionDetermination.FALSE))
+            val worldState = WorldStateDeterminer.fromMap(
+                mapOf(
+                    "start" to ConditionDetermination.TRUE,
+                    "A" to ConditionDetermination.FALSE,
+                    "goal" to ConditionDetermination.FALSE,
+                    "foo" to ConditionDetermination.FALSE
+                )
+            )
             val planner = AStarGoapPlanner(worldState)
             val plan = planner.planToGoal(listOf(actionA, misleading, actionGoal), goal)
             assertNotNull(plan)
             // Accept either minimal plan (setA, reachGoal) or (misleadA, reachGoal), but not both
             assertTrue(
                 plan!!.actions.map { it.name } == listOf("setA", "reachGoal") ||
-                plan.actions.map { it.name } == listOf("misleadA", "reachGoal")
+                        plan.actions.map { it.name } == listOf("misleadA", "reachGoal")
             )
         }
     }
+
     // --- EXTENDED TESTS TO BREAK THE PLANNER FURTHER ---
     @Nested
     inner class `Additional confusion-breaking tests` {
@@ -144,17 +162,29 @@ class IrrelevantActionsTest {
                 name = "goal",
                 pre = listOf("goal")
             )
-            val worldState = WorldStateDeterminer.fromMap(mapOf("start" to ConditionDetermination.TRUE, "A" to ConditionDetermination.FALSE, "goal" to ConditionDetermination.FALSE, "sideNoise" to ConditionDetermination.FALSE, "moreNoise" to ConditionDetermination.FALSE))
+            val worldState = WorldStateDeterminer.fromMap(
+                mapOf(
+                    "start" to ConditionDetermination.TRUE,
+                    "A" to ConditionDetermination.FALSE,
+                    "goal" to ConditionDetermination.FALSE,
+                    "sideNoise" to ConditionDetermination.FALSE,
+                    "moreNoise" to ConditionDetermination.FALSE
+                )
+            )
             val planner = AStarGoapPlanner(worldState)
             val plan = planner.planToGoal(listOf(actionA, actionGoal, irrelevant), goal)
             assertNotNull(plan)
-            assertFalse(plan!!.actions.any { it.name == "irrelevantNoise" }, "Plan should not include irrelevant side-effect actions")
+            assertFalse(
+                plan!!.actions.any { it.name == "irrelevantNoise" },
+                "Plan should not include irrelevant side-effect actions"
+            )
         }
+
         @Test
         fun `should fail if planner is confused by multiple irrelevant chains`() {
             val chainLength = 3
             val realChain = (1..chainLength).map { i ->
-                val prev = if (i == 1) "start" else "step${i-1}"
+                val prev = if (i == 1) "start" else "step${i - 1}"
                 val next = "step$i"
                 GoapAction(
                     name = "realAction$i",
@@ -170,7 +200,7 @@ class IrrelevantActionsTest {
                 (1..5).map { i ->
                     GoapAction(
                         name = "irrelevantChain${chainNum}_$i",
-                        preconditions = mapOf("noise${chainNum}_${i-1}" to ConditionDetermination.TRUE),
+                        preconditions = mapOf("noise${chainNum}_${i - 1}" to ConditionDetermination.TRUE),
                         effects = mapOf("noise${chainNum}_$i" to ConditionDetermination.TRUE)
                     )
                 }
@@ -187,7 +217,7 @@ class IrrelevantActionsTest {
             assertNotNull(plan, "Should find a plan despite multiple irrelevant chains")
             assertEquals(chainLength, plan!!.actions.size, "Should only use the real chain actions")
             (1..chainLength).forEach { i ->
-                assertEquals("realAction$i", plan.actions[i-1].name)
+                assertEquals("realAction$i", plan.actions[i - 1].name)
             }
         }
     }
@@ -232,11 +262,13 @@ class IrrelevantActionsTest {
             assertNotNull(plan, "Should find a plan")
             // Should not loop between setA/unsetA/setAagain unnecessarily
             val actionNames = plan!!.actions.map { it.name }
-            assertFalse(actionNames.windowed(2).any { it == listOf("setA", "unsetA") || it == listOf("unsetA", "setAagain") },
-                "Plan should not bounce between undo and redo actions")
+            assertFalse(
+                actionNames.windowed(2).any { it == listOf("setA", "unsetA") || it == listOf("unsetA", "setAagain") },
+                "Plan should not bounce between undo and redo actions"
+            )
             assertTrue(
                 actionNames == listOf("setA", "reachGoal") ||
-                actionNames == listOf("setAagain", "reachGoal"),
+                        actionNames == listOf("setAagain", "reachGoal"),
                 "Plan should be minimal and direct"
             )
         }
