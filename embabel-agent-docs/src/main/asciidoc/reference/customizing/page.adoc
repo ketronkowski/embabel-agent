@@ -5,7 +5,17 @@
 
 You can add custom LLMs as Spring beans of type `Llm`.
 
-Llms are created around Spring AI `ChatModel` instances.
+`Llm` instances are created around Spring AI `ChatModel` instances.
+
+You can use any Spring AI compatible model, adding additional Embabel requirements:
+
+- name
+- provider, such as "Mistral"
+- `OptionsConverter` to convert Embabel `LlmOptions` to Spring AI `ChatOptions`
+- *knowledge cutoff date* (if available)
+- any additional `PromptContributor` objects to be used in all LLM calls.
+If knowledge cutoff date is provided, add the `KnowledgeCutoffDate` prompt contributor.
+- pricing model (if available)
 
 A common requirement is to add an open AI compatible LLM.
 This can be done by extending the `OpenAiCompatibleModelFactory` class as follows:
@@ -39,7 +49,24 @@ class CustomOpenAiCompatibleModels(
 
 ==== Adding embedding models
 
-Embedding models can also be added as beans of type `EmbeddingService`.
+Embedding models can also be added as beans of the Embabel type `EmbeddingService`.
+
+Typically this is done in an `@Configuration` class like this:
+
+[source,java]
+----
+@Configuration
+public class EmbeddingModelsConfig {
+    @Bean
+    public EmbeddingService myEmbeddingModel() {
+        org.springframework.ai.embedding.EmbeddingModel embeddingModel = ...
+        return new EmbeddingService(
+                "myEmbeddingModel",
+                "myEmbeddingModelProvider",
+                embeddingModel);
+    }
+}
+----
 
 ==== Configuration via `application.properties` or `application.yml`
 
