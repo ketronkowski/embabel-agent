@@ -53,11 +53,11 @@ class FacetedRagService(
             service = name,
             results = allResults
                 .distinctBy { it.match.id }
-                .sortedByDescending { it.score }
                 .filter { it.score >= ragRequest.similarityThreshold }
+                .sortedByDescending { it.score }
                 .take(ragRequest.topK)
         )
-        logger.debug("RagResponse: {}", ragResponse)
+        logger.info("RagResponse: {}", ragResponse)
         return ragResponse
     }
 

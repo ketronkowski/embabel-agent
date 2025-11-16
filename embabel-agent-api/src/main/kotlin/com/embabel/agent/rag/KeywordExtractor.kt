@@ -16,6 +16,7 @@
 package com.embabel.agent.rag
 
 import com.embabel.common.core.types.ZeroToOne
+import kotlin.math.pow
 
 /**
  * Can extract keywords from text
@@ -29,21 +30,22 @@ interface KeywordExtractor {
     /**
      * Converts a match count to a similarity score between 0 and 1.
      *
-     * This default implementation uses a square root function to provide nonlinear scoring that is more generous
-     * to partial matches. For example, matching 3 out of 10 keywords yields ~0.548
-     * rather than 0.3, reflecting that partial matches are quite valuable.
+     * This default implementation uses an exponent of 0.4 to provide nonlinear scoring that is
+     * generous to partial matches while still giving diminishing returns. For example, matching
+     * 2 out of 15 keywords yields ~0.45 rather than 0.13, reflecting that even partial matches
+     * can be quite valuable.
      *
-     * The formula is: sqrt(matchCount / totalKeywords)
+     * The formula is: (matchCount / totalKeywords)^0.4
      *
-     * This approach gives diminishing returns as more keywords match, which aligns
-     * with information retrieval principles where early matches are most significant.
+     * This approach aligns with information retrieval principles where early matches are most
+     * significant, but avoids being overly harsh on documents that match only a subset of keywords.
      *
      * @param matchCount the number of keywords that matched
      * @return a similarity score from 0.0 to 1.0
      */
     fun matchCountToScore(matchCount: Int): ZeroToOne {
-        val fraction = matchCount.toDouble() / keywords.size.toDouble()
-        return kotlin.math.sqrt(fraction).coerceAtMost(1.0)
+        val fraction = matchCount.toDouble() / keywords.size
+        return fraction.pow(0.4).coerceAtMost(1.0)
     }
 
 }

@@ -321,13 +321,14 @@ class LuceneRagFacetProvider @JvmOverloads constructor(
                 )
             }
             .filter { it.score >= ragRequest.similarityThreshold }
-            .take(ragRequest.topK)
             .sortedByDescending { it.score }
+            .take(ragRequest.topK)
         logger.info(
-            "Keyword search for query '{}' with keywords [{}] found {} results",
+            "Keyword search for query '{}' with keywords [{}] found {} results: {}",
             ragRequest.query,
             extractedKeywords,
             similarityResults.size,
+            similarityResults.map { "(${it.match.id}, score=${"%.2f".format(it.score)})" },
         )
         return RagFacetResults(
             facetName = "$name.vector",
@@ -357,15 +358,20 @@ class LuceneRagFacetProvider @JvmOverloads constructor(
             r
         }
 
-        val filteredResults = results
+        val similarityResults = results
             .filter { it.score >= ragRequest.similarityThreshold }
-            .take(ragRequest.topK)
             .sortedByDescending { it.score }
+            .take(ragRequest.topK)
 
-        logger.info("Hybrid search for query {} found {} results", ragRequest.query, filteredResults.size)
+        logger.info(
+            "Hybrid search for query {} found {} results: {}",
+            ragRequest.query,
+            similarityResults.size,
+            similarityResults.map { "(${it.match.id}, score=${"%.2f".format(it.score)})" },
+        )
         return RagFacetResults(
             facetName = name,
-            results = filteredResults
+            results = similarityResults
         )
     }
 
