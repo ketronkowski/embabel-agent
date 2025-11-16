@@ -56,6 +56,8 @@ import org.springframework.ai.document.Document as SpringAiDocument
  * @param name Name of this RAG service
  * @param embeddingModel Optional embedding model for vector search; if null, only text search is
  * supported
+ * @param keywordExtractor Optional keyword extractor for keyword-based search; if null, keyword
+ * search is disabled
  * @param vectorWeight Weighting for vector similarity in hybrid search (0.0 to 1.0)
  * @param chunkerConfig Configuration for content chunking
  * @param indexPath Optional path for disk-based index storage; if null, uses in-memory storage
@@ -64,6 +66,7 @@ class LuceneRagFacetProvider @JvmOverloads constructor(
     override val name: String,
     override val enhancers: List<RetrievableEnhancer> = emptyList(),
     private val embeddingModel: EmbeddingModel? = null,
+    private val keywordExtractor: KeywordExtractor? = null,
     private val vectorWeight: Double = 0.5,
     chunkerConfig: ContentChunker.Config = ContentChunker.DefaultConfig(),
     private val indexPath: Path? = null,
@@ -123,8 +126,12 @@ class LuceneRagFacetProvider @JvmOverloads constructor(
     override fun facets(): List<RagFacet<out Retrievable>> {
         return listOf(
             FunctionRagFacet(
-                name = "chunks",
-                searchFunction = ::search,
+                name = "$name.hybrid",
+                searchFunction = ::hybridSearch,
+            ),
+            FunctionRagFacet(
+                name = "$name.keywords",
+                searchFunction = ::keywordSearch,
             )
         )
     }
@@ -240,7 +247,6 @@ class LuceneRagFacetProvider @JvmOverloads constructor(
      * Find chunk IDs by keyword intersection.
      * Returns pairs of (chunkId, matchCount) sorted by match count descending.
      *
-     * @param keywords Set of keywords to search for
      * @param minIntersection Minimum number of keywords that must match (default: 1)
      * @param maxResults Maximum number of results to return (default: 100)
      * @return List of (chunkId, matchCount) pairs sorted by match count descending
@@ -250,6 +256,10 @@ class LuceneRagFacetProvider @JvmOverloads constructor(
         minIntersection: Int = 1,
         maxResults: Int = 100,
     ): List<Pair<String, Int>> {
+        if (keywords.isEmpty()) {
+            logger.warn("No keywords provided for keyword search")
+            return emptyList()
+        }
         refreshReaderIfNeeded()
 
         val reader = directoryReader ?: return emptyList()
@@ -284,13 +294,53 @@ class LuceneRagFacetProvider @JvmOverloads constructor(
             .take(maxResults)
     }
 
+    fun keywordSearch(ragRequest: RagRequest): RagFacetResults<Chunk> {
+        if (keywordExtractor == null || keywordExtractor.keywords.isEmpty()) {
+            logger.warn("Keyword search requested but no keywords configured")
+            return RagFacetResults(
+                facetName = name,
+                results = emptyList()
+            )
+        }
+        ensureChunksLoaded()
+        refreshReaderIfNeeded()
 
-    fun search(ragRequest: RagRequest): RagFacetResults<Chunk> {
+        val extractedKeywords = keywordExtractor.extractKeywords(ragRequest.query)
+
+        val results = findChunkIdsByKeywords(
+            keywords = extractedKeywords,
+            minIntersection = 1,
+            maxResults = ragRequest.topK * 5
+        )
+        val similarityResults = results
+            .mapNotNull { (chunkId, matchCount) ->
+                val chunk = contentElementStorage[chunkId] as? Chunk ?: return@mapNotNull null
+                SimpleSimilaritySearchResult(
+                    match = chunk,
+                    score = keywordExtractor.matchCountToScore(matchCount),
+                )
+            }
+            .filter { it.score >= ragRequest.similarityThreshold }
+            .take(ragRequest.topK)
+            .sortedByDescending { it.score }
+        logger.info(
+            "Keyword search for query '{}' with keywords [{}] found {} results",
+            ragRequest.query,
+            extractedKeywords,
+            similarityResults.size,
+        )
+        return RagFacetResults(
+            facetName = "$name.vector",
+            results = similarityResults,
+        )
+    }
+
+    fun hybridSearch(ragRequest: RagRequest): RagFacetResults<Chunk> {
         ensureChunksLoaded()
         refreshReaderIfNeeded()
 
         val reader = directoryReader ?: return RagFacetResults(
-            facetName = name,
+            facetName = "$name.hybrid",
             results = emptyList()
         )
 
@@ -312,6 +362,7 @@ class LuceneRagFacetProvider @JvmOverloads constructor(
             .take(ragRequest.topK)
             .sortedByDescending { it.score }
 
+        logger.info("Hybrid search for query {} found {} results", ragRequest.query, filteredResults.size)
         return RagFacetResults(
             facetName = name,
             results = filteredResults

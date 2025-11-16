@@ -51,9 +51,9 @@ class LuceneRagFacetProviderTest {
     @Test
     fun `should return empty results when no documents are indexed`() {
         val request = RagRequest.query("test query")
-        val response = ragService.search(request)
+        val response = ragService.hybridSearch(request)
 
-        assertEquals("lucene-rag", response.facetName)
+        assertEquals("lucene-rag.hybrid", response.facetName)
         assertTrue(response.results.isEmpty())
     }
 
@@ -70,7 +70,7 @@ class LuceneRagFacetProviderTest {
 
         // Search for documents
         val request = RagRequest.query("machine learning")
-        val response = ragService.search(request)
+        val response = ragService.hybridSearch(request)
 
         assertEquals("lucene-rag", response.facetName)
         assertTrue(response.results.isNotEmpty())
@@ -94,7 +94,7 @@ class LuceneRagFacetProviderTest {
         val request = RagRequest.query("machine learning")
             .withSimilarityThreshold(0.9)
 
-        val response = ragService.search(request)
+        val response = ragService.hybridSearch(request)
 
         // Should only return highly relevant documents
         response.results.forEach { result ->
@@ -111,7 +111,7 @@ class LuceneRagFacetProviderTest {
         ragService.accept(documents)
 
         val request = RagRequest.query("machine learning").withTopK(3)
-        val response = ragService.search(request)
+        val response = ragService.hybridSearch(request)
 
         assertTrue(response.results.size <= 3)
     }
@@ -127,7 +127,7 @@ class LuceneRagFacetProviderTest {
 
         val request = RagRequest.query("test")
             .withSimilarityThreshold(0.0)
-        val response = ragService.search(request)
+        val response = ragService.hybridSearch(request)
 
         assertEquals(1, response.results.size, "Expected 1 result")
         val result = response.results.first()
@@ -156,7 +156,7 @@ class LuceneRagFacetProviderTest {
 
         val request = RagRequest.query("test")
             .withSimilarityThreshold(.0)
-        val response = ragServiceWithEmbedding.search(request)
+        val response = ragServiceWithEmbedding.hybridSearch(request)
 
         assertEquals(1, response.results.size)
         val retrievable = response.results.first().match
@@ -183,7 +183,7 @@ class LuceneRagFacetProviderTest {
 
         val request = RagRequest.query("artificial intelligence")
             .withSimilarityThreshold(0.0)
-        val response = ragService.search(request)
+        val response = ragService.hybridSearch(request)
 
         assertTrue(response.results.isNotEmpty())
         // Should find documents from both batches
@@ -207,7 +207,7 @@ class LuceneRagFacetProviderTest {
         // Search should use both text and vector similarity
         val request = RagRequest.query("AI and machine learning")
             .withSimilarityThreshold(0.0)
-        val response = ragServiceWithEmbedding.search(request)
+        val response = ragServiceWithEmbedding.hybridSearch(request)
 
         assertEquals("hybrid-lucene-rag", response.facetName)
         assertTrue(response.results.isNotEmpty())
@@ -239,7 +239,7 @@ class LuceneRagFacetProviderTest {
             // Use a query that should match via text search to ensure we get text results for hybrid
             val request = RagRequest.query("machine")
                 .withSimilarityThreshold(0.0)
-            val response = ragServiceHighVector.search(request)
+            val response = ragServiceHighVector.hybridSearch(request)
 
             assertTrue(
                 response.results.isNotEmpty(),
@@ -262,7 +262,7 @@ class LuceneRagFacetProviderTest {
         // Use a single word that should match
         val request = RagRequest.query("machine")
             .withSimilarityThreshold(0.0)
-        val response = ragService.search(request)
+        val response = ragService.hybridSearch(request)
 
         assertTrue(
             response.results.isNotEmpty(),
@@ -425,7 +425,7 @@ class LuceneRagFacetProviderTest {
             assertTrue(ragService.findAll().isEmpty())
 
             // Should also clear search index
-            val searchResponse = ragService.search(RagRequest.query("content"))
+            val searchResponse = ragService.hybridSearch(RagRequest.query("content"))
             assertTrue(searchResponse.results.isEmpty())
         }
 
@@ -484,14 +484,22 @@ class LuceneRagFacetProviderTest {
         @Test
         fun `should find chunks by keyword intersection with provided keywords`() {
             val documents = listOf(
-                Document("doc1", "This document discusses cars and speed limits on highways",
-                    mapOf("keywords" to listOf("cars", "speed", "highways"))),
-                Document("doc2", "Pedestrians must obey traffic signals and speed limits",
-                    mapOf("keywords" to listOf("pedestrians", "speed", "signals"))),
-                Document("doc3", "Cars should yield to pedestrians at crosswalks",
-                    mapOf("keywords" to listOf("cars", "pedestrians", "crosswalks"))),
-                Document("doc4", "Weather forecast for tomorrow",
-                    mapOf("keywords" to listOf("weather", "forecast")))
+                Document(
+                    "doc1", "This document discusses cars and speed limits on highways",
+                    mapOf("keywords" to listOf("cars", "speed", "highways"))
+                ),
+                Document(
+                    "doc2", "Pedestrians must obey traffic signals and speed limits",
+                    mapOf("keywords" to listOf("pedestrians", "speed", "signals"))
+                ),
+                Document(
+                    "doc3", "Cars should yield to pedestrians at crosswalks",
+                    mapOf("keywords" to listOf("cars", "pedestrians", "crosswalks"))
+                ),
+                Document(
+                    "doc4", "Weather forecast for tomorrow",
+                    mapOf("keywords" to listOf("weather", "forecast"))
+                )
             )
 
             ragService.accept(documents)
@@ -608,7 +616,11 @@ class LuceneRagFacetProviderTest {
             val documents = listOf(
                 Document("doc1", "car", mapOf("keywords" to "car")), // 1 match
                 Document("doc2", "car pedestrian", mapOf("keywords" to listOf("car", "pedestrian"))), // 2 matches
-                Document("doc3", "car pedestrian speedlimit", mapOf("keywords" to listOf("car", "pedestrian", "speedlimit"))) // 3 matches
+                Document(
+                    "doc3",
+                    "car pedestrian speedlimit",
+                    mapOf("keywords" to listOf("car", "pedestrian", "speedlimit"))
+                ) // 3 matches
             )
 
             ragService.accept(documents)
@@ -632,9 +644,21 @@ class LuceneRagFacetProviderTest {
         @Test
         fun `should retrieve chunks by IDs from keyword search`() {
             val documents = listOf(
-                Document("ml-doc", "Machine learning algorithms", mapOf("keywords" to listOf("machine", "learning", "algorithms"))),
-                Document("ai-doc", "Artificial intelligence systems", mapOf("keywords" to listOf("artificial", "intelligence", "systems"))),
-                Document("ds-doc", "Data science and machine learning", mapOf("keywords" to listOf("data", "science", "machine", "learning")))
+                Document(
+                    "ml-doc",
+                    "Machine learning algorithms",
+                    mapOf("keywords" to listOf("machine", "learning", "algorithms"))
+                ),
+                Document(
+                    "ai-doc",
+                    "Artificial intelligence systems",
+                    mapOf("keywords" to listOf("artificial", "intelligence", "systems"))
+                ),
+                Document(
+                    "ds-doc",
+                    "Data science and machine learning",
+                    mapOf("keywords" to listOf("data", "science", "machine", "learning"))
+                )
             )
 
             ragService.accept(documents)

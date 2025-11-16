@@ -36,7 +36,11 @@ class FacetedRagService(
     val ragFacets = facets.toList() + facetProviders.flatMap { it.facets() }
 
     init {
-        logger.info("Discovered {} RagFacets", ragFacets.size)
+        logger.info(
+            "Discovered {} RagFacets: {}",
+            ragFacets.size,
+            ragFacets.map { it.name }.sorted().joinToString(", "),
+        )
     }
 
     override fun search(ragRequest: RagRequest): RagResponse {
@@ -47,7 +51,11 @@ class FacetedRagService(
         val ragResponse = RagResponse(
             request = ragRequest,
             service = name,
-            results = allResults.distinctBy { it.match.id },
+            results = allResults
+                .distinctBy { it.match.id }
+                .sortedByDescending { it.score }
+                .filter { it.score >= ragRequest.similarityThreshold }
+                .take(ragRequest.topK)
         )
         logger.debug("RagResponse: {}", ragResponse)
         return ragResponse
@@ -58,6 +66,6 @@ class FacetedRagService(
         indent: Int,
     ): String =
         if (ragFacets.isEmpty()) "No RagFacets" else
-            "Composite of $description"
+            "RagFacets of $description"
 
 }

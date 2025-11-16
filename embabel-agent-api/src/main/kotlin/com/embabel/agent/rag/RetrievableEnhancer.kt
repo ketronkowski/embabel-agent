@@ -16,7 +16,7 @@
 package com.embabel.agent.rag
 
 /**
- * Allow enhancement of retrievable objects,
+ * Allow enhancement of retrievable objects when they are stored,
  * or actions to be taken on them.
  */
 interface RetrievableEnhancer {
