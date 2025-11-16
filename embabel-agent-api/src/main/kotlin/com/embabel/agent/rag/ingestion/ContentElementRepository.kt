@@ -17,6 +17,7 @@ package com.embabel.agent.rag.ingestion
 
 import com.embabel.agent.rag.Chunk
 import com.embabel.agent.rag.ContentElement
+import com.embabel.agent.rag.HierarchicalContentElement
 
 /**
  * Implemented by services that can retrieve Chunks and other ContentElements by id.
@@ -34,7 +35,36 @@ interface ContentElementRepository {
      */
     fun count(): Int
 
+    /**
+     * Find chunks associated with the given entity with the given ID.
+     */
     fun findChunksForEntity(
         entityId: String,
     ): List<Chunk>
+
+    /**
+     * Compute the path from root to the given element by traversing parentId relationships.
+     * Returns list of IDs from root to element, or null if path cannot be determined.
+     */
+    fun pathFromRoot(element: HierarchicalContentElement): List<String>? {
+        val path = mutableListOf<String>()
+        var current: HierarchicalContentElement? = element
+
+        // Build path from element to root (reversed)
+        while (current != null) {
+            path.add(0, current.id) // Add to front
+
+            val parentId = current.parentId
+            if (parentId == null) {
+                // Reached root
+                return path
+            }
+
+            // Look up parent
+            current = findById(parentId) as? HierarchicalContentElement
+        }
+
+        // If we exit loop without finding root, path is incomplete
+        return null
+    }
 }

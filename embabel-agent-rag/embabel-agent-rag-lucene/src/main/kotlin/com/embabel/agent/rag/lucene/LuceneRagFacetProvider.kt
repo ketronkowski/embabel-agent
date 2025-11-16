@@ -455,7 +455,7 @@ class LuceneRagFacetProvider @JvmOverloads constructor(
                 val embedding = embeddingModel.embed(retrievable.embeddableValue())
                 val embeddingBytes = floatArrayToBytes(embedding)
                 add(StoredField("embedding", embeddingBytes))
-                logger.info("Added embedding for retrievable with id='{}'", retrievable.id)
+                logger.info("Added embedding for retrievable with id {}", retrievable.id)
             }
 
             retrievable.metadata.forEach { (key, value) ->

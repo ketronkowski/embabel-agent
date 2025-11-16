@@ -197,7 +197,8 @@ class HierarchicalContentReader {
                                 currentSection.toString().trim(),
                                 parentId,
                                 uri,
-                                metadata
+                                metadata,
+                                rootId
                             )
                         )
                     }
@@ -241,7 +242,8 @@ class HierarchicalContentReader {
                     currentSection.toString().trim(),
                     parentId,
                     uri,
-                    metadata
+                    metadata,
+                    rootId
                 )
             )
         }
@@ -256,7 +258,8 @@ class HierarchicalContentReader {
                     content.trim(),
                     rootId,
                     uri,
-                    metadata
+                    metadata,
+                    rootId
                 )
             )
         }
@@ -314,7 +317,8 @@ class HierarchicalContentReader {
             content = content.trim(),
             parentId = rootId,
             url = uri,
-            metadata = metadata
+            metadata = metadata,
+            rootId = rootId
         )
 
         return MaterializedDocument(
@@ -333,14 +337,22 @@ class HierarchicalContentReader {
         parentId: String?,
         url: String?,
         metadata: Metadata,
+        rootId: String,
     ): LeafSection {
+        val metadataMap = extractMetadataMap(metadata).toMutableMap()
+
+        // Add required metadata for pathFromRoot computation
+        metadataMap["root_document_id"] = rootId
+        metadataMap["container_section_id"] = parentId ?: rootId
+        metadataMap["leaf_section_id"] = id
+
         return LeafSection(
             id = id,
             uri = url,
             title = title,
             text = content,
             parentId = parentId,
-            metadata = extractMetadataMap(metadata)
+            metadata = metadataMap
         )
     }
 
@@ -397,13 +409,19 @@ class HierarchicalContentReader {
         uri: String,
     ): MaterializedDocument {
         val rootId = UUID.randomUUID().toString()
+        val leafId = UUID.randomUUID().toString()
         val errorSection = LeafSection(
-            id = UUID.randomUUID().toString(),
+            id = leafId,
             uri = uri,
             title = "Parse Error",
             text = "Error parsing content: $errorMessage",
             parentId = rootId,
-            metadata = extractMetadataMap(metadata) + mapOf("error" to errorMessage)
+            metadata = extractMetadataMap(metadata) + mapOf(
+                "error" to errorMessage,
+                "root_document_id" to rootId,
+                "container_section_id" to rootId,
+                "leaf_section_id" to leafId
+            )
         )
 
         return MaterializedDocument(

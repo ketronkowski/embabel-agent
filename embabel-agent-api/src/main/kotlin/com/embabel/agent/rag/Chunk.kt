@@ -32,11 +32,14 @@ interface Chunk : Source, HierarchicalContentElement {
      */
     override val parentId: String
 
-    override val uri: String? get() = metadata["url"] as? String
-
     /**
      * If available, this is the path from the root document as ids,
-     * with the root id first and this chunk's id as the last element.
+     * with the root id first and this element's id as the last element.
+     *
+     * Default implementation computes from metadata for backward compatibility.
+     * For a more robust solution that traverses actual parentId relationships,
+     * use ContentElementRepository.pathFromRoot(element) instead.
+     *
      * Return null if not available or any part of the path is missing.
      */
     val pathFromRoot: List<String>?
@@ -67,6 +70,9 @@ interface Chunk : Source, HierarchicalContentElement {
 
             return path
         }
+
+
+    override val uri: String? get() = metadata["url"] as? String
 
     override fun embeddableValue(): String = text
 

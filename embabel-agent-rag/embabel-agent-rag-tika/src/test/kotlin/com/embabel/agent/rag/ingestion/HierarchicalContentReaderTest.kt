@@ -661,4 +661,104 @@ class HierarchicalContentReaderTest {
         assertTrue(titles.contains("Level1"))
         assertFalse(titles.contains("Level2")) // Should not be included due to depth limit
     }
+
+    @Test
+    fun `test all leaf sections have required metadata for pathFromRoot`() {
+        val markdown = """
+            # Main Title
+            This is the introduction.
+
+            ## Section 1
+            Content for section 1.
+
+            ### Subsection 1.1
+            Content for subsection 1.1.
+
+            ## Section 2
+            Content for section 2.
+        """.trimIndent()
+
+        val inputStream = ByteArrayInputStream(markdown.toByteArray())
+        val metadata = Metadata().apply {
+            set(TikaCoreProperties.RESOURCE_NAME_KEY, "test.md")
+        }
+
+        val result = reader.parseContent(inputStream, "test://example.md", metadata)
+
+        // Verify all leaf sections have the required metadata
+        result.children.forEach { section ->
+            val leafSection = section as LeafSection
+            assertNotNull(leafSection.metadata["root_document_id"],
+                "Section '${leafSection.title}' is missing root_document_id")
+            assertNotNull(leafSection.metadata["container_section_id"],
+                "Section '${leafSection.title}' is missing container_section_id")
+            assertNotNull(leafSection.metadata["leaf_section_id"],
+                "Section '${leafSection.title}' is missing leaf_section_id")
+
+            // Verify the values are correct
+            assertEquals(result.id, leafSection.metadata["root_document_id"])
+            assertEquals(leafSection.id, leafSection.metadata["leaf_section_id"])
+        }
+    }
+
+    @Test
+    fun `test plain text leaf section has required metadata for pathFromRoot`() {
+        val text = "This is a simple text document."
+
+        val inputStream = ByteArrayInputStream(text.toByteArray())
+        val result = reader.parseContent(inputStream, "test://plain.txt")
+
+        assertEquals(1, result.children.size)
+        val leafSection = result.children.first() as LeafSection
+
+        // Verify required metadata is present
+        assertNotNull(leafSection.metadata["root_document_id"])
+        assertNotNull(leafSection.metadata["container_section_id"])
+        assertNotNull(leafSection.metadata["leaf_section_id"])
+
+        // Verify values
+        assertEquals(result.id, leafSection.metadata["root_document_id"])
+        assertEquals(result.id, leafSection.metadata["container_section_id"]) // For single section, container is root
+        assertEquals(leafSection.id, leafSection.metadata["leaf_section_id"])
+    }
+
+
+    @Test
+    fun `test all leaf sections from directory parsing have required metadata`(@TempDir tempDir: Path) {
+        val mdFile = tempDir.resolve("test.md")
+        val markdown = """
+            # Test Document
+            This is a test document.
+
+            ## First Section
+            Content of the first section.
+        """.trimIndent()
+        Files.writeString(mdFile, markdown, StandardOpenOption.CREATE)
+
+        val fileTools = mockk<FileReadTools>()
+        every { fileTools.listFiles("") } returns listOf("f:test.md")
+        every { fileTools.resolvePath("test.md") } returns mdFile
+        every { fileTools.safeReadFile("test.md") } returns Files.readString(mdFile)
+
+        val result = reader.parseFromDirectory(fileTools, "")
+
+        assertTrue(result.success)
+        assertEquals(1, result.contentRoots.size)
+
+        val document = result.contentRoots.first()
+        val allLeaves = document.leaves()
+
+        // Verify all leaves have required metadata
+        allLeaves.forEach { leaf ->
+            assertNotNull(leaf.metadata["root_document_id"],
+                "Leaf '${leaf.title}' is missing root_document_id")
+            assertNotNull(leaf.metadata["container_section_id"],
+                "Leaf '${leaf.title}' is missing container_section_id")
+            assertNotNull(leaf.metadata["leaf_section_id"],
+                "Leaf '${leaf.title}' is missing leaf_section_id")
+
+            assertEquals(document.id, leaf.metadata["root_document_id"])
+            assertEquals(leaf.id, leaf.metadata["leaf_section_id"])
+        }
+    }
 }

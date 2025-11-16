@@ -7,6 +7,8 @@ embabel-agent-api/src/main/resources/mcp/**
 
 .claude
 
+**/.claude/**
+
 
 /target/**
 */target/**
