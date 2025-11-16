@@ -9,13 +9,37 @@ You can add custom LLMs as Spring beans of type `Llm`.
 
 You can use any Spring AI compatible model, adding additional Embabel requirements:
 
-- name
-- provider, such as "Mistral"
+- name (required)
+- provider, such as "Mistral" (required)
 - `OptionsConverter` to convert Embabel `LlmOptions` to Spring AI `ChatOptions`
 - *knowledge cutoff date* (if available)
 - any additional `PromptContributor` objects to be used in all LLM calls.
 If knowledge cutoff date is provided, add the `KnowledgeCutoffDate` prompt contributor.
 - pricing model (if available)
+
+For example:
+
+[source,java]
+----
+@Configuration
+public class LlmsConfig {
+    @Bean
+    public Llm myLlm() {
+        org.springframework.ai.chat.model.ChatModel chatModel = ...
+        return new Llm(
+                "myChatModel",
+                "myChatModelProvider",
+                chatModel)
+            .withOptionsConverter(new MyLlmOptionsConverter()) // <1>
+            .withKnowledgeCutoffDate(LocalDate.of(2025, 4, 1)); //<2>
+    }
+}
+----
+
+<1> Customize the `Llm` instance with an `OptionsConverter` implementation to convert Embabel `LlmOptions` to Spring AI `ChatOptions`.
+This is recommended.
+<2> Set the knowledge cutoff date if available.
+This will automatically expose it to prompts via the `KnowledgeCutoffDate` prompt contributor.
 
 A common requirement is to add an open AI compatible LLM.
 This can be done by extending the `OpenAiCompatibleModelFactory` class as follows:
@@ -51,7 +75,7 @@ class CustomOpenAiCompatibleModels(
 
 Embedding models can also be added as beans of the Embabel type `EmbeddingService`.
 
-Typically this is done in an `@Configuration` class like this:
+Typically, this is done in an `@Configuration` class like this:
 
 [source,java]
 ----
