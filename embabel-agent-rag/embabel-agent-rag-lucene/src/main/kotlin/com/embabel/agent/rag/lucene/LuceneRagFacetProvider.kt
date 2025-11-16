@@ -192,6 +192,7 @@ class LuceneRagFacetProvider @JvmOverloads constructor(
             val updatedChunk = Chunk(
                 id = chunk.id,
                 text = chunk.text,
+                parentId = chunk.parentId,
                 metadata = chunk.metadata + (KEYWORDS_FIELD to newKeywords)
             )
             contentElementStorage[chunkId] = updatedChunk
@@ -391,7 +392,8 @@ class LuceneRagFacetProvider @JvmOverloads constructor(
         return Chunk(
             id = doc.get(ID_FIELD),
             text = doc.get(CONTENT_FIELD),
-            metadata = metadata
+            parentId = doc.get(ID_FIELD),
+            metadata = metadata,
         )
     }
 
@@ -403,6 +405,7 @@ class LuceneRagFacetProvider @JvmOverloads constructor(
             val chunk = Chunk(
                 id = springDoc.id,
                 text = springDoc.text ?: "",
+                parentId = springDoc.id,
                 metadata = springDoc.metadata + mapOf(
                     "indexed_at" to System.currentTimeMillis(),
                     "service" to name

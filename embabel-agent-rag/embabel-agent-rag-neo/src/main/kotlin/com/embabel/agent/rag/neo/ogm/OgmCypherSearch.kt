@@ -170,7 +170,8 @@ class OgmCypherSearch(
                 match = Chunk(
                     id = row["id"] as String,
                     text = row["text"] as String,
-//                    metadata = mapOf("source" to (row["metadata_source"] as String)),
+                    metadata = mapOf("source" to (row["metadata_source"] as String)),
+                    parentId = row["parent_id"] as String? ?: "unknown",
                 ),
                 score = row["score"] as Double,
             )

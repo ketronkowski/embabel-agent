@@ -28,11 +28,11 @@ class MappedChunk(
     override val id: String,
     override val uri: String? = null,
     override val text: String,
-    override val parentId: String? = null,
+    override val parentId: String,
     override var metadata: Map<String, Any?> = emptyMap(),
 ) : Chunk {
 
-    private constructor() : this(id = "", text = "")
+    private constructor() : this(id = "", text = "", parentId = "")
 
     override fun withMetadata(metadata: Map<String, Any?>): Chunk {
         this.metadata = metadata

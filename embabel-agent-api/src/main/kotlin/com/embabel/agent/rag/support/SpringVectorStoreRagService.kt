@@ -84,7 +84,10 @@ class DocumentSimilarityResult(
 ) : SimilarityResult<Chunk> {
 
     override val match: Chunk = Chunk(
-        document.id, document.text!!
+        id = document.id,
+        text = document.text!!,
+        metadata = document.metadata,
+        parentId = document.id,
     )
 
     override fun toString(): String {

@@ -16,6 +16,7 @@
 package com.embabel.agent.rag.ingestion
 
 import com.embabel.agent.rag.Chunk
+import com.embabel.agent.rag.ContentRoot
 import com.embabel.agent.rag.LeafSection
 import org.slf4j.LoggerFactory
 import java.util.*
@@ -49,6 +50,9 @@ class ContentChunker(
          */
         const val SEQUENCE_NUMBER = "sequence_number"
 
+        /** Metadata key for the unique identifier of the root document */
+        const val ROOT_DOCUMENT_ID = "root_document_id"
+
         /** Metadata key for the unique identifier of the container section */
         const val CONTAINER_SECTION_ID = "container_section_id"
 
@@ -75,13 +79,20 @@ class ContentChunker(
         val leaves = section.leaves()
         val totalContentLength = leaves.sumOf { it.content.length + it.title.length + 1 } // +1 for newline after title
 
+        // Determine root document ID: if section is a ContentRoot, use its ID, otherwise try to get from metadata
+        val rootId = if (section is ContentRoot) {
+            section.id
+        } else {
+            section.metadata[ROOT_DOCUMENT_ID] as? String ?: section.id
+        }
+
         // Strategy 1: If total content fits in a single chunk, combine everything
         if (totalContentLength <= config.maxChunkSize) {
             logger.debug(
                 "Creating single chunk for container section '{}' with {} leaves (total length: {} <= max: {})",
                 section.title, leaves.size, totalContentLength, config.maxChunkSize
             )
-            return listOf(createSingleChunkFromContainer(section, leaves))
+            return listOf(createSingleChunkFromContainer(section, leaves, rootId))
         }
 
         // Strategy 2: Try to group leaves intelligently before splitting
@@ -89,7 +100,7 @@ class ContentChunker(
             "Total content ({} chars) exceeds maxChunkSize ({}), attempting intelligent grouping",
             totalContentLength, config.maxChunkSize
         )
-        return chunkLeavesIntelligently(section, leaves)
+        return chunkLeavesIntelligently(section, leaves, rootId)
     }
 
     /**
@@ -102,6 +113,7 @@ class ContentChunker(
     private fun createSingleChunkFromContainer(
         section: MaterializedContainerSection,
         leaves: List<LeafSection>,
+        rootId: String,
     ): Chunk {
         val combinedContent = leaves.joinToString("\n\n") { leaf ->
             if (leaf.title.isNotBlank()) "${leaf.title}\n${leaf.content}" else leaf.content
@@ -111,6 +123,7 @@ class ContentChunker(
 
         val combinedMetadata = mutableMapOf<String, Any?>()
         combinedMetadata.putAll(section.metadata)
+        combinedMetadata[ROOT_DOCUMENT_ID] = rootId
         combinedMetadata[CONTAINER_SECTION_ID] = section.id
         combinedMetadata[CONTAINER_SECTION_TITLE] = section.title
         combinedMetadata[CONTAINER_SECTION_URL] = section.uri
@@ -129,6 +142,7 @@ class ContentChunker(
     private fun chunkLeavesIntelligently(
         containerSection: MaterializedContainerSection,
         leaves: List<LeafSection>,
+        rootId: String,
     ): List<Chunk> {
         val allChunks = mutableListOf<Chunk>()
         val leafGroups = groupLeavesForOptimalChunking(leaves)
@@ -145,10 +159,10 @@ class ContentChunker(
 
                     if (leafContentSize <= config.maxChunkSize) {
                         // Small enough for single chunk
-                        allChunks.add(createSingleLeafChunk(containerSection, leaf, sequenceNumber++))
+                        allChunks.add(createSingleLeafChunk(containerSection, leaf, rootId, sequenceNumber++))
                     } else {
                         // Too large, split it
-                        val chunks = splitLeafIntoMultipleChunks(containerSection, leaf, sequenceNumber)
+                        val chunks = splitLeafIntoMultipleChunks(containerSection, leaf, rootId, sequenceNumber)
                         sequenceNumber += chunks.size
                         allChunks.addAll(chunks)
                     }
@@ -156,7 +170,7 @@ class ContentChunker(
 
                 else -> {
                     // Multi-leaf group - create combined chunk
-                    allChunks.add(createCombinedLeafChunk(containerSection, group, sequenceNumber++))
+                    allChunks.add(createCombinedLeafChunk(containerSection, group, rootId, sequenceNumber++))
                 }
             }
         }
@@ -205,6 +219,7 @@ class ContentChunker(
     private fun createCombinedLeafChunk(
         containerSection: MaterializedContainerSection,
         leaves: List<LeafSection>,
+        rootId: String,
         sequenceNumber: Int,
     ): Chunk {
         val combinedContent = leaves.joinToString("\n\n") { leaf ->
@@ -215,6 +230,7 @@ class ContentChunker(
 
         val combinedMetadata = mutableMapOf<String, Any?>()
         combinedMetadata.putAll(containerSection.metadata)
+        combinedMetadata[ROOT_DOCUMENT_ID] = rootId
         combinedMetadata[CONTAINER_SECTION_ID] = containerSection.id
         combinedMetadata[CONTAINER_SECTION_TITLE] = containerSection.title
         combinedMetadata[CONTAINER_SECTION_URL] = containerSection.uri
@@ -233,6 +249,7 @@ class ContentChunker(
     private fun createSingleLeafChunk(
         containerSection: MaterializedContainerSection,
         leaf: LeafSection,
+        rootId: String,
         sequenceNumber: Int,
     ): Chunk {
         val content = if (leaf.title.isNotBlank()) "${leaf.title}\n${leaf.content}" else leaf.content
@@ -242,6 +259,7 @@ class ContentChunker(
             id = UUID.randomUUID().toString(),
             text = contentWithSectionTitle,
             metadata = leaf.metadata + mapOf(
+                ROOT_DOCUMENT_ID to rootId,
                 CONTAINER_SECTION_ID to containerSection.id,
                 CONTAINER_SECTION_TITLE to containerSection.title,
                 LEAF_SECTION_ID to leaf.id,
@@ -258,6 +276,7 @@ class ContentChunker(
     private fun splitLeafIntoMultipleChunks(
         containerSection: MaterializedContainerSection,
         leaf: LeafSection,
+        rootId: String,
         startingSequenceNumber: Int,
     ): List<Chunk> {
         val chunks = mutableListOf<Chunk>()
@@ -273,6 +292,7 @@ class ContentChunker(
                 id = UUID.randomUUID().toString(),
                 text = textChunk.trim(),
                 metadata = leaf.metadata + mapOf(
+                    ROOT_DOCUMENT_ID to rootId,
                     CONTAINER_SECTION_ID to containerSection.id,
                     CONTAINER_SECTION_TITLE to containerSection.title,
                     LEAF_SECTION_ID to leaf.id,

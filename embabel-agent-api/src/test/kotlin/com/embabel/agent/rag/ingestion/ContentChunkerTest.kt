@@ -15,6 +15,7 @@
  */
 package com.embabel.agent.rag.ingestion
 
+import com.embabel.agent.rag.Chunk
 import com.embabel.agent.rag.LeafSection
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
@@ -546,8 +547,11 @@ class ContentChunkerTest {
         assertEquals(1, chunks.size)
         val chunk = chunks.first()
 
-        // Verify section title is prepended
-        assertTrue(chunk.text.startsWith("Container Title\n\n"), "Chunk should start with container title")
+        // Verify section title is prepended with FROM: prefix
+        assertTrue(
+            chunk.text.startsWith("FROM: Container Title\n\n"),
+            "Chunk should start with 'FROM: ' and container title"
+        )
         assertTrue(chunk.text.contains("Leaf Title"), "Chunk should contain leaf title")
         assertTrue(chunk.text.contains("This is the leaf content."), "Chunk should contain leaf content")
     }
@@ -616,6 +620,160 @@ class ContentChunkerTest {
         }
 
         // Section title should NOT be included because it would exceed the limit
-        assertFalse(chunks.first().text.startsWith("Very Long Container"), "Title should not be prepended when it would exceed maxChunkSize")
+        assertFalse(
+            chunks.first().text.startsWith("Very Long Container"),
+            "Title should not be prepended when it would exceed maxChunkSize"
+        )
+    }
+
+    @Test
+    fun `test idsFromRoot for single chunk from container`() {
+        val leaf = LeafSection(
+            id = "leaf-1",
+            title = "Introduction",
+            text = "Small content"
+        )
+
+        val container = MaterializedDocument(
+            id = "doc-root",
+            title = "Test Document",
+            children = listOf(leaf),
+            uri = "test-uri",
+        )
+
+        val chunks = chunker.chunk(container)
+        assertEquals(1, chunks.size)
+
+        val chunk = chunks.first()
+        val idsFromRoot = chunk.pathFromRoot
+
+        assertNotNull(idsFromRoot, "idsFromRoot should not be null")
+        assertEquals(2, idsFromRoot!!.size, "Should have root and chunk IDs")
+        assertEquals("doc-root", idsFromRoot[0], "First ID should be root document")
+        assertEquals(chunk.id, idsFromRoot.last(), "Last ID should be chunk ID")
+    }
+
+    @Test
+    fun `test idsFromRoot for chunk from leaf section`() {
+        val leaf1 = LeafSection(
+            id = "leaf-1",
+            title = "Section A",
+            text = "Content A"
+        )
+        val leaf2 = LeafSection(
+            id = "leaf-2",
+            title = "Section B",
+            text = "Content B"
+        )
+
+        val container = MaterializedDocument(
+            id = "doc-root",
+            title = "Multi-Section Doc",
+            children = listOf(leaf1, leaf2),
+            uri = "test-uri",
+        )
+
+        val chunks = chunker.chunk(container)
+        assertEquals(1, chunks.size)
+
+        val chunk = chunks.first()
+        val idsFromRoot = chunk.pathFromRoot
+
+        assertNotNull(idsFromRoot, "idsFromRoot should not be null")
+        assertEquals(2, idsFromRoot!!.size, "Should have root and chunk IDs")
+        assertEquals("doc-root", idsFromRoot[0], "First ID should be root document")
+        assertEquals(chunk.id, idsFromRoot.last(), "Last ID should be chunk ID")
+    }
+
+    @Test
+    fun `test idsFromRoot for split chunks maintains hierarchy`() {
+        // Create large leaf that will be split
+        val largeContent = buildString {
+            repeat(10) { paragraphIndex ->
+                appendLine("Paragraph $paragraphIndex: This is a substantial amount of content.")
+                appendLine("It contains multiple sentences to ensure splitting occurs.")
+                appendLine("Each paragraph is designed to create a sizable chunk.")
+                if (paragraphIndex < 9) appendLine()
+            }
+        }
+
+        val largeLeaf = LeafSection(
+            id = "leaf-large",
+            title = "Large Section",
+            text = largeContent
+        )
+
+        val container = MaterializedDocument(
+            id = "doc-root",
+            title = "Document",
+            children = listOf(largeLeaf),
+            uri = "test-uri",
+        )
+
+        val chunks = chunker.chunk(container)
+        assertTrue(chunks.size > 1, "Large content should create multiple chunks")
+
+        // All chunks should have idsFromRoot with same hierarchy structure
+        chunks.forEach { chunk ->
+            val idsFromRoot = chunk.pathFromRoot
+            assertNotNull(idsFromRoot, "Each chunk should have idsFromRoot")
+            assertTrue(idsFromRoot!!.size >= 3, "Should have at least root, container, and chunk")
+            assertEquals("doc-root", idsFromRoot[0], "First ID should be root")
+            assertEquals(chunk.id, idsFromRoot.last(), "Last ID should be chunk ID")
+        }
+
+        // Verify sequence numbers are different but hierarchy is same structure
+        val paths = chunks.map { it.pathFromRoot!! }
+        val firstPath = paths[0]
+        paths.forEach { path ->
+            assertEquals(firstPath.size, path.size, "All paths should have same length")
+            // All but last element (chunk ID) should match the hierarchy
+            assertEquals(
+                firstPath.dropLast(1),
+                path.dropLast(1),
+                "All chunks should share same parent hierarchy"
+            )
+        }
+    }
+
+    @Test
+    fun `test idsFromRoot with nested container sections`() {
+        val leaf = LeafSection(
+            id = "leaf-1",
+            title = "Content",
+            text = "Some content"
+        )
+
+        val nestedContainer = DefaultMaterializedContainerSection(
+            id = "nested-section",
+            title = "Nested",
+            children = listOf(leaf),
+            parentId = "doc-root",
+            metadata = mapOf("root_document_id" to "doc-root")
+        )
+
+        val chunks = chunker.chunk(nestedContainer)
+        assertEquals(1, chunks.size)
+
+        val chunk = chunks.first()
+        val idsFromRoot = chunk.pathFromRoot
+
+        assertNotNull(idsFromRoot, "idsFromRoot should not be null")
+        assertEquals("doc-root", idsFromRoot!![0], "First ID should be root document")
+        assertEquals("nested-section", idsFromRoot[1], "Second ID should be nested container")
+        assertEquals(chunk.id, idsFromRoot.last(), "Last ID should be chunk ID")
+    }
+
+    @Test
+    fun `test idsFromRoot returns null when root_document_id missing`() {
+        // Create a chunk manually without root_document_id in metadata
+        val chunk = Chunk(
+            id = "chunk-1",
+            text = "Test content",
+            metadata = mapOf("container_section_id" to "container-1"),
+            parentId = "container-1"
+        )
+
+        assertNull(chunk.pathFromRoot, "idsFromRoot should return null when root_document_id is missing")
     }
 }

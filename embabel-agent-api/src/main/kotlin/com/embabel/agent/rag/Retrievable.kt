@@ -30,7 +30,8 @@ interface Embedded {
 }
 
 /**
- * Data object instance, whether structural or not.
+ * Data object instance, whether structural (from a literal source)
+ * or not.
  */
 sealed interface Datum {
 
