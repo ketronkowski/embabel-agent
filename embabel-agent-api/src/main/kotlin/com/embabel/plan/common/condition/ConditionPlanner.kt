@@ -13,22 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.embabel.agent.spi
+package com.embabel.plan.common.condition
 
-import com.embabel.agent.core.ProcessOptions
-import com.embabel.plan.Plan
 import com.embabel.plan.Planner
-import com.embabel.plan.PlanningSystem
-import com.embabel.plan.WorldState
-import com.embabel.plan.common.condition.WorldStateDeterminer
 
 /**
- * Pluggable planner factory
+ * Planner based on condition world states, such as GOAP.
  */
-fun interface PlannerFactory {
-
-    fun createPlanner(
-        processOptions: ProcessOptions,
-        worldStateDeterminer: WorldStateDeterminer,
-    ): Planner<out PlanningSystem, out WorldState, out Plan>
-}
+interface ConditionPlanner : Planner<ConditionPlanningSystem, ConditionWorldState, ConditionPlan>

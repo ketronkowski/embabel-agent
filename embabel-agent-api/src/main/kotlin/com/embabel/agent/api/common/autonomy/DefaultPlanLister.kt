@@ -19,8 +19,8 @@ import com.embabel.agent.core.AgentPlatform
 import com.embabel.agent.core.ProcessOptions
 import com.embabel.common.util.time
 import com.embabel.plan.Plan
-import com.embabel.plan.goap.GoapPlanner
-import com.embabel.plan.goap.GoapPlanningSystem
+import com.embabel.plan.common.condition.ConditionPlanningSystem
+import com.embabel.plan.common.condition.ConditionPlanner
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
@@ -47,7 +47,7 @@ class DefaultPlanLister(
             agent = uberAgent,
             bindings = bindings,
         )
-        val planner = dummyAgentProcess.planner as? GoapPlanner
+        val planner = dummyAgentProcess.planner as? ConditionPlanner
             ?: TODO("Only GoapPlanners are presently supported: found ${dummyAgentProcess.planner::class.qualifiedName}")
         val planningSystem = planningSystem()
         val (plans, ms) = time {
@@ -67,8 +67,8 @@ class DefaultPlanLister(
         return plans
     }
 
-    private fun planningSystem(): GoapPlanningSystem {
-        return GoapPlanningSystem(
+    private fun planningSystem(): ConditionPlanningSystem {
+        return ConditionPlanningSystem(
             actions = agentPlatform.actions.toSet(),
             goals = agentPlatform.goals,
         )

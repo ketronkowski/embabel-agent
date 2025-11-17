@@ -20,9 +20,9 @@ import com.embabel.agent.core.Condition
 import com.embabel.agent.core.ProcessContext
 import com.embabel.agent.core.satisfiesType
 import com.embabel.agent.core.support.Rerun.HAS_RUN_CONDITION_PREFIX
-import com.embabel.plan.goap.ConditionDetermination
-import com.embabel.plan.goap.GoapWorldState
-import com.embabel.plan.goap.WorldStateDeterminer
+import com.embabel.plan.common.condition.ConditionDetermination
+import com.embabel.plan.common.condition.ConditionWorldState
+import com.embabel.plan.common.condition.WorldStateDeterminer
 import org.slf4j.LoggerFactory
 
 /**
@@ -37,14 +37,14 @@ class BlackboardWorldStateDeterminer(
 
     private val knownConditions = processContext.agentProcess.agent.planningSystem.knownConditions()
 
-    override fun determineWorldState(): GoapWorldState {
+    override fun determineWorldState(): ConditionWorldState {
         val map = mutableMapOf<String, ConditionDetermination>()
         knownConditions.forEach { condition ->
             // TODO shouldn't evaluate expensive conditions, just
             // return unknown
             map[condition] = determineCondition(condition)
         }
-        return GoapWorldState(map)
+        return ConditionWorldState(map)
     }
 
     override fun determineCondition(condition: String): ConditionDetermination {

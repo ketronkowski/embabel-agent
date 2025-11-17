@@ -28,7 +28,7 @@ import com.embabel.agent.core.support.BlackboardWorldStateDeterminer
 import com.embabel.agent.core.support.InMemoryBlackboard
 import com.embabel.agent.domain.io.UserInput
 import com.embabel.agent.testing.common.EventSavingAgenticEventListener
-import com.embabel.plan.goap.ConditionDetermination
+import com.embabel.plan.common.condition.ConditionDetermination
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.jupiter.api.Assertions.assertTrue

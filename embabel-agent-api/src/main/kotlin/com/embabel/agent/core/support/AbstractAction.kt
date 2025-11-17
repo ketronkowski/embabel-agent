@@ -20,8 +20,8 @@ import com.embabel.agent.core.ActionQos
 import com.embabel.agent.core.IoBinding
 import com.embabel.agent.core.ToolGroupRequirement
 import com.embabel.plan.CostComputation
-import com.embabel.plan.goap.ConditionDetermination
-import com.embabel.plan.goap.EffectSpec
+import com.embabel.plan.common.condition.ConditionDetermination
+import com.embabel.plan.common.condition.EffectSpec
 import com.fasterxml.jackson.annotation.JsonIgnore
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory

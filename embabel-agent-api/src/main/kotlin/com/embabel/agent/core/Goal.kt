@@ -18,9 +18,9 @@ package com.embabel.agent.core
 import com.embabel.common.util.indent
 import com.embabel.common.util.indentLines
 import com.embabel.plan.CostComputation
-import com.embabel.plan.goap.ConditionDetermination
-import com.embabel.plan.goap.EffectSpec
-import com.embabel.plan.goap.GoapGoal
+import com.embabel.plan.common.condition.ConditionDetermination
+import com.embabel.plan.common.condition.ConditionGoal
+import com.embabel.plan.common.condition.EffectSpec
 import com.fasterxml.jackson.annotation.JsonIgnore
 
 /**
@@ -50,7 +50,7 @@ data class Goal(
     val tags: Set<String> = emptySet(),
     val examples: Set<String> = emptySet(),
     val export: Export = Export(),
-) : GoapGoal, AgentSystemStep {
+) : ConditionGoal, AgentSystemStep {
 
     // These methods are for Java, to obviate the builder antipattern
     fun withPreconditions(vararg preconditions: String): Goal {

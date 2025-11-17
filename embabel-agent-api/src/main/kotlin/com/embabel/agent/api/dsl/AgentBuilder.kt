@@ -30,7 +30,7 @@ import com.embabel.common.ai.prompt.PromptContributorConsumer
 import com.embabel.common.core.types.Semver
 import com.embabel.common.core.types.ZeroToOne
 import com.embabel.plan.CostComputation
-import com.embabel.plan.goap.ConditionDetermination
+import com.embabel.plan.common.condition.ConditionDetermination
 import org.slf4j.LoggerFactory
 import org.springframework.ai.tool.ToolCallback
 import kotlin.reflect.KClass

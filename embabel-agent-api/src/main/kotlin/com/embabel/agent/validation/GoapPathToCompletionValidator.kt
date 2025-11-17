@@ -17,10 +17,10 @@ package com.embabel.agent.validation
 
 import com.embabel.agent.core.AgentScope
 import com.embabel.agent.core.support.Rerun.HAS_RUN_CONDITION_PREFIX
-import com.embabel.plan.goap.ConditionDetermination
-import com.embabel.plan.goap.GoapAction
-import com.embabel.plan.goap.GoapGoal
-import com.embabel.plan.goap.WorldStateDeterminer
+import com.embabel.plan.common.condition.ConditionAction
+import com.embabel.plan.common.condition.ConditionDetermination
+import com.embabel.plan.common.condition.ConditionGoal
+import com.embabel.plan.common.condition.WorldStateDeterminer
 import com.embabel.plan.goap.astar.AStarGoapPlanner
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
@@ -166,7 +166,7 @@ class GoapPathToCompletionValidator : AgentValidator {
 
         // Convert agent actions to GOAP actions, removing hasRun_ conditions
         val goapActions = agentScope.actions.map { action ->
-            GoapAction(
+            ConditionAction(
                 name = action.name,
                 preconditions = action.preconditions.filterKeys { !it.startsWith(HAS_RUN_CONDITION_PREFIX) },
                 effects = action.effects.filterKeys { !it.startsWith(HAS_RUN_CONDITION_PREFIX) },
@@ -194,20 +194,20 @@ class GoapPathToCompletionValidator : AgentValidator {
                 .filterKeys { !it.startsWith(HAS_RUN_CONDITION_PREFIX) }
                 .filterValues { it == ConditionDetermination.TRUE }
 
-            val goapGoal = GoapGoal(
+            val conditionGoal = ConditionGoal(
                 name = goal.name,
                 preconditions = goalPreconditions,
                 value = goal.value
             )
 
             // Try to find a plan to this goal
-            val plan = planner.planToGoal(goapActions, goapGoal)
+            val plan = planner.planToGoal(goapActions, conditionGoal)
 
             if (plan == null || plan.actions.isEmpty()) {
                 allGoalsAchievable = false
                 failedGoals.add(goal.name)
                 logger.debug("❌ No plan found for goal: ${goal.name}")
-                logger.debug("  Goal preconditions (desired effects): {}", goapGoal.preconditions)
+                logger.debug("  Goal preconditions (desired effects): {}", conditionGoal.preconditions)
             } else {
                 logger.debug("✅ Plan found for goal: ${goal.name}")
                 logger.debug("  Actions: {}", plan.actions.map { it.name })

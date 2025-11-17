@@ -22,7 +22,7 @@ import com.embabel.agent.testing.integration.RandomRanker
 import com.embabel.agent.testing.integration.forAutonomyTesting
 import com.embabel.common.util.indent
 import com.embabel.plan.CostComputation
-import com.embabel.plan.goap.ConditionDetermination
+import com.embabel.plan.common.condition.ConditionDetermination
 import io.mockk.clearAllMocks
 import io.mockk.unmockkAll
 import org.junit.jupiter.api.AfterEach

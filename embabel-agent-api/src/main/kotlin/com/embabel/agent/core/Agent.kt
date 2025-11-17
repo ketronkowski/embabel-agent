@@ -20,7 +20,7 @@ import com.embabel.common.core.types.*
 import com.embabel.common.util.ComputerSaysNoSerializer
 import com.embabel.common.util.indentLines
 import com.embabel.plan.PlanningSystem
-import com.embabel.plan.goap.GoapPlanningSystem
+import com.embabel.plan.common.condition.ConditionPlanningSystem
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import org.slf4j.LoggerFactory
 
@@ -87,7 +87,7 @@ data class Agent(
     /**
      * Return a version of the agent with actions and conditions pruned to the given pruned planning system.
      */
-    fun pruneTo(pruned: GoapPlanningSystem): Agent =
+    fun pruneTo(pruned: ConditionPlanningSystem): Agent =
         copy(
             actions = actions.filter { action -> pruned.actions.any { it.name == action.name } },
             conditions = conditions.filter { condition ->
@@ -99,7 +99,7 @@ data class Agent(
         get() {
             val actions = actions.toSet()
             logger.debug(infoString())
-            return GoapPlanningSystem(actions, goals)
+            return ConditionPlanningSystem(actions, goals)
         }
 
     override fun infoString(

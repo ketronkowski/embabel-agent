@@ -15,7 +15,8 @@
  */
 package com.embabel.plan.goap.astar
 
-import com.embabel.plan.goap.*
+import com.embabel.plan.common.condition.*
+import com.embabel.plan.goap.OptimizingGoapPlanner
 import java.util.*
 
 /**
@@ -42,13 +43,13 @@ internal class AStarGoapPlanner(worldStateDeterminer: WorldStateDeterminer) :
     OptimizingGoapPlanner(worldStateDeterminer) {
 
     override fun planToGoalFrom(
-        startState: GoapWorldState,
-        actions: Collection<GoapAction>,
-        goal: GoapGoal,
-    ): GoapPlan? {
+        startState: ConditionWorldState,
+        actions: Collection<ConditionAction>,
+        goal: ConditionGoal,
+    ): ConditionPlan? {
         // Quick check: if goal is already satisfied, return empty plan
         if (goal.isAchievable(startState)) {
-            return GoapPlan(emptyList(), goal, worldState = startState)
+            return ConditionPlan(emptyList(), goal, worldState = startState)
         }
 
         // Early reachability check to avoid expensive A* search for unreachable goals
@@ -60,13 +61,13 @@ internal class AStarGoapPlanner(worldStateDeterminer: WorldStateDeterminer) :
         val openList = PriorityQueue<SearchNode>()
 
         // Maps each state to its best known cost
-        val gScores = mutableMapOf<GoapWorldState, Double>().withDefault { Double.MAX_VALUE }
+        val gScores = mutableMapOf<ConditionWorldState, Double>().withDefault { Double.MAX_VALUE }
 
         // Maps each state to its best predecessor state and action
-        val cameFrom = mutableMapOf<GoapWorldState, Pair<GoapWorldState, GoapAction?>>()
+        val cameFrom = mutableMapOf<ConditionWorldState, Pair<ConditionWorldState, ConditionAction?>>()
 
         // Set to track states that have been fully evaluated
-        val closedSet = mutableSetOf<GoapWorldState>()
+        val closedSet = mutableSetOf<ConditionWorldState>()
 
         // Initialize with start node
         gScores[startState] = 0.0
@@ -153,7 +154,7 @@ internal class AStarGoapPlanner(worldStateDeterminer: WorldStateDeterminer) :
             // Second pass: remove any actions that don't contribute to the goal
             val finalPlan = forwardPlanningOptimization(optimizedPlan, startState, goal)
 
-            return GoapPlan(finalPlan, goal, worldState = startState)
+            return ConditionPlan(finalPlan, goal, worldState = startState)
         }
 
         // No path found
@@ -165,17 +166,17 @@ internal class AStarGoapPlanner(worldStateDeterminer: WorldStateDeterminer) :
      * including only actions that contribute to achieving the goal.
      */
     private fun backwardPlanningOptimization(
-        plan: List<GoapAction>,
-        startState: GoapWorldState,
-        goal: GoapGoal,
-    ): List<GoapAction> {
+        plan: List<ConditionAction>,
+        startState: ConditionWorldState,
+        goal: ConditionGoal,
+    ): List<ConditionAction> {
         if (plan.isEmpty()) return plan
 
         // Start with the goal conditions we need to satisfy
         val targetConditions = goal.preconditions.toMutableMap()
 
         // Work backward from the end of the plan
-        val keptActions = mutableListOf<GoapAction>()
+        val keptActions = mutableListOf<ConditionAction>()
 
         // Process actions in reverse
         for (action in plan.reversed()) {
@@ -210,13 +211,13 @@ internal class AStarGoapPlanner(worldStateDeterminer: WorldStateDeterminer) :
      * that don't contribute to achieving the goal.
      */
     private fun forwardPlanningOptimization(
-        plan: List<GoapAction>,
-        startState: GoapWorldState,
-        goal: GoapGoal,
-    ): List<GoapAction> {
+        plan: List<ConditionAction>,
+        startState: ConditionWorldState,
+        goal: ConditionGoal,
+    ): List<ConditionAction> {
         if (plan.isEmpty()) return plan
 
-        val optimizedPlan = mutableListOf<GoapAction>()
+        val optimizedPlan = mutableListOf<ConditionAction>()
         var currentState = startState
 
         // For each action in the plan
@@ -255,9 +256,9 @@ internal class AStarGoapPlanner(worldStateDeterminer: WorldStateDeterminer) :
      * Simulates applying a sequence of actions to a starting state and returns the final state.
      */
     private fun simulatePlan(
-        startState: GoapWorldState,
-        actions: List<GoapAction>,
-    ): GoapWorldState {
+        startState: ConditionWorldState,
+        actions: List<ConditionAction>,
+    ): ConditionWorldState {
         var currentState = startState
         for (action in actions) {
             if (action.isAchievable(currentState)) {
@@ -275,9 +276,9 @@ internal class AStarGoapPlanner(worldStateDeterminer: WorldStateDeterminer) :
      * The key optimization: quickly detect when a goal requires an effect that no action can produce.
      */
     private fun isGoalReachable(
-        startState: GoapWorldState,
-        actions: Collection<GoapAction>,
-        goal: GoapGoal,
+        startState: ConditionWorldState,
+        actions: Collection<ConditionAction>,
+        goal: ConditionGoal,
     ): Boolean {
         // Build a set of all effects that actions can produce
         val producibleEffects = mutableSetOf<Pair<String, ConditionDetermination>>()
@@ -310,8 +311,8 @@ internal class AStarGoapPlanner(worldStateDeterminer: WorldStateDeterminer) :
      * The heuristic is admissible (never overestimates) which ensures A* finds the optimal path.
      */
     private fun heuristic(
-        state: GoapWorldState,
-        goal: GoapGoal,
+        state: ConditionWorldState,
+        goal: ConditionGoal,
     ): Double {
         return goal.preconditions.count { (key, value) -> state.state[key] != value }.toDouble()
     }
@@ -320,24 +321,24 @@ internal class AStarGoapPlanner(worldStateDeterminer: WorldStateDeterminer) :
      * Apply an action to a state, returning the resulting new state.
      */
     private fun applyAction(
-        currentState: GoapWorldState,
-        action: GoapAction,
-    ): GoapWorldState {
+        currentState: ConditionWorldState,
+        action: ConditionAction,
+    ): ConditionWorldState {
         val newState = currentState.state.toMutableMap()
         action.effects.forEach { (key, value) ->
             newState[key] = value
         }
-        return GoapWorldState(newState as HashMap<String, ConditionDetermination>)
+        return ConditionWorldState(newState as HashMap<String, ConditionDetermination>)
     }
 
     /**
      * Reconstruct the path from the start state to the goal state using the recorded actions.
      */
     private fun reconstructPath(
-        cameFrom: Map<GoapWorldState, Pair<GoapWorldState, GoapAction?>>,
-        goalState: GoapWorldState,
-    ): List<GoapAction> {
-        val actions = mutableListOf<GoapAction>()
+        cameFrom: Map<ConditionWorldState, Pair<ConditionWorldState, ConditionAction?>>,
+        goalState: ConditionWorldState,
+    ): List<ConditionAction> {
+        val actions = mutableListOf<ConditionAction>()
         var currentState = goalState
 
         while (currentState in cameFrom) {
@@ -357,7 +358,7 @@ internal class AStarGoapPlanner(worldStateDeterminer: WorldStateDeterminer) :
  * Contains the state, its g-score (cost from start), and h-score (heuristic estimate to goal).
  */
 private class SearchNode(
-    val state: GoapWorldState,
+    val state: ConditionWorldState,
     val gScore: Double,
     val hScore: Double,
 ) : Comparable<SearchNode> {

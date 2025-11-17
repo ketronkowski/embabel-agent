@@ -13,22 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.embabel.agent.spi
+package com.embabel.plan.common.condition
 
-import com.embabel.agent.core.ProcessOptions
+import com.embabel.plan.Action
+import com.embabel.plan.Goal
 import com.embabel.plan.Plan
-import com.embabel.plan.Planner
-import com.embabel.plan.PlanningSystem
-import com.embabel.plan.WorldState
-import com.embabel.plan.common.condition.WorldStateDeterminer
 
-/**
- * Pluggable planner factory
- */
-fun interface PlannerFactory {
+class ConditionPlan(
+    actions: List<Action>,
+    goal: Goal,
+    val worldState: ConditionWorldState,
+) : Plan(actions, goal) {
 
-    fun createPlanner(
-        processOptions: ProcessOptions,
-        worldStateDeterminer: WorldStateDeterminer,
-    ): Planner<out PlanningSystem, out WorldState, out Plan>
+    override fun toString(): String {
+        return infoString(verbose = false)
+    }
 }

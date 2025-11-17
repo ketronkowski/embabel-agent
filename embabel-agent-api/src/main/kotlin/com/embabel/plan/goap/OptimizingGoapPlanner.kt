@@ -18,27 +18,28 @@ package com.embabel.plan.goap
 import com.embabel.common.util.loggerFor
 import com.embabel.plan.Action
 import com.embabel.plan.Goal
+import com.embabel.plan.common.condition.*
 
 /**
  * Abstract class for a Goap planner with common optimization.
  */
 abstract class OptimizingGoapPlanner(
     val worldStateDeterminer: WorldStateDeterminer,
-) : GoapPlanner {
+) : ConditionPlanner {
 
-    override fun worldState(): GoapWorldState {
+    override fun worldState(): ConditionWorldState {
         return worldStateDeterminer.determineWorldState()
     }
 
     final override fun planToGoal(
         actions: Collection<Action>,
         goal: Goal,
-    ): GoapPlan? {
-        goal as GoapGoal
+    ): ConditionPlan? {
+        goal as ConditionGoal
         val startState = worldState()
-        val directPlan = planToGoalFrom(startState, actions.filterIsInstance<GoapAction>(), goal)
+        val directPlan = planToGoalFrom(startState, actions.filterIsInstance<ConditionAction>(), goal)
 
-        val goapActions = actions.filterIsInstance<GoapAction>()
+        val goapActions = actions.filterIsInstance<ConditionAction>()
 
         // See if changing any unknown conditions could change the result
         val unknownConditions = startState.unknownConditions()
@@ -62,7 +63,7 @@ abstract class OptimizingGoapPlanner(
         return directPlan
     }
 
-    override fun prune(planningSystem: GoapPlanningSystem): GoapPlanningSystem {
+    override fun prune(planningSystem: ConditionPlanningSystem): ConditionPlanningSystem {
         val allPlans = plansToGoals(planningSystem)
         loggerFor<OptimizingGoapPlanner>().info(
             "${allPlans.size} plan(s) to consider in pruning{}",
@@ -81,8 +82,8 @@ abstract class OptimizingGoapPlanner(
     }
 
     protected abstract fun planToGoalFrom(
-        startState: GoapWorldState,
-        actions: Collection<GoapAction>,
-        goal: GoapGoal,
-    ): GoapPlan?
+        startState: ConditionWorldState,
+        actions: Collection<ConditionAction>,
+        goal: ConditionGoal,
+    ): ConditionPlan?
 }

@@ -13,22 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.embabel.agent.spi
-
-import com.embabel.agent.core.ProcessOptions
-import com.embabel.plan.Plan
-import com.embabel.plan.Planner
-import com.embabel.plan.PlanningSystem
-import com.embabel.plan.WorldState
-import com.embabel.plan.common.condition.WorldStateDeterminer
+package com.embabel.plan.common.condition
 
 /**
- * Pluggable planner factory
+ * GOAP and some other planners rely on conditions.
+ * Conditions may be true, false or unknown
  */
-fun interface PlannerFactory {
+enum class ConditionDetermination {
+    TRUE, FALSE, UNKNOWN;
 
-    fun createPlanner(
-        processOptions: ProcessOptions,
-        worldStateDeterminer: WorldStateDeterminer,
-    ): Planner<out PlanningSystem, out WorldState, out Plan>
+    /**
+     * Treat UNKNOWN as false
+     */
+    fun asTrueOrFalse(): ConditionDetermination = when (this) {
+        TRUE -> TRUE
+        else -> FALSE
+    }
+
+    companion object {
+        operator fun invoke(value: Boolean?) = when (value) {
+            true -> TRUE
+            false -> FALSE
+            null -> UNKNOWN
+        }
+    }
 }
+
+typealias EffectSpec = Map<String, ConditionDetermination>

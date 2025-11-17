@@ -34,7 +34,7 @@ import com.embabel.agent.testing.integration.IntegrationTestUtils.dummyAgentProc
 import com.embabel.agent.testing.integration.IntegrationTestUtils.dummyPlatformServices
 import com.embabel.common.ai.model.DefaultModelSelectionCriteria
 import com.embabel.common.ai.model.LlmOptions
-import com.embabel.plan.goap.ConditionDetermination
+import com.embabel.plan.common.condition.ConditionDetermination
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot

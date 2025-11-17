@@ -15,10 +15,10 @@
  */
 package com.embabel.plan.goap.a
 
-import com.embabel.plan.goap.ConditionDetermination
-import com.embabel.plan.goap.GoapAction
-import com.embabel.plan.goap.GoapGoal
-import com.embabel.plan.goap.WorldStateDeterminer
+import com.embabel.plan.common.condition.ConditionAction
+import com.embabel.plan.common.condition.ConditionDetermination
+import com.embabel.plan.common.condition.ConditionGoal
+import com.embabel.plan.common.condition.WorldStateDeterminer
 import com.embabel.plan.goap.astar.AStarGoapPlanner
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Nested
@@ -36,7 +36,7 @@ class AStarGoapPlannerTest {
         @Test
         fun `should prefer action with more preconditions when costs are equal`() {
             // Action with fewer preconditions
-            val simpleAction = GoapAction.Companion(
+            val simpleAction = ConditionAction.Companion(
                 name = "simpleAction",
                 preconditions = mapOf("start" to ConditionDetermination.TRUE),
                 effects = mapOf("goal" to ConditionDetermination.TRUE),
@@ -44,7 +44,7 @@ class AStarGoapPlannerTest {
             )
 
             // Action with more preconditions (more specific)
-            val specificAction = GoapAction.Companion(
+            val specificAction = ConditionAction.Companion(
                 name = "specificAction",
                 preconditions = mapOf(
                     "start" to ConditionDetermination.TRUE,
@@ -55,7 +55,7 @@ class AStarGoapPlannerTest {
                 cost = { 1.0 }, // Same cost as simpleAction
             )
 
-            val goal = GoapGoal.Companion(
+            val goal = ConditionGoal.Companion(
                 name = "testGoal",
                 preconditions = mapOf("goal" to ConditionDetermination.TRUE)
             )
@@ -85,14 +85,14 @@ class AStarGoapPlannerTest {
         @Test
         fun `should prefer action with more preconditions even when it appears later in the list`() {
             // Create several actions with different numbers of preconditions but same cost/effect
-            val action1 = GoapAction.Companion(
+            val action1 = ConditionAction.Companion(
                 name = "action1",
                 preconditions = mapOf("start" to ConditionDetermination.TRUE),
                 effects = mapOf("goal" to ConditionDetermination.TRUE),
                 cost = { 1.0 },
             )
 
-            val action2 = GoapAction.Companion(
+            val action2 = ConditionAction.Companion(
                 name = "action2",
                 preconditions = mapOf(
                     "start" to ConditionDetermination.TRUE,
@@ -102,7 +102,7 @@ class AStarGoapPlannerTest {
                 cost = { 1.0 },
             )
 
-            val action3 = GoapAction.Companion(
+            val action3 = ConditionAction.Companion(
                 name = "action3",
                 preconditions = mapOf(
                     "start" to ConditionDetermination.TRUE,
@@ -114,7 +114,7 @@ class AStarGoapPlannerTest {
                 cost = { 1.0 },
             )
 
-            val goal = GoapGoal.Companion(
+            val goal = ConditionGoal.Companion(
                 name = "testGoal",
                 preconditions = mapOf("goal" to ConditionDetermination.TRUE)
             )
@@ -154,7 +154,7 @@ class AStarGoapPlannerTest {
         @Test
         fun `should still choose lower cost action over higher cost action with more preconditions`() {
             // High cost action with many preconditions
-            val expensiveSpecificAction = GoapAction.Companion(
+            val expensiveSpecificAction = ConditionAction.Companion(
                 name = "expensiveSpecificAction",
                 preconditions = mapOf(
                     "start" to ConditionDetermination.TRUE,
@@ -167,14 +167,14 @@ class AStarGoapPlannerTest {
             )
 
             // Low cost action with fewer preconditions
-            val cheapSimpleAction = GoapAction.Companion(
+            val cheapSimpleAction = ConditionAction.Companion(
                 name = "cheapSimpleAction",
                 preconditions = mapOf("start" to ConditionDetermination.TRUE),
                 effects = mapOf("goal" to ConditionDetermination.TRUE),
                 cost = { 1.0 },
             )
 
-            val goal = GoapGoal.Companion(
+            val goal = ConditionGoal.Companion(
                 name = "testGoal",
                 preconditions = mapOf("goal" to ConditionDetermination.TRUE)
             )
@@ -205,14 +205,14 @@ class AStarGoapPlannerTest {
         @Test
         fun `should use precondition count as tie-breaker in multi-step plans`() {
             // First step: multiple ways to get to intermediate state
-            val simpleStep1 = GoapAction.Companion(
+            val simpleStep1 = ConditionAction.Companion(
                 name = "simpleStep1",
                 preconditions = mapOf("start" to ConditionDetermination.TRUE),
                 effects = mapOf("intermediate" to ConditionDetermination.TRUE),
                 cost = { 1.0 },
             )
 
-            val specificStep1 = GoapAction.Companion(
+            val specificStep1 = ConditionAction.Companion(
                 name = "specificStep1",
                 preconditions = mapOf(
                     "start" to ConditionDetermination.TRUE,
@@ -223,14 +223,14 @@ class AStarGoapPlannerTest {
             )
 
             // Second step: same for both paths
-            val step2 = GoapAction.Companion(
+            val step2 = ConditionAction.Companion(
                 name = "step2",
                 preconditions = mapOf("intermediate" to ConditionDetermination.TRUE),
                 effects = mapOf("goal" to ConditionDetermination.TRUE),
                 cost = { 1.0 },
             )
 
-            val goal = GoapGoal.Companion(
+            val goal = ConditionGoal.Companion(
                 name = "testGoal",
                 preconditions = mapOf("goal" to ConditionDetermination.TRUE)
             )
@@ -267,21 +267,21 @@ class AStarGoapPlannerTest {
 
         @Test
         fun `should handle actions with zero preconditions`() {
-            val actionWithNoPreconditions = GoapAction.Companion(
+            val actionWithNoPreconditions = ConditionAction.Companion(
                 name = "noPreconditions",
                 preconditions = emptyMap(),
                 effects = mapOf("goal" to ConditionDetermination.TRUE),
                 cost = { 1.0 },
             )
 
-            val actionWithOnePrecondition = GoapAction.Companion(
+            val actionWithOnePrecondition = ConditionAction.Companion(
                 name = "onePrecondition",
                 preconditions = mapOf("start" to ConditionDetermination.TRUE),
                 effects = mapOf("goal" to ConditionDetermination.TRUE),
                 cost = { 1.0 },
             )
 
-            val goal = GoapGoal.Companion(
+            val goal = ConditionGoal.Companion(
                 name = "testGoal",
                 preconditions = mapOf("goal" to ConditionDetermination.TRUE)
             )
@@ -308,7 +308,7 @@ class AStarGoapPlannerTest {
 
         @Test
         fun `should handle identical actions with same precondition count`() {
-            val action1 = GoapAction.Companion(
+            val action1 = ConditionAction.Companion(
                 name = "action1",
                 preconditions = mapOf(
                     "start" to ConditionDetermination.TRUE,
@@ -318,7 +318,7 @@ class AStarGoapPlannerTest {
                 cost = { 1.0 },
             )
 
-            val action2 = GoapAction.Companion(
+            val action2 = ConditionAction.Companion(
                 name = "action2",
                 preconditions = mapOf(
                     "start" to ConditionDetermination.TRUE,
@@ -328,7 +328,7 @@ class AStarGoapPlannerTest {
                 cost = { 1.0 },
             )
 
-            val goal = GoapGoal.Companion(
+            val goal = ConditionGoal.Companion(
                 name = "testGoal",
                 preconditions = mapOf("goal" to ConditionDetermination.TRUE)
             )
@@ -362,14 +362,14 @@ class AStarGoapPlannerTest {
 
         @Test
         fun `should quickly return null for unreachable goal with no action producing required effect`() {
-            val action = GoapAction.Companion(
+            val action = ConditionAction.Companion(
                 name = "irrelevantAction",
                 preconditions = mapOf("start" to ConditionDetermination.TRUE),
                 effects = mapOf("irrelevant" to ConditionDetermination.TRUE),
                 cost = { 1.0 },
             )
 
-            val goal = GoapGoal.Companion(
+            val goal = ConditionGoal.Companion(
                 name = "unreachableGoal",
                 preconditions = mapOf("impossibleCondition" to ConditionDetermination.TRUE)
             )
@@ -394,14 +394,14 @@ class AStarGoapPlannerTest {
         @Test
         fun `should quickly return null for goal requiring unavailable precondition chain`() {
             // Actions that don't create the chain needed for the goal
-            val action1 = GoapAction.Companion(
+            val action1 = ConditionAction.Companion(
                 name = "action1",
                 preconditions = mapOf("start" to ConditionDetermination.TRUE),
                 effects = mapOf("conditionA" to ConditionDetermination.TRUE),
                 cost = { 1.0 },
             )
 
-            val action2 = GoapAction.Companion(
+            val action2 = ConditionAction.Companion(
                 name = "action2",
                 preconditions = mapOf("conditionB" to ConditionDetermination.TRUE),
                 effects = mapOf("conditionC" to ConditionDetermination.TRUE),
@@ -409,7 +409,7 @@ class AStarGoapPlannerTest {
             )
 
             // Goal requires conditionC, but there's no way to get conditionB
-            val goal = GoapGoal.Companion(
+            val goal = ConditionGoal.Companion(
                 name = "unreachableGoal",
                 preconditions = mapOf("conditionC" to ConditionDetermination.TRUE)
             )
@@ -435,21 +435,21 @@ class AStarGoapPlannerTest {
 
         @Test
         fun `should still find plans for reachable goals`() {
-            val action1 = GoapAction.Companion(
+            val action1 = ConditionAction.Companion(
                 name = "action1",
                 preconditions = mapOf("start" to ConditionDetermination.TRUE),
                 effects = mapOf("intermediate" to ConditionDetermination.TRUE),
                 cost = { 1.0 },
             )
 
-            val action2 = GoapAction.Companion(
+            val action2 = ConditionAction.Companion(
                 name = "action2",
                 preconditions = mapOf("intermediate" to ConditionDetermination.TRUE),
                 effects = mapOf("goal" to ConditionDetermination.TRUE),
                 cost = { 1.0 },
             )
 
-            val goal = GoapGoal.Companion(
+            val goal = ConditionGoal.Companion(
                 name = "reachableGoal",
                 preconditions = mapOf("goal" to ConditionDetermination.TRUE)
             )
@@ -472,14 +472,14 @@ class AStarGoapPlannerTest {
 
         @Test
         fun `should return empty plan when goal already satisfied`() {
-            val action = GoapAction.Companion(
+            val action = ConditionAction.Companion(
                 name = "unnecessaryAction",
                 preconditions = mapOf("start" to ConditionDetermination.TRUE),
                 effects = mapOf("goal" to ConditionDetermination.TRUE),
                 cost = { 1.0 },
             )
 
-            val goal = GoapGoal.Companion(
+            val goal = ConditionGoal.Companion(
                 name = "alreadySatisfied",
                 preconditions = mapOf("goal" to ConditionDetermination.TRUE)
             )
@@ -506,42 +506,42 @@ class AStarGoapPlannerTest {
         @Test
         fun `should maintain optimization behavior while preferring more conditions`() {
             // Setup a scenario where optimization and condition preference both matter
-            val unnecessaryAction = com.embabel.plan.goap.GoapAction.Companion(
+            val unnecessaryAction = ConditionAction.Companion(
                 name = "unnecessary",
-                preconditions = mapOf("start" to com.embabel.plan.goap.ConditionDetermination.TRUE),
-                effects = mapOf("irrelevant" to com.embabel.plan.goap.ConditionDetermination.TRUE),
+                preconditions = mapOf("start" to ConditionDetermination.TRUE),
+                effects = mapOf("irrelevant" to ConditionDetermination.TRUE),
                 cost = { 1.0 },
             )
 
-            val simpleGoalAction = com.embabel.plan.goap.GoapAction.Companion(
+            val simpleGoalAction = ConditionAction.Companion(
                 name = "simpleGoal",
-                preconditions = mapOf("start" to com.embabel.plan.goap.ConditionDetermination.TRUE),
-                effects = mapOf("goal" to com.embabel.plan.goap.ConditionDetermination.TRUE),
+                preconditions = mapOf("start" to ConditionDetermination.TRUE),
+                effects = mapOf("goal" to ConditionDetermination.TRUE),
                 cost = { 1.0 },
             )
 
-            val specificGoalAction = com.embabel.plan.goap.GoapAction.Companion(
+            val specificGoalAction = ConditionAction.Companion(
                 name = "specificGoal",
                 preconditions = mapOf(
-                    "start" to com.embabel.plan.goap.ConditionDetermination.TRUE,
-                    "specific" to com.embabel.plan.goap.ConditionDetermination.TRUE
+                    "start" to ConditionDetermination.TRUE,
+                    "specific" to ConditionDetermination.TRUE
                 ),
-                effects = mapOf("goal" to com.embabel.plan.goap.ConditionDetermination.TRUE),
+                effects = mapOf("goal" to ConditionDetermination.TRUE),
                 cost = { 1.0 },
             )
 
-            val goal = com.embabel.plan.goap.GoapGoal.Companion(
+            val goal = ConditionGoal.Companion(
                 name = "testGoal",
-                preconditions = mapOf("goal" to com.embabel.plan.goap.ConditionDetermination.TRUE)
+                preconditions = mapOf("goal" to ConditionDetermination.TRUE)
             )
 
             val planner = _root_ide_package_.com.embabel.plan.goap.astar.AStarGoapPlanner(
-                com.embabel.plan.goap.WorldStateDeterminer.Companion.fromMap(
+                WorldStateDeterminer.Companion.fromMap(
                     mapOf(
-                        "start" to com.embabel.plan.goap.ConditionDetermination.TRUE,
-                        "specific" to com.embabel.plan.goap.ConditionDetermination.TRUE,
-                        "goal" to com.embabel.plan.goap.ConditionDetermination.FALSE,
-                        "irrelevant" to com.embabel.plan.goap.ConditionDetermination.FALSE
+                        "start" to ConditionDetermination.TRUE,
+                        "specific" to ConditionDetermination.TRUE,
+                        "goal" to ConditionDetermination.FALSE,
+                        "irrelevant" to ConditionDetermination.FALSE
                     )
                 )
             )

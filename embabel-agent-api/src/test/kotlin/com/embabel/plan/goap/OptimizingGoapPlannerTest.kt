@@ -15,6 +15,7 @@
  */
 package com.embabel.plan.goap
 
+import com.embabel.plan.common.condition.*
 import com.embabel.plan.goap.astar.AStarGoapPlanner
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Nested
@@ -32,32 +33,32 @@ class OptimizingGoapPlannerTest {
         @Test
         fun `should detect and avoid cyclic dependencies in actions`() {
             // Create actions with a potential cycle
-            val action1 = GoapAction(
+            val action1 = ConditionAction(
                 name = "action1",
                 preconditions = mapOf("conditionA" to ConditionDetermination.FALSE),
                 effects = mapOf("conditionB" to ConditionDetermination.TRUE)
             )
 
-            val action2 = GoapAction(
+            val action2 = ConditionAction(
                 name = "action2",
                 preconditions = mapOf("conditionB" to ConditionDetermination.TRUE),
                 effects = mapOf("conditionC" to ConditionDetermination.TRUE)
             )
 
-            val action3 = GoapAction(
+            val action3 = ConditionAction(
                 name = "action3",
                 preconditions = mapOf("conditionC" to ConditionDetermination.TRUE),
                 effects = mapOf("conditionA" to ConditionDetermination.TRUE)
             )
 
             // This action creates a potential infinite loop because it undoes what action1 does
-            val cycleAction = GoapAction(
+            val cycleAction = ConditionAction(
                 name = "cycleAction",
                 preconditions = mapOf("conditionB" to ConditionDetermination.TRUE),
                 effects = mapOf("conditionB" to ConditionDetermination.FALSE)
             )
 
-            val goal = GoapGoal(
+            val goal = ConditionGoal(
                 name = "testGoal",
                 pre = listOf("conditionC")
             )
@@ -72,7 +73,7 @@ class OptimizingGoapPlannerTest {
                 )
             )
 
-            val actions: List<GoapAction> = listOf(action1, action2, action3, cycleAction)
+            val actions: List<ConditionAction> = listOf(action1, action2, action3, cycleAction)
             val plan = planner.planToGoal(actions, goal)
 
             assertNotNull(plan, "Should find a plan despite potential cycles")
@@ -87,14 +88,14 @@ class OptimizingGoapPlannerTest {
         @Test
         fun `should choose lower cost path when multiple paths exist`() {
             // Path 1: A -> B -> C (total cost 3)
-            val actionA1 = GoapAction(
+            val actionA1 = ConditionAction(
                 name = "actionA1",
                 preconditions = mapOf("start" to ConditionDetermination.TRUE),
                 effects = mapOf("stepB" to ConditionDetermination.TRUE),
                 cost = { 1.0 },
             )
 
-            val actionB1 = GoapAction(
+            val actionB1 = ConditionAction(
                 name = "actionB1",
                 preconditions = mapOf("stepB" to ConditionDetermination.TRUE),
                 effects = mapOf("goal" to ConditionDetermination.TRUE),
@@ -102,21 +103,21 @@ class OptimizingGoapPlannerTest {
             )
 
             // Path 2: X -> Y -> Z (total cost 5)
-            val actionX2 = GoapAction(
+            val actionX2 = ConditionAction(
                 name = "actionX2",
                 preconditions = mapOf("start" to ConditionDetermination.TRUE),
                 effects = mapOf("stepY" to ConditionDetermination.TRUE),
                 cost = { 2.0 },
             )
 
-            val actionY2 = GoapAction(
+            val actionY2 = ConditionAction(
                 name = "actionY2",
                 preconditions = mapOf("stepY" to ConditionDetermination.TRUE),
                 effects = mapOf("goal" to ConditionDetermination.TRUE),
                 cost = { 3.0 },
             )
 
-            val goal = GoapGoal(
+            val goal = ConditionGoal(
                 name = "testGoal",
                 pre = listOf("goal")
             )
@@ -132,7 +133,7 @@ class OptimizingGoapPlannerTest {
                 )
             )
 
-            val actions: List<GoapAction> = listOf(actionA1, actionB1, actionX2, actionY2)
+            val actions: List<ConditionAction> = listOf(actionA1, actionB1, actionX2, actionY2)
             val plan = planner.planToGoal(actions, goal)
 
             assertNotNull(plan, "Should find a plan")
@@ -149,13 +150,13 @@ class OptimizingGoapPlannerTest {
         @Test
         fun `should ignore irrelevant actions with misleading effects`() {
             // The actions we actually need
-            val actionA = GoapAction(
+            val actionA = ConditionAction(
                 name = "actionA",
                 preconditions = mapOf("start" to ConditionDetermination.TRUE),
                 effects = mapOf("stepB" to ConditionDetermination.TRUE)
             )
 
-            val actionB = GoapAction(
+            val actionB = ConditionAction(
                 name = "actionB",
                 preconditions = mapOf("stepB" to ConditionDetermination.TRUE),
                 effects = mapOf("goal" to ConditionDetermination.TRUE)
@@ -163,7 +164,7 @@ class OptimizingGoapPlannerTest {
 
             // Irrelevant action that has an effect that matches a goal precondition name
             // but is actually for a different context
-            val misleadingAction = GoapAction(
+            val misleadingAction = ConditionAction(
                 name = "misleadingAction",
                 preconditions = mapOf("start" to ConditionDetermination.TRUE),
                 effects = mapOf(
@@ -173,13 +174,13 @@ class OptimizingGoapPlannerTest {
             )
 
             // Another misleading action that seems to be part of a valid path
-            val misleadingAction2 = GoapAction(
+            val misleadingAction2 = ConditionAction(
                 name = "misleadingAction2",
                 preconditions = mapOf("wrongContext" to ConditionDetermination.TRUE),
                 effects = mapOf("goal" to ConditionDetermination.TRUE)
             )
 
-            val goal = GoapGoal(
+            val goal = ConditionGoal(
                 name = "testGoal",
                 pre = listOf("goal")
             )
@@ -195,21 +196,21 @@ class OptimizingGoapPlannerTest {
                 )
             )
 
-            val actions: List<GoapAction> = listOf(actionA, actionB, misleadingAction, misleadingAction2)
+            val actions: List<ConditionAction> = listOf(actionA, actionB, misleadingAction, misleadingAction2)
             val plan = planner.planToGoal(actions, goal)
 
             assertNotNull(plan, "Should find a plan")
 
             // The planner could choose either path, but the important thing is that it finds a valid plan
             // Let's check if the plan actually achieves the goal
-            val finalState = simulatePlan(planner.worldState(), plan!!.actions.filterIsInstance<GoapAction>())
+            val finalState = simulatePlan(planner.worldState(), plan!!.actions.filterIsInstance<ConditionAction>())
             assertTrue(goal.isAchievable(finalState), "The plan should achieve the goal")
         }
 
         private fun simulatePlan(
-            startState: GoapWorldState,
-            actions: List<GoapAction>,
-        ): GoapWorldState {
+            startState: ConditionWorldState,
+            actions: List<ConditionAction>,
+        ): ConditionWorldState {
             var currentState = startState
             for (action in actions) {
                 if (action.isAchievable(currentState)) {
@@ -220,14 +221,14 @@ class OptimizingGoapPlannerTest {
         }
 
         private fun applyAction(
-            currentState: GoapWorldState,
-            action: GoapAction,
-        ): GoapWorldState {
+            currentState: ConditionWorldState,
+            action: ConditionAction,
+        ): ConditionWorldState {
             val newState = currentState.state.toMutableMap()
             action.effects.forEach { (key, value) ->
                 newState[key] = value
             }
-            return GoapWorldState(HashMap(newState))
+            return ConditionWorldState(HashMap(newState))
         }
     }
 
@@ -240,7 +241,7 @@ class OptimizingGoapPlannerTest {
             val actionChain = (1..10).map { i ->
                 val prev = if (i == 1) "start" else "step${i - 1}"
                 val next = "step$i"
-                GoapAction(
+                ConditionAction(
                     name = "action$i",
                     preconditions = mapOf(prev to ConditionDetermination.TRUE),
                     effects = mapOf(next to ConditionDetermination.TRUE)
@@ -249,7 +250,7 @@ class OptimizingGoapPlannerTest {
 
             // Create a large number of irrelevant actions
             val irrelevantActions = (1..50).map { i ->
-                GoapAction(
+                ConditionAction(
                     name = "irrelevant$i",
                     preconditions = mapOf("irrelevantPre$i" to ConditionDetermination.TRUE),
                     effects = mapOf("irrelevantEffect$i" to ConditionDetermination.TRUE)
@@ -258,14 +259,14 @@ class OptimizingGoapPlannerTest {
 
             // Create some misleading actions that have similar names but don't help
             val misleadingActions = (1..10).map { i ->
-                GoapAction(
+                ConditionAction(
                     name = "misleading$i",
                     preconditions = mapOf("start" to ConditionDetermination.TRUE),
                     effects = mapOf("badStep$i" to ConditionDetermination.TRUE)
                 )
             }
 
-            val goal = GoapGoal(
+            val goal = ConditionGoal(
                 name = "testGoal",
                 pre = listOf("step10")
             )
@@ -285,7 +286,7 @@ class OptimizingGoapPlannerTest {
             )
 
             val allActions = actionChain + irrelevantActions + misleadingActions
-            val actions: List<GoapAction> = allActions
+            val actions: List<ConditionAction> = allActions
             val plan = planner.planToGoal(actions, goal)
 
             assertNotNull(plan, "Should find a plan despite many irrelevant actions")
@@ -304,14 +305,14 @@ class OptimizingGoapPlannerTest {
         @Test
         fun `should handle actions with conflicting effects`() {
             // Action that sets condition A to TRUE
-            val actionSetA = GoapAction(
+            val actionSetA = ConditionAction(
                 name = "actionSetA",
                 preconditions = mapOf("start" to ConditionDetermination.TRUE),
                 effects = mapOf("conditionA" to ConditionDetermination.TRUE)
             )
 
             // Action that requires A but sets it to FALSE
-            val actionUnsetA = GoapAction(
+            val actionUnsetA = ConditionAction(
                 name = "actionUnsetA",
                 preconditions = mapOf("conditionA" to ConditionDetermination.TRUE),
                 effects = mapOf(
@@ -321,7 +322,7 @@ class OptimizingGoapPlannerTest {
             )
 
             // Action that requires both A and B
-            val actionNeedsAandB = GoapAction(
+            val actionNeedsAandB = ConditionAction(
                 name = "actionNeedsAandB",
                 preconditions = mapOf(
                     "conditionA" to ConditionDetermination.TRUE,
@@ -331,13 +332,13 @@ class OptimizingGoapPlannerTest {
             )
 
             // Action that only needs B
-            val actionNeedsOnlyB = GoapAction(
+            val actionNeedsOnlyB = ConditionAction(
                 name = "actionNeedsOnlyB",
                 preconditions = mapOf("conditionB" to ConditionDetermination.TRUE),
                 effects = mapOf("goal" to ConditionDetermination.TRUE)
             )
 
-            val goal = GoapGoal(
+            val goal = ConditionGoal(
                 name = "testGoal",
                 pre = listOf("goal")
             )
@@ -353,7 +354,7 @@ class OptimizingGoapPlannerTest {
                 )
             )
 
-            val actions: List<GoapAction> = listOf(actionSetA, actionUnsetA, actionNeedsAandB, actionNeedsOnlyB)
+            val actions: List<ConditionAction> = listOf(actionSetA, actionUnsetA, actionNeedsAandB, actionNeedsOnlyB)
             val plan = planner.planToGoal(actions, goal)
 
 

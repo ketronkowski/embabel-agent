@@ -18,7 +18,7 @@ package com.embabel.agent.api.annotation.support
 import com.embabel.agent.api.common.OperationContext
 import com.embabel.agent.api.dsl.Frog
 import com.embabel.agent.testing.unit.FakeOperationContext
-import com.embabel.plan.goap.ConditionDetermination
+import com.embabel.plan.common.condition.ConditionDetermination
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.jupiter.api.Assertions.assertEquals

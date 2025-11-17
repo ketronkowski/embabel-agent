@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.embabel.plan.goap
+package com.embabel.plan.common.condition
 
 import com.embabel.common.util.color
 import com.embabel.common.util.indent
@@ -22,7 +22,10 @@ import java.time.Instant
 
 private const val LUMON_MEMBRANE_COLOR = 0xbeb780
 
-typealias GoapState = Map<String, ConditionDetermination>
+/**
+ * Conditions expressed as a map from condition name to determination
+ */
+typealias ConditionState = Map<String, ConditionDetermination>
 
 /**
  * Determine the world state: the conditions that drive GOAP planning
@@ -37,7 +40,7 @@ interface WorldStateDeterminer {
      * Implementations may choose to return UNKNOWN for expensive conditions,
      * which the planner should invoke lazily
      */
-    fun determineWorldState(): GoapWorldState
+    fun determineWorldState(): ConditionWorldState
 
     /**
      * Determine an individual condition, disabling any caching.
@@ -60,7 +63,7 @@ private class FromMapWorldStateDeterminer(
     private val map: Map<String, ConditionDetermination>,
 ) : WorldStateDeterminer {
 
-    override fun determineWorldState(): GoapWorldState = GoapWorldState(map)
+    override fun determineWorldState(): ConditionWorldState = ConditionWorldState(map)
 
     override fun determineCondition(condition: String): ConditionDetermination {
         return map[condition] ?: ConditionDetermination.UNKNOWN
@@ -71,8 +74,8 @@ private class FromMapWorldStateDeterminer(
  * Represents the state of the world at any time.
  * World state is just a map. This class exposes operations on the state.
  */
-data class GoapWorldState(
-    val state: GoapState = emptyMap(),
+data class ConditionWorldState(
+    val state: ConditionState = emptyMap(),
 ) : WorldState {
 
     override val timestamp: Instant = Instant.now()
@@ -85,7 +88,7 @@ data class GoapWorldState(
     /**
      * Generate variants with different definite values for the given condition
      */
-    internal fun variants(unknownCondition: String): Collection<GoapWorldState> {
+    internal fun variants(unknownCondition: String): Collection<ConditionWorldState> {
         return setOf(ConditionDetermination.TRUE, ConditionDetermination.FALSE).map {
             this + (unknownCondition to it)
         }
@@ -96,31 +99,39 @@ data class GoapWorldState(
      * For each existing condition, generate variants where that condition is flipped to the other values
      * (TRUE -> FALSE and UNKNOWN, FALSE -> TRUE and UNKNOWN, UNKNOWN -> TRUE and FALSE)
      */
-    fun withOneChange(): Collection<GoapWorldState> {
-        val result = mutableListOf<GoapWorldState>()
+    fun withOneChange(): Collection<ConditionWorldState> {
+        val result = mutableListOf<ConditionWorldState>()
 
         for ((condition, currentValue) in state) {
             // Generate variants where this condition has a different value
             when (currentValue) {
                 ConditionDetermination.TRUE -> {
-                    result.add(GoapWorldState(state + (condition to ConditionDetermination.FALSE)))
-                    result.add(GoapWorldState(state + (condition to ConditionDetermination.UNKNOWN)))
+                    result.add(ConditionWorldState(state + (condition to ConditionDetermination.FALSE)))
+                    result.add(ConditionWorldState(state + (condition to ConditionDetermination.UNKNOWN)))
                 }
 
                 ConditionDetermination.FALSE -> {
-                    result.add(GoapWorldState(state + (condition to ConditionDetermination.TRUE)))
-                    result.add(GoapWorldState(state + (condition to ConditionDetermination.UNKNOWN)))
+                    result.add(ConditionWorldState(state + (condition to ConditionDetermination.TRUE)))
+                    result.add(ConditionWorldState(state + (condition to ConditionDetermination.UNKNOWN)))
                 }
 
                 ConditionDetermination.UNKNOWN -> {
-                    result.add(GoapWorldState(state + (condition to ConditionDetermination.TRUE)))
-                    result.add(GoapWorldState(state + (condition to ConditionDetermination.FALSE)))
+                    result.add(ConditionWorldState(state + (condition to ConditionDetermination.TRUE)))
+                    result.add(ConditionWorldState(state + (condition to ConditionDetermination.FALSE)))
                 }
             }
         }
 
         return result
     }
+
+    /**
+     * Are all preconditions satisfied in this world state?
+     */
+    infix fun satisfiesPreconditions(
+        preconditions: EffectSpec,
+    ): Boolean =
+        preconditions.all { (key, value) -> state[key] == value }
 
     override fun infoString(
         verbose: Boolean?,
@@ -139,6 +150,6 @@ data class GoapWorldState(
         else
             state.toString()
 
-    operator fun plus(pair: Pair<String, ConditionDetermination>): GoapWorldState =
-        GoapWorldState(this.state + pair)
+    operator fun plus(pair: Pair<String, ConditionDetermination>): ConditionWorldState =
+        ConditionWorldState(this.state + pair)
 }

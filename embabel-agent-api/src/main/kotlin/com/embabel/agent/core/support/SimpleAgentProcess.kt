@@ -24,7 +24,7 @@ import com.embabel.common.util.indentLines
 import com.embabel.plan.Plan
 import com.embabel.plan.Planner
 import com.embabel.plan.WorldState
-import com.embabel.plan.goap.WorldStateDeterminer
+import com.embabel.plan.common.condition.WorldStateDeterminer
 import java.time.Instant
 
 open class SimpleAgentProcess(

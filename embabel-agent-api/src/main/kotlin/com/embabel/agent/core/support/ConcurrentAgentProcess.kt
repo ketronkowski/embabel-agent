@@ -20,7 +20,7 @@ import com.embabel.agent.api.common.PlatformServices
 import com.embabel.agent.core.*
 import com.embabel.agent.spi.PlannerFactory
 import com.embabel.plan.WorldState
-import com.embabel.plan.goap.GoapWorldState
+import com.embabel.plan.common.condition.ConditionWorldState
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.runBlocking
 import java.time.Instant
@@ -67,7 +67,7 @@ open class ConcurrentAgentProcess(
             val achievableActions =
                 agent.actions.filter {
                     plan.actions.contains(it) &&
-                            it.isAchievable(worldState as GoapWorldState)
+                            it.isAchievable(worldState as ConditionWorldState)
                 }
             val actions =
                 achievableActions.map { achievableAction ->

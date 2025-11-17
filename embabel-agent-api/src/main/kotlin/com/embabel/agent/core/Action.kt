@@ -18,8 +18,8 @@ package com.embabel.agent.core
 import com.embabel.common.util.indent
 import com.embabel.common.util.indentLines
 import com.embabel.common.util.loggerFor
-import com.embabel.plan.goap.EffectSpec
-import com.embabel.plan.goap.GoapAction
+import com.embabel.plan.common.condition.ConditionAction
+import com.embabel.plan.common.condition.EffectSpec
 
 
 /**
@@ -31,7 +31,7 @@ import com.embabel.plan.goap.GoapAction
  * representation such as YML.
  * @qos Quality of Service. Governs retry policy
  */
-interface Action : DataFlowStep, GoapAction, ActionRunner, DataDictionary, ToolGroupConsumer {
+interface Action : DataFlowStep, ConditionAction, ActionRunner, DataDictionary, ToolGroupConsumer {
 
     /**
      * Can this action be run again if it has already run in the given AgentProcess?

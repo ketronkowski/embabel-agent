@@ -13,22 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.embabel.agent.spi
+package com.embabel.plan.common.condition
 
-import com.embabel.agent.core.ProcessOptions
-import com.embabel.plan.Plan
-import com.embabel.plan.Planner
-import com.embabel.plan.PlanningSystem
-import com.embabel.plan.WorldState
-import com.embabel.plan.common.condition.WorldStateDeterminer
+import com.embabel.plan.Step
 
 /**
- * Pluggable planner factory
+ * Step with preconditions
  */
-fun interface PlannerFactory {
+interface ConditionStep : Step {
 
-    fun createPlanner(
-        processOptions: ProcessOptions,
-        worldStateDeterminer: WorldStateDeterminer,
-    ): Planner<out PlanningSystem, out WorldState, out Plan>
+    /**
+     * Conditions that must be true for this step to execute
+     */
+    val preconditions: EffectSpec
+
+    /**
+     * The names of all conditions that are referenced by this step
+     */
+    val knownConditions: Set<String>
+
+    /**
+     * Whether the step is available in the current world state
+     */
+    fun isAchievable(currentState: ConditionWorldState): Boolean {
+        return currentState satisfiesPreconditions preconditions
+    }
+
 }

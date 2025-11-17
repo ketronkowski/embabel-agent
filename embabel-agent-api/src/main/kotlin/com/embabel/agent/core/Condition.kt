@@ -20,7 +20,7 @@ import com.embabel.agent.experimental.primitive.PromptCondition
 import com.embabel.common.core.types.HasInfoString
 import com.embabel.common.core.types.ZeroToOne
 import com.embabel.common.util.indent
-import com.embabel.plan.goap.ConditionDetermination
+import com.embabel.plan.common.condition.ConditionDetermination
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
