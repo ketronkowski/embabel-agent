@@ -203,6 +203,9 @@ interface PromptRunner : LlmUse, PromptRunnerOperations {
     fun withToolObjects(vararg toolObjects: Any?): PromptRunner =
         toolObjects.fold(this) { acc, toolObject -> acc.withToolObject(toolObject) }
 
+    fun withToolObjects(toolObjects: List<ToolObject>): PromptRunner =
+        toolObjects.fold(this) { acc, toolObject -> acc.withToolObject(toolObject) }
+
     /**
      * Add a reference which provides tools and prompt contribution.
      */

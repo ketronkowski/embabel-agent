@@ -39,7 +39,7 @@ class AppleScriptTools : SelfToolGroup {
     override val provider = Constants.EMBABEL_PROVIDER
 
     override val description: ToolGroupDescription
-        get() = ToolGroupDescription(role = "AppleScript", description = "Run AppleScript commands")
+        get() = ToolGroupDescription(role = TOOL_GROUP_NAME, description = "Run AppleScript commands")
 
     override val permissions: Set<ToolGroupPermission>
         get() = setOf(ToolGroupPermission.HOST_ACCESS)
@@ -50,5 +50,10 @@ class AppleScriptTools : SelfToolGroup {
         val process = runtime.exec(arrayOf("osascript", "-e", script))
         val exitCode = process.waitFor()
         return "Script executed with exit code: $exitCode"
+    }
+
+    companion object {
+
+        const val TOOL_GROUP_NAME = "AppleScript"
     }
 }

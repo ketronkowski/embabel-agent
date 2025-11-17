@@ -75,7 +75,7 @@ This is a level of indirection between user intent and tool selection.
 For example, we don't ask for Brave or Google web search: we ask for "web" tools, which may be resolved differently in different environments.
 
 TIP: Tools use should be focused.
-Thus tool groups cannot be specified at agent level, but must be specified on individual actions.
+Thus tool groups are not specified at agent level, but on individual actions.
 
 Tool groups are often backed by <<reference.integrations__mcp,MCP>>.
 
@@ -117,7 +117,7 @@ The framework provides a default `ToolGroupsConfiguration` that demonstrates how
     fun mathToolGroup() = MathTools()
 
     @Bean
-    fun mcpWebToolsGroup(): ToolGroup {
+    fun mcpWebToolsGroup(): ToolGroup { // <1>
         return McpToolGroup(
             description = CoreToolGroups.WEB_DESCRIPTION,
             name = "docker-web",
@@ -134,6 +134,9 @@ The framework provides a default `ToolGroupsConfiguration` that demonstrates how
     }
 }
 ----
+
+<1> This method creates a Spring bean of type `ToolGroup`.
+This will automatically be picked up by the agent platform, allowing the tool group to be requested by name (role).
 
 ===== Key Configuration Patterns
 
