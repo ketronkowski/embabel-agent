@@ -15,17 +15,19 @@
  */
 package com.embabel.agent.config.models.bedrock
 
-import com.embabel.agent.spi.config.spring.AgentPlatformConfiguration
+import com.embabel.agent.common.RetryProperties
+import com.embabel.common.ai.autoconfig.LlmAutoConfigMetadataLoader
 import com.embabel.common.ai.model.*
+import com.embabel.common.util.ExcludeFromJacocoGeneratedReport
 import io.micrometer.observation.ObservationRegistry
+import jakarta.annotation.PostConstruct
+import org.slf4j.LoggerFactory
 import org.springframework.ai.bedrock.cohere.BedrockCohereEmbeddingModel
 import org.springframework.ai.bedrock.cohere.api.CohereEmbeddingBedrockApi
-import org.springframework.ai.bedrock.cohere.api.CohereEmbeddingBedrockApi.CohereEmbeddingModel
 import org.springframework.ai.bedrock.converse.BedrockChatOptions
 import org.springframework.ai.bedrock.converse.BedrockProxyChatModel
 import org.springframework.ai.bedrock.titan.BedrockTitanEmbeddingModel
 import org.springframework.ai.bedrock.titan.api.TitanEmbeddingBedrockApi
-import org.springframework.ai.bedrock.titan.api.TitanEmbeddingBedrockApi.TitanEmbeddingModel
 import org.springframework.ai.chat.model.ChatModel
 import org.springframework.ai.chat.observation.ChatModelObservationConvention
 import org.springframework.ai.model.ModelOptionsUtils
@@ -38,12 +40,9 @@ import org.springframework.ai.model.tool.ToolCallingChatOptions
 import org.springframework.ai.model.tool.ToolCallingManager
 import org.springframework.ai.model.tool.ToolExecutionEligibilityPredicate
 import org.springframework.beans.factory.ObjectProvider
-import org.springframework.boot.autoconfigure.AutoConfigureBefore
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
+import org.springframework.beans.factory.config.ConfigurableBeanFactory
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.context.properties.EnableConfigurationProperties
-import org.springframework.boot.context.properties.NestedConfigurationProperty
-import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Import
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider
@@ -53,46 +52,38 @@ import software.amazon.awssdk.regions.providers.AwsRegionProvider
 import software.amazon.awssdk.services.bedrockruntime.BedrockRuntimeAsyncClient
 import software.amazon.awssdk.services.bedrockruntime.BedrockRuntimeClient
 
-@ConfigurationProperties(prefix = "embabel.agent.models.bedrock")
-class BedrockProperties {
+/**
+ * Configuration properties for Bedrock models.
+ * These properties control retry behavior when calling AWS Bedrock APIs.
+ */
+@ConfigurationProperties(prefix = "embabel.agent.platform.models.bedrock")
+class BedrockProperties : RetryProperties {
     /**
-     * List of Bedrock models to configure
+     * Maximum number of attempts.
      */
-    @NestedConfigurationProperty
-    var models: List<BedrockModelProperties> = emptyList()
+    override var maxAttempts: Int = 10
+
+    /**
+     * Initial backoff interval (in milliseconds).
+     */
+    override var backoffMillis: Long = 5000L
+
+    /**
+     * Backoff interval multiplier.
+     */
+    override var backoffMultiplier: Double = 5.0
+
+    /**
+     * Maximum backoff interval (in milliseconds).
+     */
+    override var backoffMaxInterval: Long = 180000L
 }
 
-@ConfigurationProperties(prefix = "embabel.agent.models.bedrock.models")
-class BedrockModelProperties {
-    /**
-     * Name of the LLM, such as "gpt-3.5-turbo"
-     */
-    var name: String = ""
-
-    /**
-     * Model's knowledge cutoff date
-     */
-    var knowledgeCutoff: String = ""
-
-    /**
-     * Input token price
-     */
-    var inputPrice: Double = 0.0
-
-    /**
-     * Output token price
-     */
-    var outputPrice: Double = 0.0
-}
-
-@ConditionalOnClass(
-    BedrockProxyChatModel::class,
-    BedrockRuntimeClient::class,
-    BedrockRuntimeAsyncClient::class,
-    TitanEmbeddingBedrockApi::class,
-    CohereEmbeddingBedrockApi::class
-)
-
+/**
+ * Configuration class for Bedrock models.
+ * This class dynamically loads and registers Bedrock models from YAML configuration,
+ * similar to the Anthropic configuration pattern.
+ */
 @Configuration(proxyBeanMethods = false)
 @Import(BedrockAwsConnectionConfiguration::class)
 @EnableConfigurationProperties(
@@ -100,10 +91,9 @@ class BedrockModelProperties {
     BedrockCohereEmbeddingProperties::class,
     BedrockTitanEmbeddingProperties::class
 )
-@AutoConfigureBefore(AgentPlatformConfiguration::class)
-class BedrockModels(
-
-    private val bedrockProperties: BedrockProperties,
+@ExcludeFromJacocoGeneratedReport(reason = "Bedrock configuration can't be unit tested")
+class BedrockModelsConfig(
+    private val properties: BedrockProperties,
     private val credentialsProvider: AwsCredentialsProvider,
     private val regionProvider: AwsRegionProvider,
     private val connectionProperties: BedrockAwsConnectionProperties,
@@ -113,149 +103,146 @@ class BedrockModels(
     private val bedrockRuntimeAsyncClient: ObjectProvider<BedrockRuntimeAsyncClient>,
     private val bedrockCohereEmbeddingProperties: BedrockCohereEmbeddingProperties,
     private val bedrockTitanEmbeddingProperties: BedrockTitanEmbeddingProperties,
+    private val configurableBeanFactory: ConfigurableBeanFactory,
+    private val modelLoader: LlmAutoConfigMetadataLoader<BedrockModelDefinitions> = BedrockModelLoader(),
 ) {
+    private val logger = LoggerFactory.getLogger(BedrockModelsConfig::class.java)
 
-    @Bean("bedrockModel-$EU_ANTHROPIC_CLAUDE_3_5_SONNET")
-    fun euAnthropicClaude35Sonnet(): Llm = llmOf(EU_ANTHROPIC_CLAUDE_3_5_SONNET)
+    init {
+        logger.info("Bedrock models are available: {}", properties)
+    }
 
-    @Bean("bedrockModel-$EU_ANTHROPIC_CLAUDE_3_5_SONNET_V2")
-    fun euAnthropicClaude35SonnetV2(): Llm = llmOf(EU_ANTHROPIC_CLAUDE_3_5_SONNET_V2)
+    @PostConstruct
+    fun registerModelBeans() {
+        val definitions = modelLoader.loadAutoConfigMetadata()
 
-    @Bean("bedrockModel-$EU_ANTHROPIC_CLAUDE_3_5_HAIKU")
-    fun euAnthropicClaude35Haiku(): Llm = llmOf(EU_ANTHROPIC_CLAUDE_3_5_HAIKU)
-
-    @Bean("bedrockModel-$EU_ANTHROPIC_CLAUDE_3_7_SONNET")
-    fun euAnthropicClaude37Sonnet(): Llm = llmOf(EU_ANTHROPIC_CLAUDE_3_7_SONNET)
-
-    @Bean("bedrockModel-$EU_ANTHROPIC_CLAUDE_SONNET_4")
-    fun euAnthropicClaudeSonnet4(): Llm = llmOf(EU_ANTHROPIC_CLAUDE_SONNET_4)
-
-    @Bean("bedrockModel-$EU_ANTHROPIC_CLAUDE_OPUS_4")
-    fun euAnthropicClaudeOpus4(): Llm = llmOf(EU_ANTHROPIC_CLAUDE_OPUS_4)
-
-    @Bean("bedrockModel-$US_ANTHROPIC_CLAUDE_3_5_SONNET")
-    fun usAnthropicClaude35Sonnet(): Llm = llmOf(US_ANTHROPIC_CLAUDE_3_5_SONNET)
-
-    @Bean("bedrockModel-$US_ANTHROPIC_CLAUDE_3_5_SONNET_V2")
-    fun usAnthropicClaude35SonnetV2(): Llm = llmOf(US_ANTHROPIC_CLAUDE_3_5_SONNET_V2)
-
-    @Bean("bedrockModel-$US_ANTHROPIC_CLAUDE_3_5_HAIKU")
-    fun usAnthropicClaude35Haiku(): Llm = llmOf(US_ANTHROPIC_CLAUDE_3_5_HAIKU)
-
-    @Bean("bedrockModel-$US_ANTHROPIC_CLAUDE_3_7_SONNET")
-    fun usAnthropicClaude37Sonnet(): Llm = llmOf(US_ANTHROPIC_CLAUDE_3_7_SONNET)
-
-    @Bean("bedrockModel-$US_ANTHROPIC_CLAUDE_SONNET_4")
-    fun usAnthropicClaudeSonnet4(): Llm = llmOf(US_ANTHROPIC_CLAUDE_SONNET_4)
-
-    @Bean("bedrockModel-$US_ANTHROPIC_CLAUDE_OPUS_4")
-    fun usAnthropicClaudeOpus4(): Llm = llmOf(US_ANTHROPIC_CLAUDE_OPUS_4)
-
-    @Bean("bedrockModel-$APAC_ANTHROPIC_CLAUDE_3_5_SONNET")
-    fun apacAnthropicClaude35Sonnet(): Llm = llmOf(APAC_ANTHROPIC_CLAUDE_3_5_SONNET)
-
-    @Bean("bedrockModel-$APAC_ANTHROPIC_CLAUDE_3_5_SONNET_V2")
-    fun apacAnthropicClaude35SonnetV2(): Llm = llmOf(APAC_ANTHROPIC_CLAUDE_3_5_SONNET_V2)
-
-    @Bean("bedrockModel-$APAC_ANTHROPIC_CLAUDE_3_5_HAIKU")
-    fun apacAnthropicClaude35Haiku(): Llm = llmOf(APAC_ANTHROPIC_CLAUDE_3_5_HAIKU)
-
-    @Bean("bedrockModel-$APAC_ANTHROPIC_CLAUDE_3_7_SONNET")
-    fun apacAnthropicClaude37Sonnet(): Llm = llmOf(APAC_ANTHROPIC_CLAUDE_3_7_SONNET)
-
-    @Bean("bedrockModel-$APAC_ANTHROPIC_CLAUDE_SONNET_4")
-    fun apacAnthropicClaudeSonnet4(): Llm = llmOf(APAC_ANTHROPIC_CLAUDE_SONNET_4)
-
-    @Bean("bedrockModel-$APAC_ANTHROPIC_CLAUDE_OPUS_4")
-    fun apacAnthropicClaudeOpus4(): Llm = llmOf(APAC_ANTHROPIC_CLAUDE_OPUS_4)
-
-    @Bean("bedrockModel-amazon.titan-embed-image-v1")
-    fun titanEmbedImageV1(): EmbeddingService = embeddingServiceOf(TitanEmbeddingModel.TITAN_EMBED_IMAGE_V1)
-
-    @Bean("bedrockModel-amazon.titan-embed-text-v1")
-    fun titanEmbedTextV1(): EmbeddingService = embeddingServiceOf(TitanEmbeddingModel.TITAN_EMBED_TEXT_V1)
-
-    @Bean("bedrockModel-amazon.titan-embed-text-v2:0")
-    fun titanEmbedTextV2(): EmbeddingService = embeddingServiceOf(TitanEmbeddingModel.TITAN_EMBED_TEXT_V2)
-
-    @Bean("bedrockModel-cohere.embed-multilingual-v3")
-    fun cohereEmbedMultilingualV3(): EmbeddingService =
-        embeddingServiceOf(CohereEmbeddingModel.COHERE_EMBED_MULTILINGUAL_V3)
-
-    @Bean("bedrockModel-cohere.embed-english-v3")
-    fun cohereEmbedEnglishV3(): EmbeddingService = embeddingServiceOf(CohereEmbeddingModel.COHERE_EMBED_ENGLISH_V3)
-
-    private fun bedrockModelProperties(string: String): BedrockModelProperties =
-        bedrockProperties.models.find { it.name == string }
-            ?: throw IllegalArgumentException(
-                "No bedrock model named $string: Known bedrock models: ${
-                    bedrockProperties.models.map { it.name }.sorted()
-                }"
-            )
-
-    private fun llmOf(model: String): Llm = llmOf(bedrockModelProperties(model))
-
-    private fun llmOf(model: BedrockModelProperties): Llm = Llm(
-        name = model.name,
-        model = chatModelOf(model.name),
-        optionsConverter = BedrockOptionsConverter,
-        provider = PROVIDER,
-        knowledgeCutoffDate = java.time.LocalDate.parse(model.knowledgeCutoff),
-        pricingModel = PerTokenPricingModel(
-            usdPer1mInputTokens = model.inputPrice,
-            usdPer1mOutputTokens = model.outputPrice,
-        )
-    )
-
-    private fun chatModelOf(model: String): ChatModel = EmbabelBedrockProxyChatModelBuilder()
-        .credentialsProvider(credentialsProvider)
-        .region(regionProvider.region)
-        .timeout(connectionProperties.timeout)
-        .defaultOptions(BedrockChatOptions.builder().model(model).build())
-        .observationRegistry(observationRegistry.getIfUnique { ObservationRegistry.NOOP })
-        .toolCallingManager(
-            ToolCallingManager.builder()
-                .observationRegistry(observationRegistry.getIfUnique { ObservationRegistry.NOOP }).build()
-        )
-        .bedrockRuntimeClient(bedrockRuntimeClient.getIfAvailable())
-        .bedrockRuntimeAsyncClient(bedrockRuntimeAsyncClient.getIfAvailable())
-        .build()
-        .apply<BedrockProxyChatModel> {
-            observationConvention.ifAvailable(::setObservationConvention)
+        // Register LLM models
+        definitions.models.forEach { modelDef ->
+            try {
+                val llm = createBedrockLlm(modelDef)
+                configurableBeanFactory.registerSingleton("bedrockModel-" + modelDef.name, llm)
+                logger.info(
+                    "Registered Bedrock model bean: {} -> {} (region: {})",
+                    modelDef.name, modelDef.modelId, modelDef.region
+                )
+            } catch (e: Exception) {
+                logger.error(
+                    "Failed to create model: {} ({})",
+                    modelDef.name, modelDef.modelId, e
+                )
+                throw e
+            }
         }
 
-    private fun embeddingServiceOf(model: TitanEmbeddingModel): EmbeddingService = EmbeddingService(
-        name = model.id(),
-        model = BedrockTitanEmbeddingModel(
-            TitanEmbeddingBedrockApi(
-                model.id(),
-                credentialsProvider,
-                regionProvider.region,
-                ModelOptionsUtils.OBJECT_MAPPER,
-                connectionProperties.timeout,
-            ), observationRegistry.getIfUnique { ObservationRegistry.NOOP }
-        ).withInputType(bedrockTitanEmbeddingProperties.inputType),
-        provider = PROVIDER,
-    )
+        // Register embedding models
+        definitions.embeddingModels.forEach { embeddingDef ->
+            try {
+                val embeddingService = createBedrockEmbedding(embeddingDef)
+                configurableBeanFactory.registerSingleton("bedrockModel-" + embeddingDef.name, embeddingService)
+                logger.info(
+                    "Registered Bedrock embedding model bean: {} -> {} (type: {})",
+                    embeddingDef.name, embeddingDef.modelId, embeddingDef.modelType
+                )
+            } catch (e: Exception) {
+                logger.error(
+                    "Failed to create embedding model: {} ({})",
+                    embeddingDef.name, embeddingDef.modelId, e
+                )
+                throw e
+            }
+        }
+    }
 
-    private fun embeddingServiceOf(model: CohereEmbeddingModel): EmbeddingService = EmbeddingService(
-        name = model.id(),
-        model = BedrockCohereEmbeddingModel(
-            CohereEmbeddingBedrockApi(
-                model.id(),
-                credentialsProvider,
-                regionProvider.region,
-                ModelOptionsUtils.OBJECT_MAPPER,
-                connectionProperties.timeout
+    /**
+     * Creates an individual Bedrock LLM from configuration.
+     */
+    private fun createBedrockLlm(modelDef: BedrockModelDefinition): Llm {
+        val chatModel = createBedrockChatModel(modelDef.modelId)
+
+        return Llm(
+            name = modelDef.modelId,
+            model = chatModel,
+            provider = PROVIDER,
+            optionsConverter = BedrockOptionsConverter,
+            knowledgeCutoffDate = modelDef.knowledgeCutoffDate,
+            pricingModel = modelDef.pricingModel?.let {
+                PerTokenPricingModel(
+                    usdPer1mInputTokens = it.usdPer1mInputTokens,
+                    usdPer1mOutputTokens = it.usdPer1mOutputTokens,
+                )
+            }
+        )
+    }
+
+    /**
+     * Creates a Bedrock chat model with retry and observation support.
+     */
+    private fun createBedrockChatModel(modelId: String): ChatModel {
+        return EmbabelBedrockProxyChatModelBuilder()
+            .credentialsProvider(credentialsProvider)
+            .region(regionProvider.region)
+            .timeout(connectionProperties.timeout)
+            .defaultOptions(BedrockChatOptions.builder().model(modelId).build())
+            .observationRegistry(observationRegistry.getIfUnique { ObservationRegistry.NOOP })
+            .toolCallingManager(
+                ToolCallingManager.builder()
+                    .observationRegistry(observationRegistry.getIfUnique { ObservationRegistry.NOOP })
+                    .build()
+            )
+            .bedrockRuntimeClient(bedrockRuntimeClient.getIfAvailable())
+            .bedrockRuntimeAsyncClient(bedrockRuntimeAsyncClient.getIfAvailable())
+            .build()
+            .apply<BedrockProxyChatModel> {
+                observationConvention.ifAvailable(::setObservationConvention)
+            }
+    }
+
+    /**
+     * Creates an embedding service based on model type (Titan or Cohere).
+     */
+    private fun createBedrockEmbedding(embeddingDef: BedrockEmbeddingModelDefinition): EmbeddingService {
+        return when (embeddingDef.modelType.lowercase()) {
+            "titan" -> createTitanEmbedding(embeddingDef)
+            "cohere" -> createCohereEmbedding(embeddingDef)
+            else -> throw IllegalArgumentException("Unknown embedding model type: ${embeddingDef.modelType}")
+        }
+    }
+
+    private fun createTitanEmbedding(embeddingDef: BedrockEmbeddingModelDefinition): EmbeddingService {
+        return EmbeddingService(
+            name = embeddingDef.modelId,
+            model = BedrockTitanEmbeddingModel(
+                TitanEmbeddingBedrockApi(
+                    embeddingDef.modelId,
+                    credentialsProvider,
+                    regionProvider.region,
+                    ModelOptionsUtils.OBJECT_MAPPER,
+                    connectionProperties.timeout,
+                ), observationRegistry.getIfUnique { ObservationRegistry.NOOP }
+            ).withInputType(bedrockTitanEmbeddingProperties.inputType),
+            provider = PROVIDER,
+        )
+    }
+
+    private fun createCohereEmbedding(embeddingDef: BedrockEmbeddingModelDefinition): EmbeddingService {
+        return EmbeddingService(
+            name = embeddingDef.modelId,
+            model = BedrockCohereEmbeddingModel(
+                CohereEmbeddingBedrockApi(
+                    embeddingDef.modelId,
+                    credentialsProvider,
+                    regionProvider.region,
+                    ModelOptionsUtils.OBJECT_MAPPER,
+                    connectionProperties.timeout
+                ),
+                bedrockCohereEmbeddingProperties.options
             ),
-            bedrockCohereEmbeddingProperties.options
-        ),
-        provider = PROVIDER,
-    )
+            provider = PROVIDER,
+        )
+    }
 
     companion object {
-
-        const val BEDROCK_PROFILE = "bedrock"
+        const val PROVIDER = "Bedrock"
 
         // https://docs.aws.amazon.com/bedrock/latest/userguide/models-supported.html
         const val EU_ANTHROPIC_CLAUDE_3_5_SONNET = "eu.anthropic.claude-3-5-sonnet-20240620-v1:0"
@@ -278,14 +265,10 @@ class BedrockModels(
         const val APAC_ANTHROPIC_CLAUDE_3_7_SONNET = "apac.anthropic.claude-3-7-sonnet-20250219-v1:0"
         const val APAC_ANTHROPIC_CLAUDE_SONNET_4 = "apac.anthropic.claude-sonnet-4-20250514-v1:0"
         const val APAC_ANTHROPIC_CLAUDE_OPUS_4 = "apac.anthropic.claude-opus-4-20250514-v1:0"
-
-        const val PROVIDER = "Bedrock"
     }
 }
 
-
 object BedrockOptionsConverter : OptionsConverter<ToolCallingChatOptions> {
-
     override fun convertOptions(options: LlmOptions) =
         ToolCallingChatOptions.builder()
             .temperature(options.temperature)
@@ -298,8 +281,8 @@ object BedrockOptionsConverter : OptionsConverter<ToolCallingChatOptions> {
 }
 
 /**
- * Inspired from final org.springframework.ai.bedrock.converse.BedrockProxyChatModel.Builder class to avoid annoying
- * warn log message during builder initialization relative to how AWS configuration values are provided.
+ * Custom builder for BedrockProxyChatModel to avoid AWS configuration warning logs.
+ * Inspired by org.springframework.ai.bedrock.converse.BedrockProxyChatModel.Builder.
  */
 class EmbabelBedrockProxyChatModelBuilder internal constructor() {
     private var credentialsProvider: AwsCredentialsProvider? = null
