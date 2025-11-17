@@ -34,6 +34,50 @@ If you have a list of 10,000 objects, you would include advice to use the tools 
 
 NOTE: An `LlmReference` is somewhat similar to a Claude Skill.
 
+`LlmReference` instances can be created programmatically or defined in YML using `LlmReferenceProvider` implementations.
+For example, you could define a `references.yml` file in this format:
+
+[source,yaml]
+----
+- fqn: com.embabel.coding.tools.git.GitHubRepository
+  url: https://github.com/embabel/embabel-agent-examples.git
+  description: Embabel examples Repository
+
+- fqn: com.embabel.coding.tools.git.GitHubRepository
+  url: https://github.com/embabel/java-agent-template.git
+  description: >
+    Java agent template Repository: Simplest Java example with Maven
+    Can be used as a GitHub template
+
+- fqn: com.embabel.coding.tools.git.GitHubRepository
+  url: https://github.com/embabel/embabel-agent.git
+  description: >
+    Embabel agent framework implementation repo: Look to check code under embabel-agent-api
+
+- fqn: com.embabel.coding.tools.api.ApiReferenceProvider
+  name: embabel-agent
+  description: Embabel Agent API
+  acceptedPackages:
+    - com.embabel.agent
+    - com.embabel.common
+----
+
+The `fqn` property specifies the fully qualified class name of the `LlmReferenceProvider` implementation.
+This enables you to define your own `LlmReferenceProvider` implementations.
+Out of the box, Embabel provides:
+
+- `com.embabel.agent.api.common.reference.LiteralText`: Text in `notes`
+- `com.embabel.agent.api.common.reference.SpringResource`: Contents of the given Spring resource path
+- `com.embabel.agent.api.common.reference.WebPage`: Content of the given web page, if it can be fetched
+- `com.embabel.coding.tools.git.GitHubRepository`: GitHub repositories (`embabel-agent-code` module)
+- `com.embabel.coding.tools.api.ApiReferenceProvider`: API from classpath (`embabel-agent-code` module)
+
+You can parse your YML files into `List<LlmReference>` using the `LlmReferenceProviders.fromYml` method.
+
+The `resource` argument is a Spring resource specification.
+
+Thus `LlmReferenceProviders.fromYml("references.yml")` will load `references.yml` under `src/main/resources/`
+
 ==== Built-in Convenience Classes
 
 Embabel provides several convenience classes that implement `PromptContributor` for common use cases.

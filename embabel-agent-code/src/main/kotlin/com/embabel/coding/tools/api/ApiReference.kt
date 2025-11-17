@@ -20,6 +20,7 @@ import org.springframework.ai.tool.annotation.Tool
 
 /**
  * API reference that can be exposed to LLMs as a prompt contribution and tools.
+ * Can also be used in configuration to provide API reference information.
  */
 class ApiReference(
     override val description: String,
