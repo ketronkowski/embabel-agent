@@ -28,6 +28,7 @@ import com.embabel.agent.rag.support.RagFacetResults
 import com.embabel.common.core.types.HasInfoString
 import com.embabel.common.core.types.SimpleSimilaritySearchResult
 import com.embabel.common.util.indent
+import com.embabel.common.util.trim
 import org.apache.lucene.analysis.standard.StandardAnalyzer
 import org.apache.lucene.document.*
 import org.apache.lucene.index.DirectoryReader
@@ -615,7 +616,7 @@ class LuceneRagFacetProvider @JvmOverloads constructor(
                             "Loading document {}: id={}, content preview={}",
                             i,
                             doc.get("id"),
-                            doc.get("content")?.take(50)
+                            trim(s = doc.get("content") ?: "", max = 25, keepRight = 4),
                         )
                         val chunk = createChunkFromDocument(doc)
                         contentElementStorage[chunk.id] = chunk

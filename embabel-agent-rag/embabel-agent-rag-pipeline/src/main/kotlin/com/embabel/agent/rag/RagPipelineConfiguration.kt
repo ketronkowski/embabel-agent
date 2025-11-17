@@ -15,17 +15,33 @@
  */
 package com.embabel.agent.rag
 
+import com.embabel.agent.rag.pipeline.HyDEQueryGenerator
 import com.embabel.agent.rag.pipeline.PipelinedRagServiceEnhancer
+import com.embabel.agent.rag.pipeline.support.LlmHyDEQueryGenerator
+import com.embabel.common.textio.template.TemplateRenderer
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
+/**
+ * Configure necessary beans for the RAG pipeline
+ * if they are not already present. Allows users to override
+ */
 @Configuration
 class RagPipelineConfiguration {
 
     @Bean
     @ConditionalOnMissingBean(RagServiceEnhancer::class)
-    fun ragServiceEnhancer(properties: RagServiceEnhancerProperties): RagServiceEnhancer {
-        return PipelinedRagServiceEnhancer(properties)
+    fun ragServiceEnhancer(
+        properties: RagServiceEnhancerProperties,
+        hyDEQueryGenerator: HyDEQueryGenerator,
+    ): RagServiceEnhancer {
+        return PipelinedRagServiceEnhancer(properties, hyDEQueryGenerator)
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(HyDEQueryGenerator::class)
+    fun hyDEQueryGenerator(templateRenderer: TemplateRenderer): HyDEQueryGenerator {
+        return LlmHyDEQueryGenerator(promptPath = "default_hyde", templateRenderer = templateRenderer)
     }
 }

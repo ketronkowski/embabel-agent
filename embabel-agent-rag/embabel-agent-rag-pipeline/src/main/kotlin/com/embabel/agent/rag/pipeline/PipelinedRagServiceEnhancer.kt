@@ -32,7 +32,8 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
  */
 @EnableConfigurationProperties(RagServiceEnhancerProperties::class)
 class PipelinedRagServiceEnhancer(
-    val ragServiceEnhancerProperties: RagServiceEnhancerProperties = RagServiceEnhancerProperties(),
+    val ragServiceEnhancerProperties: RagServiceEnhancerProperties,
+    val hyDEQueryGenerator: HyDEQueryGenerator,
 ) : RagServiceEnhancer {
 
     private val logger = LoggerFactory.getLogger(PipelinedRagServiceEnhancer::class.java)
@@ -76,37 +77,20 @@ class PipelinedRagServiceEnhancer(
         override val description
             get() = "Pipelined RAG service wrapping ${delegate.name}: ${delegate.description}"
 
-        private fun hydeQuery(
-            ragRequest: RagRequest,
-            hyDE: HyDE,
-        ): String {
-            val hydeQuery = operationContext
-                .ai()
-                .withLlm(ragServiceEnhancerProperties.compressionLlm)
-                .generateText(
-                    """
-                    Given the following request, generate a plausible hypothetical
-                    answer.
-                    Don't worry if the answer isn't accurate; just make it a reasonable
-                    example of an answer to the query.
-                    The answer should be at most ${ragRequest.hyDE?.wordCount ?: 50} words.
-
-                    REQUEST:
-                    ${ragRequest.query}
-
-                    CONTEXT FOR THE ANSWER:
-                    ${hyDE.context}
-                """.trimIndent()
-                )
-            logger.info("{} -> Generated HyDE query: {}", ragRequest.query, hydeQuery)
-            return hydeQuery
-        }
 
         override fun search(ragRequest: RagRequest): RagResponse {
             listener.onRagEvent(RagRequestReceivedEvent(ragRequest))
             logger.info("Performing initial rag search for {} using RagService {}", ragRequest, delegate.name)
+            val initialQuery = ragRequest.hyDE?.let {
+                hyDEQueryGenerator.hydeQuery(
+                    ragRequest = ragRequest,
+                    llm = ragServiceEnhancerProperties.compressionLlm,
+                    ai = operationContext.ai(),
+                )
+            } ?: ragRequest.query
+            // We are more generous in the initial request to give the enhancers more to work with
             val initialRequest = ragRequest.copy(
-                query = ragRequest.hyDE?.let { hydeQuery(ragRequest, it) } ?: ragRequest.query,
+                query = initialQuery,
                 topK = ragRequest.topK * 2,
                 similarityThreshold = ragRequest.similarityThreshold / 2,
             )

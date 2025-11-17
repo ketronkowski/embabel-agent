@@ -51,7 +51,6 @@ interface RagRequestRefinement<T : RagRequestRefinement<T>> : RetrievalFilters<T
 
     val hyDE: HyDE?
 
-
     /**
      * Create a RagRequest from this refinement and a query.
      */
@@ -60,6 +59,7 @@ interface RagRequestRefinement<T : RagRequestRefinement<T>> : RetrievalFilters<T
             query = query,
             similarityThreshold = similarityThreshold,
             topK = topK,
+            hyDE = hyDE,
             contentElementSearch = contentElementSearch,
             entitySearch = entitySearch,
             compressionConfig = compressionConfig,
