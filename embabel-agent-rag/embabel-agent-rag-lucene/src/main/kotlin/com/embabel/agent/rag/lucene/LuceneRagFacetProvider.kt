@@ -15,6 +15,7 @@
  */
 package com.embabel.agent.rag.lucene
 
+import com.embabel.agent.api.common.primitive.KeywordExtractor
 import com.embabel.agent.rag.*
 import com.embabel.agent.rag.ingestion.ContentChunker
 import com.embabel.agent.rag.ingestion.ContentChunker.Companion.CONTAINER_SECTION_ID

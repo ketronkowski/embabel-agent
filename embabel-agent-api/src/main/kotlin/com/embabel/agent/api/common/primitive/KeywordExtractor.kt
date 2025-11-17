@@ -13,18 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.embabel.agent.rag
+package com.embabel.agent.api.common.primitive
 
 import com.embabel.common.core.types.ZeroToOne
 import kotlin.math.pow
 
 /**
- * Can extract keywords from text
+ * Implementations can extract keywords from text
  */
 interface KeywordExtractor {
 
+    /**
+     * All known keywords
+     */
     val keywords: Set<String>
 
+    /**
+     * Extract keywords from the given text
+     *
+     * @param text the text to extract keywords from
+     * @return the set of extracted keywords
+     */
     fun extractKeywords(text: String): Set<String>
 
     /**
