@@ -104,6 +104,7 @@ class PipelinedRagServiceEnhancer(
             val pipeline = AdaptivePipelineRagResponseEnhancer(
                 enhancers = buildList {
                     add(DeduplicatingEnhancer)
+                    add(ChunkMergingEnhancer)
                     if (ragRequest.compressionConfig.enabled) {
                         add(
                             PromptedContextualCompressionEnhancer(
