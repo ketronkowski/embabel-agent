@@ -30,9 +30,9 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 
-class HierarchicalContentReaderTest {
+class TikaHierarchicalContentReaderTest {
 
-    private val reader = HierarchicalContentReader()
+    private val reader = TikaHierarchicalContentReader()
 
     @Nested
     inner class MarkdownParsingTests {
@@ -61,7 +61,7 @@ class HierarchicalContentReaderTest {
 
             val result = reader.parseContent(inputStream, metadata = metadata, uri = "test://example.md")
 
-            assertEquals(4, result.children.size) // Introduction + Section 1 + Subsection 1.1 + Section 2
+            assertEquals(4, result.children.toList().size) // Introduction + Section 1 + Subsection 1.1 + Section 2
             assertEquals("test://example.md", result.uri)
             assertNotNull(result.id)
 
@@ -108,7 +108,7 @@ class HierarchicalContentReaderTest {
 
             val result = reader.parseContent(inputStream, "x", metadata)
 
-            assertEquals(6, result.children.size) // All leaf sections
+            assertEquals(6, result.children.toList().size) // All leaf sections
             assertNotNull(result.id)
 
             val titles = result.children.map { it.title }
@@ -150,7 +150,7 @@ class HierarchicalContentReaderTest {
 
             val result = reader.parseContent(inputStream, "x", metadata)
 
-            assertEquals(2, result.children.size)
+            assertEquals(2, result.children.toList().size)
             val titles = result.children.map { it.title }
             assertTrue(titles.contains("Code Examples"))
             assertTrue(titles.contains("Another Section"))
@@ -174,7 +174,7 @@ class HierarchicalContentReaderTest {
             val result = reader.parseContent(inputStream, "y", metadata)
 
             // Empty content should return empty content root
-            assertTrue(result.children.isEmpty())
+            assertTrue(result.children.toList().isEmpty())
             assertNotNull(result.id)
         }
 
@@ -193,7 +193,7 @@ class HierarchicalContentReaderTest {
 
             val result = reader.parseContent(inputStream, "a", metadata)
 
-            assertEquals(1, result.children.size)
+            assertEquals(1, result.children.toList().size)
             val section = result.children.first() as LeafSection
             assertEquals("This is just content.", section.title)
             assertEquals(markdown, section.content)
@@ -220,7 +220,7 @@ class HierarchicalContentReaderTest {
 
             val result = reader.parseContent(inputStream, "uri")
 
-            assertEquals(4, result.children.size)
+            assertEquals(4, result.children.toList().size)
             val titles = result.children.map { it.title }
             assertEquals(listOf("Level 1 Title", "Level 2 Title", "Level 3 Title", "Level 4 Title"), titles)
 
@@ -250,7 +250,7 @@ class HierarchicalContentReaderTest {
 
             val result = reader.parseContent(inputStream, "uri")
 
-            assertEquals(3, result.children.size)
+            assertEquals(3, result.children.toList().size)
 
             // All sections should have parent IDs set
             result.children.forEach { section ->
@@ -286,7 +286,7 @@ class HierarchicalContentReaderTest {
 
             val result = reader.parseFile(markdownFile)
 
-            assertEquals(3, result.children.size)
+            assertEquals(3, result.children.toList().size)
             assertNotNull(result.id)
             val titles = result.children.map { it.title }
             assertTrue(titles.contains("Test Document"))
@@ -324,7 +324,7 @@ class HierarchicalContentReaderTest {
             val result = reader.parseContent(inputStream, metadata = metadata, uri = "test://autodetect.html")
 
             // Should detect HTML and parse headings
-            assertEquals(2, result.children.size)
+            assertEquals(2, result.children.toList().size)
             val titles = result.children.map { it.title }
             assertTrue(titles.contains("First Heading"))
             assertTrue(titles.contains("Second Heading"))
@@ -352,7 +352,7 @@ class HierarchicalContentReaderTest {
             val result = reader.parseContent(inputStream, metadata = metadata, uri = "Test")
 
             // HTML headings should create separate sections
-            assertEquals(2, result.children.size)
+            assertEquals(2, result.children.toList().size)
 
             val titles = result.children.map { it.title }
             assertTrue(titles.contains("Main Heading"))
@@ -396,7 +396,7 @@ class HierarchicalContentReaderTest {
             val result = reader.parseContent(inputStream, metadata = metadata, uri = "test://example.html")
 
             // HTML headings should create separate sections like markdown
-            assertEquals(4, result.children.size)
+            assertEquals(4, result.children.toList().size)
 
             val titles = result.children.map { it.title }
             assertTrue(titles.contains("Main Heading"))
@@ -440,7 +440,7 @@ class HierarchicalContentReaderTest {
 
             val result = reader.parseUrl("file:${tempFile.toAbsolutePath()}")
 
-            assertEquals(3, result.children.size)
+            assertEquals(3, result.children.toList().size)
             val titles = result.children.map { it.title }
             assertTrue(titles.contains("Introduction"))
             assertTrue(titles.contains("Features"))
@@ -468,7 +468,7 @@ class HierarchicalContentReaderTest {
 
             val result = reader.parseContent(inputStream, "test://plain.txt", metadata)
 
-            assertEquals(1, result.children.size)
+            assertEquals(1, result.children.toList().size)
             assertEquals("test://plain.txt", result.uri)
             assertNotNull(result.id)
 
@@ -490,7 +490,7 @@ class HierarchicalContentReaderTest {
 
             val result = reader.parseContent(inputStream, "x", metadata)
 
-            assertEquals(1, result.children.size)
+            assertEquals(1, result.children.toList().size)
             assertEquals("Custom Title from Metadata", (result.children.first() as LeafSection).title)
         }
 
@@ -505,7 +505,7 @@ class HierarchicalContentReaderTest {
 
             val result = reader.parseContent(inputStream, uri = "foo")
 
-            assertEquals(1, result.children.size)
+            assertEquals(1, result.children.toList().size)
             assertEquals("This should become the title", (result.children.first() as LeafSection).title)
         }
 
@@ -517,7 +517,7 @@ class HierarchicalContentReaderTest {
             val result = reader.parseContent(inputStream, "uri")
 
             // Should return empty content root for empty content
-            assertTrue(result.children.isEmpty())
+            assertTrue(result.children.toList().isEmpty())
             assertNotNull(result.id)
         }
     }
@@ -538,7 +538,7 @@ class HierarchicalContentReaderTest {
 
             val result = reader.parseContent(inputStream, "uri", metadata)
 
-            assertEquals(1, result.children.size)
+            assertEquals(1, result.children.toList().size)
             val section = result.children.first() as LeafSection
             val resultMetadata = section.metadata
             assertEquals("Test Author", resultMetadata[TikaCoreProperties.CREATOR.name])
@@ -597,7 +597,7 @@ class HierarchicalContentReaderTest {
             val inputStream = ByteArrayInputStream(text.toByteArray())
             val result = reader.parseContent(inputStream, "test://plain.txt")
 
-            assertEquals(1, result.children.size)
+            assertEquals(1, result.children.toList().size)
             val leafSection = result.children.first() as LeafSection
 
             // Verify required metadata is present
@@ -607,7 +607,10 @@ class HierarchicalContentReaderTest {
 
             // Verify values
             assertEquals(result.id, leafSection.metadata["root_document_id"])
-            assertEquals(result.id, leafSection.metadata["container_section_id"]) // For single section, container is root
+            assertEquals(
+                result.id,
+                leafSection.metadata["container_section_id"]
+            ) // For single section, container is root
             assertEquals(leafSection.id, leafSection.metadata["leaf_section_id"])
         }
     }
@@ -660,7 +663,7 @@ class HierarchicalContentReaderTest {
                 maxFileSize = 1024 * 1024
             )
 
-            val result = reader.parseFromDirectory(fileTools, "", config)
+            val result = reader.parseFromDirectory(fileTools, config)
 
             assertTrue(result.success)
             assertEquals(3, result.totalFilesFound)
@@ -703,7 +706,7 @@ class HierarchicalContentReaderTest {
                 maxFileSize = 100 // Very small limit to exclude large file
             )
 
-            val result = reader.parseFromDirectory(fileTools, "", config)
+            val result = reader.parseFromDirectory(fileTools, config)
 
             assertTrue(result.success)
             assertEquals(1, result.totalFilesFound) // Only small file should be discovered
@@ -733,7 +736,7 @@ class HierarchicalContentReaderTest {
                 excludedDirectories = setOf(".git")
             )
 
-            val result = reader.parseFromDirectory(fileTools, "", config)
+            val result = reader.parseFromDirectory(fileTools, config)
 
             assertTrue(result.success)
             assertEquals(1, result.totalFilesFound) // Only normal.md should be found
@@ -755,7 +758,7 @@ class HierarchicalContentReaderTest {
             every { fileTools.resolvePath("error.md") } returns errorFile
             every { fileTools.safeReadFile("error.md") } returns null // Simulate read error
 
-            val result = reader.parseFromDirectory(fileTools, "")
+            val result = reader.parseFromDirectory(fileTools, DirectoryParsingConfig())
 
             assertTrue(result.success) // Should still be successful overall
             assertEquals(1, result.totalFilesFound)
@@ -808,7 +811,7 @@ class HierarchicalContentReaderTest {
                 maxFileSize = 1024 * 1024
             )
 
-            val result = reader.parseFromDirectory(fileTools, "", config)
+            val result = reader.parseFromDirectory(fileTools, config)
 
             assertTrue(result.success)
             assertEquals(2, result.totalFilesFound) // Only kt and java files
@@ -852,7 +855,7 @@ class HierarchicalContentReaderTest {
                 maxDepth = 1 // Should stop at level1, not go to level2
             )
 
-            val result = reader.parseFromDirectory(fileTools, "", config)
+            val result = reader.parseFromDirectory(fileTools, config)
 
             assertTrue(result.success)
             assertEquals(2, result.totalFilesFound) // Only root.md and level1.md
@@ -882,7 +885,7 @@ class HierarchicalContentReaderTest {
             every { fileTools.resolvePath("test.md") } returns mdFile
             every { fileTools.safeReadFile("test.md") } returns Files.readString(mdFile)
 
-            val result = reader.parseFromDirectory(fileTools, "")
+            val result = reader.parseFromDirectory(fileTools)
 
             assertTrue(result.success)
             assertEquals(1, result.contentRoots.size)
@@ -908,6 +911,151 @@ class HierarchicalContentReaderTest {
                 assertEquals(document.id, leaf.metadata["root_document_id"])
                 assertEquals(leaf.id, leaf.metadata["leaf_section_id"])
             }
+        }
+
+        @Test
+        fun `test parseFromDirectory with relativePath starting from subdirectory`(@TempDir tempDir: Path) {
+            // Create directory structure
+            val docsDir = tempDir.resolve("docs")
+            Files.createDirectory(docsDir)
+            val apiDir = docsDir.resolve("api")
+            Files.createDirectory(apiDir)
+
+            // Files in root (should be ignored)
+            val rootFile = tempDir.resolve("root.md")
+            Files.writeString(rootFile, "# Root\nRoot content", StandardOpenOption.CREATE)
+
+            // Files in docs (should be included)
+            val docsFile = docsDir.resolve("guide.md")
+            Files.writeString(docsFile, "# Guide\nGuide content", StandardOpenOption.CREATE)
+
+            // Files in docs/api (should be included)
+            val apiFile = apiDir.resolve("reference.md")
+            Files.writeString(apiFile, "# API Reference\nAPI content", StandardOpenOption.CREATE)
+
+            val fileTools = mockk<FileReadTools>()
+            every { fileTools.listFiles("docs") } returns listOf("f:guide.md", "d:api")
+            every { fileTools.listFiles("docs/api") } returns listOf("f:reference.md")
+            every { fileTools.resolvePath("docs/guide.md") } returns docsFile
+            every { fileTools.resolvePath("docs/api/reference.md") } returns apiFile
+            every { fileTools.safeReadFile("docs/guide.md") } returns Files.readString(docsFile)
+            every { fileTools.safeReadFile("docs/api/reference.md") } returns Files.readString(apiFile)
+
+            val config = DirectoryParsingConfig(
+                relativePath = "docs",
+                includedExtensions = setOf("md")
+            )
+
+            val result = reader.parseFromDirectory(fileTools, config)
+
+            assertTrue(result.success)
+            assertEquals(2, result.totalFilesFound) // Only files under docs/
+            assertEquals(2, result.filesProcessed)
+            assertEquals(2, result.contentRoots.size)
+
+            val titles = result.contentRoots.map { it.title }
+            assertTrue(titles.contains("Guide"))
+            assertTrue(titles.contains("API Reference"))
+            assertFalse(titles.contains("Root")) // Root file should not be included
+        }
+
+        @Test
+        fun `test parseFromDirectory with nested relativePath`(@TempDir tempDir: Path) {
+            // Create deep directory structure
+            val projectDir = tempDir.resolve("project")
+            Files.createDirectory(projectDir)
+            val srcDir = projectDir.resolve("src")
+            Files.createDirectory(srcDir)
+            val mainDir = srcDir.resolve("main")
+            Files.createDirectory(mainDir)
+
+            // Files in project/src/main (target directory)
+            val mainFile = mainDir.resolve("App.kt")
+            Files.writeString(
+                mainFile,
+                """
+                /**
+                 * Main application
+                 */
+                class App {
+                    fun run() = "Running"
+                }
+            """.trimIndent(), StandardOpenOption.CREATE
+            )
+
+            // Files outside target path (should be ignored)
+            val projectFile = projectDir.resolve("README.md")
+            Files.writeString(projectFile, "# Project\nProject readme", StandardOpenOption.CREATE)
+
+            val fileTools = mockk<FileReadTools>()
+            every { fileTools.listFiles("project/src/main") } returns listOf("f:App.kt")
+            every { fileTools.resolvePath("project/src/main/App.kt") } returns mainFile
+            every { fileTools.safeReadFile("project/src/main/App.kt") } returns Files.readString(mainFile)
+
+            val config = DirectoryParsingConfig(
+                relativePath = "project/src/main",
+                includedExtensions = setOf("kt")
+            )
+
+            val result = reader.parseFromDirectory(fileTools, config)
+
+            assertTrue(result.success)
+            assertEquals(1, result.totalFilesFound)
+            assertEquals(1, result.filesProcessed)
+            assertEquals(1, result.contentRoots.size)
+
+            val titles = result.contentRoots.map { it.title }
+            assertTrue(titles.any { it.contains("Main application") || it.contains("/**") })
+        }
+
+        @Test
+        fun `test parseFromDirectory with withRelativePath builder`(@TempDir tempDir: Path) {
+            val subdir = tempDir.resolve("subdir")
+            Files.createDirectory(subdir)
+
+            val file = subdir.resolve("test.md")
+            Files.writeString(file, "# Test\nTest content", StandardOpenOption.CREATE)
+
+            val fileTools = mockk<FileReadTools>()
+            every { fileTools.listFiles("subdir") } returns listOf("f:test.md")
+            every { fileTools.resolvePath("subdir/test.md") } returns file
+            every { fileTools.safeReadFile("subdir/test.md") } returns Files.readString(file)
+
+            // Use builder method to set relative path
+            val baseConfig = DirectoryParsingConfig(includedExtensions = setOf("md"))
+            val config = baseConfig.withRelativePath("subdir")
+
+            assertEquals("subdir", config.relativePath)
+
+            val result = reader.parseFromDirectory(fileTools, config)
+
+            assertTrue(result.success)
+            assertEquals(1, result.totalFilesFound)
+            assertEquals(1, result.filesProcessed)
+        }
+
+        @Test
+        fun `test parseFromDirectory with empty relativePath uses root`(@TempDir tempDir: Path) {
+            val file = tempDir.resolve("root-file.md")
+            Files.writeString(file, "# Root File\nRoot content", StandardOpenOption.CREATE)
+
+            val fileTools = mockk<FileReadTools>()
+            every { fileTools.listFiles("") } returns listOf("f:root-file.md")
+            every { fileTools.resolvePath("root-file.md") } returns file
+            every { fileTools.safeReadFile("root-file.md") } returns Files.readString(file)
+
+            // Explicitly set empty relativePath (default)
+            val config = DirectoryParsingConfig(
+                relativePath = "",
+                includedExtensions = setOf("md")
+            )
+
+            val result = reader.parseFromDirectory(fileTools, config)
+
+            assertTrue(result.success)
+            assertEquals(1, result.totalFilesFound)
+            assertEquals(1, result.filesProcessed)
+            assertTrue(result.contentRoots.any { it.title == "Root File" })
         }
     }
 }

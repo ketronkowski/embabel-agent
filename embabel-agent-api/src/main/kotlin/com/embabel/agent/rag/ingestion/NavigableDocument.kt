@@ -18,23 +18,18 @@ package com.embabel.agent.rag.ingestion
 import com.embabel.agent.rag.ContainerSection
 import com.embabel.agent.rag.ContentRoot
 import com.embabel.agent.rag.LeafSection
-import com.embabel.agent.rag.MaterializedSection
+import com.embabel.agent.rag.NavigableSection
 
-interface MaterializedContainerSection : ContainerSection, MaterializedSection {
+interface NavigableContainerSection : ContainerSection, NavigableSection {
 
-    /**
-     * Direct children of this section (not all descendants).
-     */
-    val children: List<MaterializedSection>
-
-    fun descendants(): List<MaterializedSection> =
-        children + children.filterIsInstance<MaterializedContainerSection>().flatMap { containerChild ->
+    fun descendants(): List<NavigableSection> =
+        children + children.filterIsInstance<NavigableContainerSection>().flatMap { containerChild ->
             containerChild.descendants()
         }
 
     fun leaves(): List<LeafSection> =
         children.filterIsInstance<LeafSection>() +
-                children.filterIsInstance<MaterializedContainerSection>().flatMap { containerChild ->
+                children.filterIsInstance<NavigableContainerSection>().flatMap { containerChild ->
                     containerChild.leaves()
                 }
 }
@@ -43,10 +38,19 @@ data class DefaultMaterializedContainerSection(
     override val id: String,
     override val uri: String? = null,
     override val title: String,
-    override val children: List<MaterializedSection>,
+    override val children: List<NavigableSection>,
     override val parentId: String? = null,
     override val metadata: Map<String, Any?> = emptyMap(),
-) : MaterializedContainerSection
+) : NavigableContainerSection
+
+/**
+ * Document we can navigate through descendants of
+ */
+interface NavigableDocument : ContentRoot, NavigableContainerSection {
+
+    override fun labels(): Set<String> = super<ContentRoot>.labels() + super<NavigableContainerSection>.labels()
+
+}
 
 /**
  * In-memory representation of a document with sections.
@@ -55,10 +59,6 @@ data class MaterializedDocument(
     override val id: String,
     override val uri: String,
     override val title: String,
-    override val children: List<MaterializedSection>,
+    override val children: List<NavigableSection>,
     override val metadata: Map<String, Any?> = emptyMap(),
-) : MaterializedContainerSection, ContentRoot {
-
-    override fun labels(): Set<String> = super<ContentRoot>.labels() + super<MaterializedContainerSection>.labels()
-
-}
+) : NavigableDocument

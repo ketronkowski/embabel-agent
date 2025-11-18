@@ -50,6 +50,7 @@ interface ContentRoot : HierarchicalContentElement {
 }
 
 sealed interface Section : HierarchicalContentElement {
+
     val title: String
 
     override fun propertiesToPersist(): Map<String, Any?> = super.propertiesToPersist() + mapOf(
@@ -61,7 +62,13 @@ sealed interface Section : HierarchicalContentElement {
     }
 }
 
-interface MaterializedSection : Section
+interface NavigableSection : Section {
+
+    /**
+     * Direct children of this section (not all descendants).
+     */
+    val children: Iterable<NavigableSection>
+}
 
 interface ContainerSection : Section {
 
@@ -80,9 +87,11 @@ data class LeafSection(
     val text: String,
     override val parentId: String? = null,
     override val metadata: Map<String, Any?> = emptyMap(),
-) : MaterializedSection, HasContent {
+) : NavigableSection, HasContent {
 
     override val content get() = text
+
+    override val children: Iterable<NavigableSection> get() = emptyList()
 
     override fun propertiesToPersist(): Map<String, Any?> = super.propertiesToPersist() + mapOf(
         "text" to content,

@@ -75,7 +75,7 @@ class ContentChunker(
     /**
      * Split a MaterializedContainerSection into one or more Chunks
      */
-    fun chunk(section: MaterializedContainerSection): List<Chunk> {
+    fun chunk(section: NavigableContainerSection): List<Chunk> {
         val leaves = section.leaves()
         val totalContentLength = leaves.sumOf { it.content.length + it.title.length + 1 } // +1 for newline after title
 
@@ -106,12 +106,12 @@ class ContentChunker(
     /**
      * Split multiple MaterializedContainerSections into Chunks
      */
-    fun splitSections(sections: List<MaterializedContainerSection>): List<Chunk> {
+    fun splitSections(sections: List<NavigableContainerSection>): List<Chunk> {
         return sections.flatMap { chunk(it) }
     }
 
     private fun createSingleChunkFromContainer(
-        section: MaterializedContainerSection,
+        section: NavigableContainerSection,
         leaves: List<LeafSection>,
         rootId: String,
     ): Chunk {
@@ -140,7 +140,7 @@ class ContentChunker(
     }
 
     private fun chunkLeavesIntelligently(
-        containerSection: MaterializedContainerSection,
+        containerSection: NavigableContainerSection,
         leaves: List<LeafSection>,
         rootId: String,
     ): List<Chunk> {
@@ -217,7 +217,7 @@ class ContentChunker(
     }
 
     private fun createCombinedLeafChunk(
-        containerSection: MaterializedContainerSection,
+        containerSection: NavigableContainerSection,
         leaves: List<LeafSection>,
         rootId: String,
         sequenceNumber: Int,
@@ -247,7 +247,7 @@ class ContentChunker(
     }
 
     private fun createSingleLeafChunk(
-        containerSection: MaterializedContainerSection,
+        containerSection: NavigableContainerSection,
         leaf: LeafSection,
         rootId: String,
         sequenceNumber: Int,
@@ -274,7 +274,7 @@ class ContentChunker(
     }
 
     private fun splitLeafIntoMultipleChunks(
-        containerSection: MaterializedContainerSection,
+        containerSection: NavigableContainerSection,
         leaf: LeafSection,
         rootId: String,
         startingSequenceNumber: Int,

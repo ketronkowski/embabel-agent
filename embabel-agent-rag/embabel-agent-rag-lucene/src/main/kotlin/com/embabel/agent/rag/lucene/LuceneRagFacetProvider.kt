@@ -20,7 +20,7 @@ import com.embabel.agent.rag.*
 import com.embabel.agent.rag.ingestion.ContentChunker
 import com.embabel.agent.rag.ingestion.ContentChunker.Companion.CONTAINER_SECTION_ID
 import com.embabel.agent.rag.ingestion.ContentChunker.Companion.SEQUENCE_NUMBER
-import com.embabel.agent.rag.ingestion.MaterializedDocument
+import com.embabel.agent.rag.ingestion.NavigableDocument
 import com.embabel.agent.rag.support.FunctionRagFacet
 import com.embabel.agent.rag.support.RagFacet
 import com.embabel.agent.rag.support.RagFacetProvider
@@ -166,7 +166,7 @@ class LuceneRagFacetProvider @JvmOverloads constructor(
         return element
     }
 
-    override fun createRelationships(root: MaterializedDocument) {
+    override fun createRelationships(root: NavigableDocument) {
         // No op here
     }
 

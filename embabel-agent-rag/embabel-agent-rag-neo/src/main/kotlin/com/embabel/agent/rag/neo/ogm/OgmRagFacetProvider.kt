@@ -19,6 +19,7 @@ import com.embabel.agent.api.common.Embedding
 import com.embabel.agent.rag.*
 import com.embabel.agent.rag.ingestion.DefaultMaterializedContainerSection
 import com.embabel.agent.rag.ingestion.MaterializedDocument
+import com.embabel.agent.rag.ingestion.NavigableDocument
 import com.embabel.agent.rag.neo.common.CypherQuery
 import com.embabel.agent.rag.schema.SchemaResolver
 import com.embabel.agent.rag.support.FunctionRagFacet
@@ -213,7 +214,7 @@ class OgmRagFacetProvider(
         }
     }
 
-    override fun createRelationships(root: MaterializedDocument) {
+    override fun createRelationships(root: NavigableDocument) {
         ogmCypherSearch.query(
             "Create relationships for root ${root.id}",
             query = "create_content_element_relationships",

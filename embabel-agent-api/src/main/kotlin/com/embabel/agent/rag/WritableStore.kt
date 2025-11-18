@@ -15,7 +15,7 @@
  */
 package com.embabel.agent.rag
 
-import com.embabel.agent.rag.ingestion.MaterializedDocument
+import com.embabel.agent.rag.ingestion.NavigableDocument
 import com.embabel.common.core.types.Named
 import org.springframework.ai.document.DocumentWriter
 
@@ -28,5 +28,5 @@ interface WritableStore : DocumentWriter, Named {
      * Write the given content root and its children to the underlying store.
      * @return list of chunk ids
      */
-    fun writeContent(root: MaterializedDocument): List<String>
+    fun writeContent(root: NavigableDocument): List<String>
 }
