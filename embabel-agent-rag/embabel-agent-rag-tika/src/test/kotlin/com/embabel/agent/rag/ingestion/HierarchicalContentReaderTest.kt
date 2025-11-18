@@ -22,6 +22,7 @@ import io.mockk.mockk
 import org.apache.tika.metadata.Metadata
 import org.apache.tika.metadata.TikaCoreProperties
 import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.io.ByteArrayInputStream
@@ -33,9 +34,12 @@ class HierarchicalContentReaderTest {
 
     private val reader = HierarchicalContentReader()
 
-    @Test
-    fun `test parse simple markdown content`() {
-        val markdown = """
+    @Nested
+    inner class MarkdownParsingTests {
+
+        @Test
+        fun `test parse simple markdown content`() {
+            val markdown = """
             # Main Title
             This is the introduction.
 
@@ -49,35 +53,35 @@ class HierarchicalContentReaderTest {
             Content for section 2.
         """.trimIndent()
 
-        val inputStream = ByteArrayInputStream(markdown.toByteArray())
-        val metadata = Metadata().apply {
-            set(TikaCoreProperties.RESOURCE_NAME_KEY, "test.md")
-            set(TikaCoreProperties.CONTENT_TYPE_HINT, "text/markdown")
+            val inputStream = ByteArrayInputStream(markdown.toByteArray())
+            val metadata = Metadata().apply {
+                set(TikaCoreProperties.RESOURCE_NAME_KEY, "test.md")
+                set(TikaCoreProperties.CONTENT_TYPE_HINT, "text/markdown")
+            }
+
+            val result = reader.parseContent(inputStream, metadata = metadata, uri = "test://example.md")
+
+            assertEquals(4, result.children.size) // Introduction + Section 1 + Subsection 1.1 + Section 2
+            assertEquals("test://example.md", result.uri)
+            assertNotNull(result.id)
+
+            // Check that all sections have proper titles and content
+            val titles = result.children.map { it.title }
+            assertTrue(titles.contains("Main Title"))
+            assertTrue(titles.contains("Section 1"))
+            assertTrue(titles.contains("Subsection 1.1"))
+            assertTrue(titles.contains("Section 2"))
+
+            // Check that all sections have the same URL
+            result.children.forEach { section ->
+                assertEquals("test://example.md", section.uri)
+                assertNotNull(section.id)
+            }
         }
 
-        val result = reader.parseContent(inputStream, metadata = metadata, uri = "test://example.md")
-
-        assertEquals(4, result.children.size) // Introduction + Section 1 + Subsection 1.1 + Section 2
-        assertEquals("test://example.md", result.uri)
-        assertNotNull(result.id)
-
-        // Check that all sections have proper titles and content
-        val titles = result.children.map { it.title }
-        assertTrue(titles.contains("Main Title"))
-        assertTrue(titles.contains("Section 1"))
-        assertTrue(titles.contains("Subsection 1.1"))
-        assertTrue(titles.contains("Section 2"))
-
-        // Check that all sections have the same URL
-        result.children.forEach { section ->
-            assertEquals("test://example.md", section.uri)
-            assertNotNull(section.id)
-        }
-    }
-
-    @Test
-    fun `test parse markdown with nested structure`() {
-        val markdown = """
+        @Test
+        fun `test parse markdown with nested structure`() {
+            val markdown = """
             # Document Title
             Introduction paragraph.
 
@@ -97,183 +101,34 @@ class HierarchicalContentReaderTest {
             Second chapter content.
         """.trimIndent()
 
-        val inputStream = ByteArrayInputStream(markdown.toByteArray())
-        val metadata = Metadata().apply {
-            set(TikaCoreProperties.RESOURCE_NAME_KEY, "document.md")
+            val inputStream = ByteArrayInputStream(markdown.toByteArray())
+            val metadata = Metadata().apply {
+                set(TikaCoreProperties.RESOURCE_NAME_KEY, "document.md")
+            }
+
+            val result = reader.parseContent(inputStream, "x", metadata)
+
+            assertEquals(6, result.children.size) // All leaf sections
+            assertNotNull(result.id)
+
+            val titles = result.children.map { it.title }
+            assertTrue(titles.contains("Document Title"))
+            assertTrue(titles.contains("Chapter 1"))
+            assertTrue(titles.contains("Section 1.1"))
+            assertTrue(titles.contains("Subsection 1.1.1"))
+            assertTrue(titles.contains("Section 1.2"))
+            assertTrue(titles.contains("Chapter 2"))
+
+            // Verify all sections have content
+            result.children.forEach { section ->
+                assertTrue((section as LeafSection).content.isNotBlank())
+                assertNotNull(section.id)
+            }
         }
 
-        val result = reader.parseContent(inputStream, "x", metadata)
-
-        assertEquals(6, result.children.size) // All leaf sections
-        assertNotNull(result.id)
-
-        val titles = result.children.map { it.title }
-        assertTrue(titles.contains("Document Title"))
-        assertTrue(titles.contains("Chapter 1"))
-        assertTrue(titles.contains("Section 1.1"))
-        assertTrue(titles.contains("Subsection 1.1.1"))
-        assertTrue(titles.contains("Section 1.2"))
-        assertTrue(titles.contains("Chapter 2"))
-
-        // Verify all sections have content
-        result.children.forEach { section ->
-            assertTrue((section as LeafSection).content.isNotBlank())
-            assertNotNull(section.id)
-        }
-    }
-
-    @Test
-    fun `test parse plain text content`() {
-        val text = """
-            This is a simple text document.
-            It has multiple lines.
-            But no special formatting.
-        """.trimIndent()
-
-        val inputStream = ByteArrayInputStream(text.toByteArray())
-        val metadata = Metadata().apply {
-            set(TikaCoreProperties.CONTENT_TYPE_HINT, "text/plain")
-        }
-
-        val result = reader.parseContent(inputStream, "test://plain.txt", metadata)
-
-        assertEquals(1, result.children.size)
-        assertEquals("test://plain.txt", result.uri)
-        assertNotNull(result.id)
-
-        val section = result.children.first() as LeafSection
-        assertEquals("This is a simple text document.", section.title)
-        assertEquals("test://plain.txt", section.uri)
-        assertEquals(text, section.content)
-        assertNotNull(section.id)
-    }
-
-    @Test
-    fun `test parse file from disk`(@TempDir tempDir: Path) {
-        val markdownFile = tempDir.resolve("test.md").toFile()
-        val markdown = """
-            # Test Document
-            This is a test document.
-
-            ## First Section
-            Content of the first section.
-
-            ## Second Section
-            Content of the second section.
-        """.trimIndent()
-
-        markdownFile.writeText(markdown)
-
-        val result = reader.parseFile(markdownFile)
-
-        assertEquals(3, result.children.size)
-        assertNotNull(result.id)
-        val titles = result.children.map { it.title }
-        assertTrue(titles.contains("Test Document"))
-        assertTrue(titles.contains("First Section"))
-        assertTrue(titles.contains("Second Section"))
-
-        result.children.forEach { section ->
-            assertTrue(section.uri!!.contains("test.md"))
-            assertNotNull(section.id)
-        }
-    }
-
-    @Test
-    fun `test title extraction from metadata`() {
-        val content = "Some content without markdown headers"
-
-        val inputStream = ByteArrayInputStream(content.toByteArray())
-        val metadata = Metadata().apply {
-            set(TikaCoreProperties.TITLE, "Custom Title from Metadata")
-        }
-
-        val result = reader.parseContent(inputStream, "x", metadata)
-
-        assertEquals(1, result.children.size)
-        assertEquals("Custom Title from Metadata", (result.children.first() as LeafSection).title)
-    }
-
-    @Test
-    fun `test title extraction from first line when no headers`() {
-        val content = """
-            This should become the title
-            And this is the rest of the content.
-        """.trimIndent()
-
-        val inputStream = ByteArrayInputStream(content.toByteArray())
-
-        val result = reader.parseContent(inputStream, uri = "foo")
-
-        assertEquals(1, result.children.size)
-        assertEquals("This should become the title", (result.children.first() as LeafSection).title)
-    }
-
-    @Test
-    fun `test metadata preservation`() {
-        val content = "Simple content"
-
-        val inputStream = ByteArrayInputStream(content.toByteArray())
-        val metadata = Metadata().apply {
-            set(TikaCoreProperties.TITLE, "Test Title")
-            set(TikaCoreProperties.CREATOR, "Test Author")
-            set("custom-field", "custom-value")
-        }
-
-        val result = reader.parseContent(inputStream, "uri", metadata)
-
-        assertEquals(1, result.children.size)
-        val section = result.children.first() as LeafSection
-        val resultMetadata = section.metadata
-        assertEquals("Test Author", resultMetadata[TikaCoreProperties.CREATOR.name])
-        assertEquals("custom-value", resultMetadata["custom-field"])
-    }
-
-    @Test
-    fun `test error handling for empty content`() {
-        // Create an input stream with empty content
-        val inputStream = ByteArrayInputStream(ByteArray(0))
-
-        val result = reader.parseContent(inputStream, "uri")
-
-        // Should return empty content root for empty content
-        assertTrue(result.children.isEmpty())
-        assertNotNull(result.id)
-    }
-
-    @Test
-    fun `test HTML content parsing`() {
-        val html = """
-            <html>
-            <head><title>HTML Document</title></head>
-            <body>
-                <h1>Main Heading</h1>
-                <p>This is a paragraph with <strong>bold</strong> text.</p>
-                <h2>Second Heading</h2>
-                <p>More content here.</p>
-            </body>
-            </html>
-        """.trimIndent()
-
-        val inputStream = ByteArrayInputStream(html.toByteArray())
-        val metadata = Metadata().apply {
-            set(TikaCoreProperties.CONTENT_TYPE_HINT, "text/html")
-        }
-
-        val result = reader.parseContent(inputStream, metadata = metadata, uri = "Test")
-
-        assertEquals(1, result.children.size) // HTML content treated as single section
-        val section = result.children.first() as LeafSection
-        assertNotNull(section.title)
-        assertTrue(section.content.isNotBlank())
-        // Content should be cleaned HTML
-        assertFalse(section.content.contains("<"))
-        assertFalse(section.content.contains(">"))
-    }
-
-    @Test
-    fun `test markdown with code blocks`() {
-        val markdown = """
+        @Test
+        fun `test markdown with code blocks`() {
+            val markdown = """
             # Code Examples
 
             Here's some code:
@@ -288,66 +143,66 @@ class HierarchicalContentReaderTest {
             More content after code.
         """.trimIndent()
 
-        val inputStream = ByteArrayInputStream(markdown.toByteArray())
-        val metadata = Metadata().apply {
-            set(TikaCoreProperties.RESOURCE_NAME_KEY, "code.md")
+            val inputStream = ByteArrayInputStream(markdown.toByteArray())
+            val metadata = Metadata().apply {
+                set(TikaCoreProperties.RESOURCE_NAME_KEY, "code.md")
+            }
+
+            val result = reader.parseContent(inputStream, "x", metadata)
+
+            assertEquals(2, result.children.size)
+            val titles = result.children.map { it.title }
+            assertTrue(titles.contains("Code Examples"))
+            assertTrue(titles.contains("Another Section"))
+
+            // Find the Code Examples section and verify it contains the code block
+            val codeSection = result.children.find { it.title == "Code Examples" } as LeafSection?
+            assertNotNull(codeSection)
+            assertTrue(codeSection!!.content.contains("```kotlin"))
+            assertTrue(codeSection.content.contains("fun main()"))
         }
 
-        val result = reader.parseContent(inputStream, "x", metadata)
+        @Test
+        fun `test empty markdown file`() {
+            val markdown = ""
 
-        assertEquals(2, result.children.size)
-        val titles = result.children.map { it.title }
-        assertTrue(titles.contains("Code Examples"))
-        assertTrue(titles.contains("Another Section"))
+            val inputStream = ByteArrayInputStream(markdown.toByteArray())
+            val metadata = Metadata().apply {
+                set(TikaCoreProperties.RESOURCE_NAME_KEY, "empty.md")
+            }
 
-        // Find the Code Examples section and verify it contains the code block
-        val codeSection = result.children.find { it.title == "Code Examples" } as LeafSection?
-        assertNotNull(codeSection)
-        assertTrue(codeSection!!.content.contains("```kotlin"))
-        assertTrue(codeSection.content.contains("fun main()"))
-    }
+            val result = reader.parseContent(inputStream, "y", metadata)
 
-    @Test
-    fun `test empty markdown file`() {
-        val markdown = ""
-
-        val inputStream = ByteArrayInputStream(markdown.toByteArray())
-        val metadata = Metadata().apply {
-            set(TikaCoreProperties.RESOURCE_NAME_KEY, "empty.md")
+            // Empty content should return empty content root
+            assertTrue(result.children.isEmpty())
+            assertNotNull(result.id)
         }
 
-        val result = reader.parseContent(inputStream, "y", metadata)
-
-        // Empty content should return empty content root
-        assertTrue(result.children.isEmpty())
-        assertNotNull(result.id)
-    }
-
-    @Test
-    fun `test markdown with only content no headers`() {
-        val markdown = """
+        @Test
+        fun `test markdown with only content no headers`() {
+            val markdown = """
             This is just content.
             No headers at all.
             Just plain text.
         """.trimIndent()
 
-        val inputStream = ByteArrayInputStream(markdown.toByteArray())
-        val metadata = Metadata().apply {
-            set(TikaCoreProperties.RESOURCE_NAME_KEY, "plain.md")
+            val inputStream = ByteArrayInputStream(markdown.toByteArray())
+            val metadata = Metadata().apply {
+                set(TikaCoreProperties.RESOURCE_NAME_KEY, "plain.md")
+            }
+
+            val result = reader.parseContent(inputStream, "a", metadata)
+
+            assertEquals(1, result.children.size)
+            val section = result.children.first() as LeafSection
+            assertEquals("This is just content.", section.title)
+            assertEquals(markdown, section.content)
+            assertNotNull(section.id)
         }
 
-        val result = reader.parseContent(inputStream, "a", metadata)
-
-        assertEquals(1, result.children.size)
-        val section = result.children.first() as LeafSection
-        assertEquals("This is just content.", section.title)
-        assertEquals(markdown, section.content)
-        assertNotNull(section.id)
-    }
-
-    @Test
-    fun `test multiple markdown sections with different levels`() {
-        val markdown = """
+        @Test
+        fun `test multiple markdown sections with different levels`() {
+            val markdown = """
             # Level 1 Title
             Content under level 1.
 
@@ -361,26 +216,26 @@ class HierarchicalContentReaderTest {
             Content under level 4.
         """.trimIndent()
 
-        val inputStream = ByteArrayInputStream(markdown.toByteArray())
+            val inputStream = ByteArrayInputStream(markdown.toByteArray())
 
-        val result = reader.parseContent(inputStream, "uri")
+            val result = reader.parseContent(inputStream, "uri")
 
-        assertEquals(4, result.children.size)
-        val titles = result.children.map { it.title }
-        assertEquals(listOf("Level 1 Title", "Level 2 Title", "Level 3 Title", "Level 4 Title"), titles)
+            assertEquals(4, result.children.size)
+            val titles = result.children.map { it.title }
+            assertEquals(listOf("Level 1 Title", "Level 2 Title", "Level 3 Title", "Level 4 Title"), titles)
 
-        // Verify each section has appropriate content
-        result.children.forEach { section ->
-            val leafSection = section as LeafSection
-            assertTrue(leafSection.content.startsWith("Content under"))
-            assertNotNull(leafSection.id)
-            assertNotNull(leafSection.parentId) // All sections should have parent references
+            // Verify each section has appropriate content
+            result.children.forEach { section ->
+                val leafSection = section as LeafSection
+                assertTrue(leafSection.content.startsWith("Content under"))
+                assertNotNull(leafSection.id)
+                assertNotNull(leafSection.parentId) // All sections should have parent references
+            }
         }
-    }
 
-    @Test
-    fun `test section parent relationships are maintained`() {
-        val markdown = """
+        @Test
+        fun `test section parent relationships are maintained`() {
+            val markdown = """
             # Main Section
             Main content.
 
@@ -391,280 +246,308 @@ class HierarchicalContentReaderTest {
             Deep content.
         """.trimIndent()
 
-        val inputStream = ByteArrayInputStream(markdown.toByteArray())
+            val inputStream = ByteArrayInputStream(markdown.toByteArray())
 
-        val result = reader.parseContent(inputStream, "uri")
+            val result = reader.parseContent(inputStream, "uri")
 
-        assertEquals(3, result.children.size)
+            assertEquals(3, result.children.size)
 
-        // All sections should have parent IDs set
-        result.children.forEach { section ->
-            assertNotNull(section.parentId)
+            // All sections should have parent IDs set
+            result.children.forEach { section ->
+                assertNotNull(section.parentId)
+            }
+
+            // Verify content is correctly assigned
+            val mainSection = result.children.find { it.title == "Main Section" } as LeafSection?
+            assertEquals("Main content.", mainSection?.content?.trim())
+
+            val subSection = result.children.find { it.title == "Sub Section" } as LeafSection?
+            assertEquals("Sub content.", subSection?.content?.trim())
+
+            val deepSection = result.children.find { it.title == "Deep Section" } as LeafSection?
+            assertEquals("Deep content.", deepSection?.content?.trim())
         }
 
-        // Verify content is correctly assigned
-        val mainSection = result.children.find { it.title == "Main Section" } as LeafSection?
-        assertEquals("Main content.", mainSection?.content?.trim())
-
-        val subSection = result.children.find { it.title == "Sub Section" } as LeafSection?
-        assertEquals("Sub content.", subSection?.content?.trim())
-
-        val deepSection = result.children.find { it.title == "Deep Section" } as LeafSection?
-        assertEquals("Deep content.", deepSection?.content?.trim())
-    }
-
-    @Test
-    fun `test parseFromDirectory with mixed file types`(@TempDir tempDir: Path) {
-        // Create test files
-        val mdFile = tempDir.resolve("document.md")
-        Files.writeString(
-            mdFile, """
+        @Test
+        fun `test parse file from disk`(@TempDir tempDir: Path) {
+            val markdownFile = tempDir.resolve("test.md").toFile()
+            val markdown = """
             # Test Document
             This is a test document.
 
-            ## Section 1
-            Content of section 1.
-        """.trimIndent(), StandardOpenOption.CREATE
-        )
+            ## First Section
+            Content of the first section.
 
-        val txtFile = tempDir.resolve("readme.txt")
-        Files.writeString(txtFile, "This is a simple text file.", StandardOpenOption.CREATE)
+            ## Second Section
+            Content of the second section.
+        """.trimIndent()
 
-        val subdirPath = tempDir.resolve("subdir")
-        Files.createDirectory(subdirPath)
-        val subFile = subdirPath.resolve("sub.md")
-        Files.writeString(
-            subFile, """
-            # Sub Document
-            Content in subdirectory.
-        """.trimIndent(), StandardOpenOption.CREATE
-        )
+            markdownFile.writeText(markdown)
 
-        // Mock FileReadTools
-        val fileTools = mockk<FileReadTools>()
-        every { fileTools.listFiles("") } returns listOf("f:document.md", "f:readme.txt", "d:subdir")
-        every { fileTools.listFiles("subdir") } returns listOf("f:sub.md")
-        every { fileTools.resolvePath("document.md") } returns mdFile
-        every { fileTools.resolvePath("readme.txt") } returns txtFile
-        every { fileTools.resolvePath("subdir/sub.md") } returns subFile
-        every { fileTools.safeReadFile("document.md") } returns Files.readString(mdFile)
-        every { fileTools.safeReadFile("readme.txt") } returns Files.readString(txtFile)
-        every { fileTools.safeReadFile("subdir/sub.md") } returns Files.readString(subFile)
+            val result = reader.parseFile(markdownFile)
 
-        val config = DirectoryParsingConfig(
-            includedExtensions = setOf("md", "txt"),
-            maxFileSize = 1024 * 1024
-        )
+            assertEquals(3, result.children.size)
+            assertNotNull(result.id)
+            val titles = result.children.map { it.title }
+            assertTrue(titles.contains("Test Document"))
+            assertTrue(titles.contains("First Section"))
+            assertTrue(titles.contains("Second Section"))
 
-        val result = reader.parseFromDirectory(fileTools, "", config)
-
-        assertTrue(result.success)
-        assertEquals(3, result.totalFilesFound)
-        assertEquals(3, result.filesProcessed)
-        assertEquals(0, result.filesSkipped)
-        assertEquals(0, result.filesErrored)
-        assertEquals(3, result.contentRoots.size)
-        assertTrue(result.errors.isEmpty())
-
-        // Verify parsed content
-        val documentRoot = result.contentRoots.find { it.title == "Test Document" }
-        assertNotNull(documentRoot)
-        assertEquals(2, documentRoot!!.leaves().size) // 2 sections in document.md
-
-        val readmeRoot = result.contentRoots.find { it.title == "This is a simple text file." }
-        assertNotNull(readmeRoot)
-        assertEquals(1, readmeRoot!!.leaves().size) // 1 section in readme.txt
-
-        val subRoot = result.contentRoots.find { it.title == "Sub Document" }
-        assertNotNull(subRoot)
-        assertEquals(1, subRoot!!.leaves().size) // 1 section in sub.md
-    }
-
-    @Test
-    fun `test parseFromDirectory with file size limits`(@TempDir tempDir: Path) {
-        val smallFile = tempDir.resolve("small.md")
-        Files.writeString(smallFile, "# Small\nSmall content", StandardOpenOption.CREATE)
-
-        val largeFile = tempDir.resolve("large.md")
-        Files.writeString(largeFile, "# Large\n" + "X".repeat(2000), StandardOpenOption.CREATE)
-
-        val fileTools = mockk<FileReadTools>()
-        every { fileTools.listFiles("") } returns listOf("f:small.md", "f:large.md")
-        every { fileTools.resolvePath("small.md") } returns smallFile
-        every { fileTools.resolvePath("large.md") } returns largeFile
-        every { fileTools.safeReadFile("small.md") } returns Files.readString(smallFile)
-
-        val config = DirectoryParsingConfig(
-            includedExtensions = setOf("md"),
-            maxFileSize = 100 // Very small limit to exclude large file
-        )
-
-        val result = reader.parseFromDirectory(fileTools, "", config)
-
-        assertTrue(result.success)
-        assertEquals(1, result.totalFilesFound) // Only small file should be discovered
-        assertEquals(1, result.filesProcessed)
-        assertEquals(0, result.filesSkipped)
-        assertEquals(0, result.filesErrored)
-        assertEquals(1, result.contentRoots.size)
-    }
-
-    @Test
-    fun `test parseFromDirectory with excluded directories`(@TempDir tempDir: Path) {
-        val normalFile = tempDir.resolve("normal.md")
-        Files.writeString(normalFile, "# Normal\nNormal content", StandardOpenOption.CREATE)
-
-        val gitDir = tempDir.resolve(".git")
-        Files.createDirectory(gitDir)
-        val gitFile = gitDir.resolve("config")
-        Files.writeString(gitFile, "git config content", StandardOpenOption.CREATE)
-
-        val fileTools = mockk<FileReadTools>()
-        every { fileTools.listFiles("") } returns listOf("f:normal.md", "d:.git")
-        every { fileTools.resolvePath("normal.md") } returns normalFile
-        every { fileTools.safeReadFile("normal.md") } returns Files.readString(normalFile)
-
-        val config = DirectoryParsingConfig(
-            includedExtensions = setOf("md"),
-            excludedDirectories = setOf(".git")
-        )
-
-        val result = reader.parseFromDirectory(fileTools, "", config)
-
-        assertTrue(result.success)
-        assertEquals(1, result.totalFilesFound) // Only normal.md should be found
-        assertEquals(1, result.filesProcessed)
-        assertEquals(1, result.contentRoots.size)
-
-        val contentRoot = result.contentRoots.first()
-        assertEquals("Normal", contentRoot.title)
-    }
-
-    @Test
-    fun `test parseFromDirectory handles file read errors gracefully`(@TempDir tempDir: Path) {
-        // Create a real file first so it passes the file size validation
-        val errorFile = tempDir.resolve("error.md")
-        Files.writeString(errorFile, "# Error\nSome content", StandardOpenOption.CREATE)
-
-        val fileTools = mockk<FileReadTools>()
-        every { fileTools.listFiles("") } returns listOf("f:error.md")
-        every { fileTools.resolvePath("error.md") } returns errorFile
-        every { fileTools.safeReadFile("error.md") } returns null // Simulate read error
-
-        val result = reader.parseFromDirectory(fileTools, "")
-
-        assertTrue(result.success) // Should still be successful overall
-        assertEquals(1, result.totalFilesFound)
-        assertEquals(0, result.filesProcessed)
-        assertEquals(1, result.filesSkipped) // File should be skipped due to read error
-        assertEquals(0, result.filesErrored)
-        assertEquals(0, result.contentRoots.size)
-    }
-
-    @Test
-    fun `test parseFromDirectory with custom extensions`(@TempDir tempDir: Path) {
-        val kotlinFile = tempDir.resolve("Example.kt")
-        Files.writeString(
-            kotlinFile, """
-            /**
-             * Example Kotlin class
-             */
-            class Example {
-                fun doSomething() = "Hello"
+            result.children.forEach { section ->
+                assertTrue(section.uri!!.contains("test.md"))
+                assertNotNull(section.id)
             }
-        """.trimIndent(), StandardOpenOption.CREATE
-        )
+        }
+    }
 
-        val javaFile = tempDir.resolve("Main.java")
-        Files.writeString(
-            javaFile, """
-            public class Main {
-                public static void main(String[] args) {
-                    System.out.println("Hello World");
-                }
+    @Nested
+    inner class HtmlParsingTests {
+
+        @Test
+        fun `test HTML autodetection without type hint`() {
+            val html = """
+            <html>
+            <head><title>Autodetected HTML</title></head>
+            <body>
+                <h1>First Heading</h1>
+                <p>Content under first heading.</p>
+                <h2>Second Heading</h2>
+                <p>Content under second heading.</p>
+            </body>
+            </html>
+        """.trimIndent()
+
+            val inputStream = ByteArrayInputStream(html.toByteArray())
+            // No CONTENT_TYPE_HINT set - should autodetect as HTML
+            val metadata = Metadata()
+
+            val result = reader.parseContent(inputStream, metadata = metadata, uri = "test://autodetect.html")
+
+            // Should detect HTML and parse headings
+            assertEquals(2, result.children.size)
+            val titles = result.children.map { it.title }
+            assertTrue(titles.contains("First Heading"))
+            assertTrue(titles.contains("Second Heading"))
+        }
+
+        @Test
+        fun `test HTML content parsing`() {
+            val html = """
+            <html>
+            <head><title>HTML Document</title></head>
+            <body>
+                <h1>Main Heading</h1>
+                <p>This is a paragraph with <strong>bold</strong> text.</p>
+                <h2>Second Heading</h2>
+                <p>More content here.</p>
+            </body>
+            </html>
+        """.trimIndent()
+
+            val inputStream = ByteArrayInputStream(html.toByteArray())
+            val metadata = Metadata().apply {
+                set(TikaCoreProperties.CONTENT_TYPE_HINT, "text/html")
             }
-        """.trimIndent(), StandardOpenOption.CREATE
-        )
 
-        val ignoredFile = tempDir.resolve("data.csv")
-        Files.writeString(ignoredFile, "name,value\ntest,123", StandardOpenOption.CREATE)
+            val result = reader.parseContent(inputStream, metadata = metadata, uri = "Test")
 
-        val fileTools = mockk<FileReadTools>()
-        every { fileTools.listFiles("") } returns listOf("f:Example.kt", "f:Main.java", "f:data.csv")
-        every { fileTools.resolvePath("Example.kt") } returns kotlinFile
-        every { fileTools.resolvePath("Main.java") } returns javaFile
-        every { fileTools.resolvePath("data.csv") } returns Path.of("data.csv")
-        every { fileTools.safeReadFile("Example.kt") } returns Files.readString(kotlinFile)
-        every { fileTools.safeReadFile("Main.java") } returns Files.readString(javaFile)
+            // HTML headings should create separate sections
+            assertEquals(2, result.children.size)
 
-        val config = DirectoryParsingConfig(
-            includedExtensions = setOf("kt", "java"), // Only include code files
-            maxFileSize = 1024 * 1024
-        )
+            val titles = result.children.map { it.title }
+            assertTrue(titles.contains("Main Heading"))
+            assertTrue(titles.contains("Second Heading"))
 
-        val result = reader.parseFromDirectory(fileTools, "", config)
+            // Content should be cleaned HTML (no tags)
+            result.children.forEach { section ->
+                val leafSection = section as LeafSection
+                assertNotNull(leafSection.title)
+                assertFalse(leafSection.content.contains("<"))
+                assertFalse(leafSection.content.contains(">"))
+            }
+        }
 
-        assertTrue(result.success)
-        assertEquals(2, result.totalFilesFound) // Only kt and java files
-        assertEquals(2, result.filesProcessed)
-        assertEquals(2, result.contentRoots.size)
+        @Test
+        fun `test HTML with headings creates separate sections`() {
+            val html = """
+            <html>
+            <head><title>HTML Document</title></head>
+            <body>
+                <h1>Main Heading</h1>
+                <p>This is the introduction with <strong>bold</strong> text.</p>
 
-        val titles = result.contentRoots.map { it.title }
-        // Debug: Print actual titles to understand the issue
-        println("Actual titles: $titles")
+                <h2>Second Heading</h2>
+                <p>Content for section 2.</p>
 
-        // Since both are plain text files without markdown headers,
-        // they will use the first line as title (truncated to 50 chars)
-        assertTrue(titles.any { it.contains("/**") || it.contains("Example") }) // Kotlin file
-        assertTrue(titles.any { it.contains("public class") || it.contains("Main") }) // Java file
+                <h3>Sub Heading</h3>
+                <p>Content for subsection.</p>
+
+                <h2>Third Heading</h2>
+                <p>More content here.</p>
+            </body>
+            </html>
+        """.trimIndent()
+
+            val inputStream = ByteArrayInputStream(html.toByteArray())
+            val metadata = Metadata().apply {
+                set(TikaCoreProperties.CONTENT_TYPE_HINT, "text/html")
+            }
+
+            val result = reader.parseContent(inputStream, metadata = metadata, uri = "test://example.html")
+
+            // HTML headings should create separate sections like markdown
+            assertEquals(4, result.children.size)
+
+            val titles = result.children.map { it.title }
+            assertTrue(titles.contains("Main Heading"))
+            assertTrue(titles.contains("Second Heading"))
+            assertTrue(titles.contains("Sub Heading"))
+            assertTrue(titles.contains("Third Heading"))
+
+            // Verify content is properly extracted without HTML tags
+            result.children.forEach { section ->
+                val leafSection = section as LeafSection
+                assertFalse(leafSection.content.contains("<"))
+                assertFalse(leafSection.content.contains(">"))
+                assertTrue(leafSection.content.isNotBlank())
+            }
+        }
+
+        @Test
+        fun `test parseUrl with HTML headings`() {
+            val html = """
+            <html>
+            <head><title>Test Page</title></head>
+            <body>
+                <h1>Introduction</h1>
+                <p>Welcome to the page.</p>
+
+                <h2>Features</h2>
+                <ul>
+                    <li>Feature 1</li>
+                    <li>Feature 2</li>
+                </ul>
+
+                <h2>Conclusion</h2>
+                <p>Thank you for reading.</p>
+            </body>
+            </html>
+        """.trimIndent()
+
+            // Create a temporary file to test parseUrl
+            val tempFile = Files.createTempFile("test", ".html")
+            Files.writeString(tempFile, html)
+
+            val result = reader.parseUrl("file:${tempFile.toAbsolutePath()}")
+
+            assertEquals(3, result.children.size)
+            val titles = result.children.map { it.title }
+            assertTrue(titles.contains("Introduction"))
+            assertTrue(titles.contains("Features"))
+            assertTrue(titles.contains("Conclusion"))
+
+            Files.deleteIfExists(tempFile)
+        }
     }
 
-    @Test
-    fun `test parseFromDirectory with max depth limit`(@TempDir tempDir: Path) {
-        // Create nested directory structure
-        val level1 = tempDir.resolve("level1")
-        Files.createDirectory(level1)
-        val level2 = level1.resolve("level2")
-        Files.createDirectory(level2)
+    @Nested
+    inner class PlainTextParsingTests {
 
-        val rootFile = tempDir.resolve("root.md")
-        Files.writeString(rootFile, "# Root\nRoot content", StandardOpenOption.CREATE)
+        @Test
+        fun `test parse plain text content`() {
+            val text = """
+            This is a simple text document.
+            It has multiple lines.
+            But no special formatting.
+        """.trimIndent()
 
-        val level1File = level1.resolve("level1.md")
-        Files.writeString(level1File, "# Level1\nLevel1 content", StandardOpenOption.CREATE)
+            val inputStream = ByteArrayInputStream(text.toByteArray())
+            val metadata = Metadata().apply {
+                set(TikaCoreProperties.CONTENT_TYPE_HINT, "text/plain")
+            }
 
-        val level2File = level2.resolve("level2.md")
-        Files.writeString(level2File, "# Level2\nLevel2 content", StandardOpenOption.CREATE)
+            val result = reader.parseContent(inputStream, "test://plain.txt", metadata)
 
-        val fileTools = mockk<FileReadTools>()
-        every { fileTools.listFiles("") } returns listOf("f:root.md", "d:level1")
-        every { fileTools.listFiles("level1") } returns listOf("f:level1.md", "d:level2")
-        every { fileTools.resolvePath("root.md") } returns rootFile
-        every { fileTools.resolvePath("level1/level1.md") } returns level1File
-        every { fileTools.safeReadFile("root.md") } returns Files.readString(rootFile)
-        every { fileTools.safeReadFile("level1/level1.md") } returns Files.readString(level1File)
+            assertEquals(1, result.children.size)
+            assertEquals("test://plain.txt", result.uri)
+            assertNotNull(result.id)
 
-        val config = DirectoryParsingConfig(
-            includedExtensions = setOf("md"),
-            maxDepth = 1 // Should stop at level1, not go to level2
-        )
+            val section = result.children.first() as LeafSection
+            assertEquals("This is a simple text document.", section.title)
+            assertEquals("test://plain.txt", section.uri)
+            assertEquals(text, section.content)
+            assertNotNull(section.id)
+        }
 
-        val result = reader.parseFromDirectory(fileTools, "", config)
+        @Test
+        fun `test title extraction from metadata`() {
+            val content = "Some content without markdown headers"
 
-        assertTrue(result.success)
-        assertEquals(2, result.totalFilesFound) // Only root.md and level1.md
-        assertEquals(2, result.filesProcessed)
-        assertEquals(2, result.contentRoots.size)
+            val inputStream = ByteArrayInputStream(content.toByteArray())
+            val metadata = Metadata().apply {
+                set(TikaCoreProperties.TITLE, "Custom Title from Metadata")
+            }
 
-        val titles = result.contentRoots.map { it.title }
-        assertTrue(titles.contains("Root"))
-        assertTrue(titles.contains("Level1"))
-        assertFalse(titles.contains("Level2")) // Should not be included due to depth limit
+            val result = reader.parseContent(inputStream, "x", metadata)
+
+            assertEquals(1, result.children.size)
+            assertEquals("Custom Title from Metadata", (result.children.first() as LeafSection).title)
+        }
+
+        @Test
+        fun `test title extraction from first line when no headers`() {
+            val content = """
+            This should become the title
+            And this is the rest of the content.
+        """.trimIndent()
+
+            val inputStream = ByteArrayInputStream(content.toByteArray())
+
+            val result = reader.parseContent(inputStream, uri = "foo")
+
+            assertEquals(1, result.children.size)
+            assertEquals("This should become the title", (result.children.first() as LeafSection).title)
+        }
+
+        @Test
+        fun `test error handling for empty content`() {
+            // Create an input stream with empty content
+            val inputStream = ByteArrayInputStream(ByteArray(0))
+
+            val result = reader.parseContent(inputStream, "uri")
+
+            // Should return empty content root for empty content
+            assertTrue(result.children.isEmpty())
+            assertNotNull(result.id)
+        }
     }
 
-    @Test
-    fun `test all leaf sections have required metadata for pathFromRoot`() {
-        val markdown = """
+    @Nested
+    inner class MetadataTests {
+
+        @Test
+        fun `test metadata preservation`() {
+            val content = "Simple content"
+
+            val inputStream = ByteArrayInputStream(content.toByteArray())
+            val metadata = Metadata().apply {
+                set(TikaCoreProperties.TITLE, "Test Title")
+                set(TikaCoreProperties.CREATOR, "Test Author")
+                set("custom-field", "custom-value")
+            }
+
+            val result = reader.parseContent(inputStream, "uri", metadata)
+
+            assertEquals(1, result.children.size)
+            val section = result.children.first() as LeafSection
+            val resultMetadata = section.metadata
+            assertEquals("Test Author", resultMetadata[TikaCoreProperties.CREATOR.name])
+            assertEquals("custom-value", resultMetadata["custom-field"])
+        }
+
+        @Test
+        fun `test all leaf sections have required metadata for pathFromRoot`() {
+            val markdown = """
             # Main Title
             This is the introduction.
 
@@ -678,87 +561,353 @@ class HierarchicalContentReaderTest {
             Content for section 2.
         """.trimIndent()
 
-        val inputStream = ByteArrayInputStream(markdown.toByteArray())
-        val metadata = Metadata().apply {
-            set(TikaCoreProperties.RESOURCE_NAME_KEY, "test.md")
+            val inputStream = ByteArrayInputStream(markdown.toByteArray())
+            val metadata = Metadata().apply {
+                set(TikaCoreProperties.RESOURCE_NAME_KEY, "test.md")
+            }
+
+            val result = reader.parseContent(inputStream, "test://example.md", metadata)
+
+            // Verify all leaf sections have the required metadata
+            result.children.forEach { section ->
+                val leafSection = section as LeafSection
+                assertNotNull(
+                    leafSection.metadata["root_document_id"],
+                    "Section '${leafSection.title}' is missing root_document_id"
+                )
+                assertNotNull(
+                    leafSection.metadata["container_section_id"],
+                    "Section '${leafSection.title}' is missing container_section_id"
+                )
+                assertNotNull(
+                    leafSection.metadata["leaf_section_id"],
+                    "Section '${leafSection.title}' is missing leaf_section_id"
+                )
+
+                // Verify the values are correct
+                assertEquals(result.id, leafSection.metadata["root_document_id"])
+                assertEquals(leafSection.id, leafSection.metadata["leaf_section_id"])
+            }
         }
 
-        val result = reader.parseContent(inputStream, "test://example.md", metadata)
+        @Test
+        fun `test plain text leaf section has required metadata for pathFromRoot`() {
+            val text = "This is a simple text document."
 
-        // Verify all leaf sections have the required metadata
-        result.children.forEach { section ->
-            val leafSection = section as LeafSection
-            assertNotNull(leafSection.metadata["root_document_id"],
-                "Section '${leafSection.title}' is missing root_document_id")
-            assertNotNull(leafSection.metadata["container_section_id"],
-                "Section '${leafSection.title}' is missing container_section_id")
-            assertNotNull(leafSection.metadata["leaf_section_id"],
-                "Section '${leafSection.title}' is missing leaf_section_id")
+            val inputStream = ByteArrayInputStream(text.toByteArray())
+            val result = reader.parseContent(inputStream, "test://plain.txt")
 
-            // Verify the values are correct
+            assertEquals(1, result.children.size)
+            val leafSection = result.children.first() as LeafSection
+
+            // Verify required metadata is present
+            assertNotNull(leafSection.metadata["root_document_id"])
+            assertNotNull(leafSection.metadata["container_section_id"])
+            assertNotNull(leafSection.metadata["leaf_section_id"])
+
+            // Verify values
             assertEquals(result.id, leafSection.metadata["root_document_id"])
+            assertEquals(result.id, leafSection.metadata["container_section_id"]) // For single section, container is root
             assertEquals(leafSection.id, leafSection.metadata["leaf_section_id"])
         }
     }
 
-    @Test
-    fun `test plain text leaf section has required metadata for pathFromRoot`() {
-        val text = "This is a simple text document."
+    @Nested
+    inner class DirectoryParsingTests {
 
-        val inputStream = ByteArrayInputStream(text.toByteArray())
-        val result = reader.parseContent(inputStream, "test://plain.txt")
+        @Test
+        fun `test parseFromDirectory with mixed file types`(@TempDir tempDir: Path) {
+            // Create test files
+            val mdFile = tempDir.resolve("document.md")
+            Files.writeString(
+                mdFile,
+                """
+            # Test Document
+            This is a test document.
 
-        assertEquals(1, result.children.size)
-        val leafSection = result.children.first() as LeafSection
+            ## Section 1
+            Content of section 1.
+        """.trimIndent(), StandardOpenOption.CREATE
+            )
 
-        // Verify required metadata is present
-        assertNotNull(leafSection.metadata["root_document_id"])
-        assertNotNull(leafSection.metadata["container_section_id"])
-        assertNotNull(leafSection.metadata["leaf_section_id"])
+            val txtFile = tempDir.resolve("readme.txt")
+            Files.writeString(txtFile, "This is a simple text file.", StandardOpenOption.CREATE)
 
-        // Verify values
-        assertEquals(result.id, leafSection.metadata["root_document_id"])
-        assertEquals(result.id, leafSection.metadata["container_section_id"]) // For single section, container is root
-        assertEquals(leafSection.id, leafSection.metadata["leaf_section_id"])
-    }
+            val subdirPath = tempDir.resolve("subdir")
+            Files.createDirectory(subdirPath)
+            val subFile = subdirPath.resolve("sub.md")
+            Files.writeString(
+                subFile,
+                """
+            # Sub Document
+            Content in subdirectory.
+        """.trimIndent(), StandardOpenOption.CREATE
+            )
 
+            // Mock FileReadTools
+            val fileTools = mockk<FileReadTools>()
+            every { fileTools.listFiles("") } returns listOf("f:document.md", "f:readme.txt", "d:subdir")
+            every { fileTools.listFiles("subdir") } returns listOf("f:sub.md")
+            every { fileTools.resolvePath("document.md") } returns mdFile
+            every { fileTools.resolvePath("readme.txt") } returns txtFile
+            every { fileTools.resolvePath("subdir/sub.md") } returns subFile
+            every { fileTools.safeReadFile("document.md") } returns Files.readString(mdFile)
+            every { fileTools.safeReadFile("readme.txt") } returns Files.readString(txtFile)
+            every { fileTools.safeReadFile("subdir/sub.md") } returns Files.readString(subFile)
 
-    @Test
-    fun `test all leaf sections from directory parsing have required metadata`(@TempDir tempDir: Path) {
-        val mdFile = tempDir.resolve("test.md")
-        val markdown = """
+            val config = DirectoryParsingConfig(
+                includedExtensions = setOf("md", "txt"),
+                maxFileSize = 1024 * 1024
+            )
+
+            val result = reader.parseFromDirectory(fileTools, "", config)
+
+            assertTrue(result.success)
+            assertEquals(3, result.totalFilesFound)
+            assertEquals(3, result.filesProcessed)
+            assertEquals(0, result.filesSkipped)
+            assertEquals(0, result.filesErrored)
+            assertEquals(3, result.contentRoots.size)
+            assertTrue(result.errors.isEmpty())
+
+            // Verify parsed content
+            val documentRoot = result.contentRoots.find { it.title == "Test Document" }
+            assertNotNull(documentRoot)
+            assertEquals(2, documentRoot!!.leaves().size) // 2 sections in document.md
+
+            val readmeRoot = result.contentRoots.find { it.title == "This is a simple text file." }
+            assertNotNull(readmeRoot)
+            assertEquals(1, readmeRoot!!.leaves().size) // 1 section in readme.txt
+
+            val subRoot = result.contentRoots.find { it.title == "Sub Document" }
+            assertNotNull(subRoot)
+            assertEquals(1, subRoot!!.leaves().size) // 1 section in sub.md
+        }
+
+        @Test
+        fun `test parseFromDirectory with file size limits`(@TempDir tempDir: Path) {
+            val smallFile = tempDir.resolve("small.md")
+            Files.writeString(smallFile, "# Small\nSmall content", StandardOpenOption.CREATE)
+
+            val largeFile = tempDir.resolve("large.md")
+            Files.writeString(largeFile, "# Large\n" + "X".repeat(2000), StandardOpenOption.CREATE)
+
+            val fileTools = mockk<FileReadTools>()
+            every { fileTools.listFiles("") } returns listOf("f:small.md", "f:large.md")
+            every { fileTools.resolvePath("small.md") } returns smallFile
+            every { fileTools.resolvePath("large.md") } returns largeFile
+            every { fileTools.safeReadFile("small.md") } returns Files.readString(smallFile)
+
+            val config = DirectoryParsingConfig(
+                includedExtensions = setOf("md"),
+                maxFileSize = 100 // Very small limit to exclude large file
+            )
+
+            val result = reader.parseFromDirectory(fileTools, "", config)
+
+            assertTrue(result.success)
+            assertEquals(1, result.totalFilesFound) // Only small file should be discovered
+            assertEquals(1, result.filesProcessed)
+            assertEquals(0, result.filesSkipped)
+            assertEquals(0, result.filesErrored)
+            assertEquals(1, result.contentRoots.size)
+        }
+
+        @Test
+        fun `test parseFromDirectory with excluded directories`(@TempDir tempDir: Path) {
+            val normalFile = tempDir.resolve("normal.md")
+            Files.writeString(normalFile, "# Normal\nNormal content", StandardOpenOption.CREATE)
+
+            val gitDir = tempDir.resolve(".git")
+            Files.createDirectory(gitDir)
+            val gitFile = gitDir.resolve("config")
+            Files.writeString(gitFile, "git config content", StandardOpenOption.CREATE)
+
+            val fileTools = mockk<FileReadTools>()
+            every { fileTools.listFiles("") } returns listOf("f:normal.md", "d:.git")
+            every { fileTools.resolvePath("normal.md") } returns normalFile
+            every { fileTools.safeReadFile("normal.md") } returns Files.readString(normalFile)
+
+            val config = DirectoryParsingConfig(
+                includedExtensions = setOf("md"),
+                excludedDirectories = setOf(".git")
+            )
+
+            val result = reader.parseFromDirectory(fileTools, "", config)
+
+            assertTrue(result.success)
+            assertEquals(1, result.totalFilesFound) // Only normal.md should be found
+            assertEquals(1, result.filesProcessed)
+            assertEquals(1, result.contentRoots.size)
+
+            val contentRoot = result.contentRoots.first()
+            assertEquals("Normal", contentRoot.title)
+        }
+
+        @Test
+        fun `test parseFromDirectory handles file read errors gracefully`(@TempDir tempDir: Path) {
+            // Create a real file first so it passes the file size validation
+            val errorFile = tempDir.resolve("error.md")
+            Files.writeString(errorFile, "# Error\nSome content", StandardOpenOption.CREATE)
+
+            val fileTools = mockk<FileReadTools>()
+            every { fileTools.listFiles("") } returns listOf("f:error.md")
+            every { fileTools.resolvePath("error.md") } returns errorFile
+            every { fileTools.safeReadFile("error.md") } returns null // Simulate read error
+
+            val result = reader.parseFromDirectory(fileTools, "")
+
+            assertTrue(result.success) // Should still be successful overall
+            assertEquals(1, result.totalFilesFound)
+            assertEquals(0, result.filesProcessed)
+            assertEquals(1, result.filesSkipped) // File should be skipped due to read error
+            assertEquals(0, result.filesErrored)
+            assertEquals(0, result.contentRoots.size)
+        }
+
+        @Test
+        fun `test parseFromDirectory with custom extensions`(@TempDir tempDir: Path) {
+            val kotlinFile = tempDir.resolve("Example.kt")
+            Files.writeString(
+                kotlinFile,
+                """
+            /**
+             * Example Kotlin class
+             */
+            class Example {
+                fun doSomething() = "Hello"
+            }
+        """.trimIndent(), StandardOpenOption.CREATE
+            )
+
+            val javaFile = tempDir.resolve("Main.java")
+            Files.writeString(
+                javaFile,
+                """
+            public class Main {
+                public static void main(String[] args) {
+                    System.out.println("Hello World");
+                }
+            }
+        """.trimIndent(), StandardOpenOption.CREATE
+            )
+
+            val ignoredFile = tempDir.resolve("data.csv")
+            Files.writeString(ignoredFile, "name,value\ntest,123", StandardOpenOption.CREATE)
+
+            val fileTools = mockk<FileReadTools>()
+            every { fileTools.listFiles("") } returns listOf("f:Example.kt", "f:Main.java", "f:data.csv")
+            every { fileTools.resolvePath("Example.kt") } returns kotlinFile
+            every { fileTools.resolvePath("Main.java") } returns javaFile
+            every { fileTools.resolvePath("data.csv") } returns Path.of("data.csv")
+            every { fileTools.safeReadFile("Example.kt") } returns Files.readString(kotlinFile)
+            every { fileTools.safeReadFile("Main.java") } returns Files.readString(javaFile)
+
+            val config = DirectoryParsingConfig(
+                includedExtensions = setOf("kt", "java"), // Only include code files
+                maxFileSize = 1024 * 1024
+            )
+
+            val result = reader.parseFromDirectory(fileTools, "", config)
+
+            assertTrue(result.success)
+            assertEquals(2, result.totalFilesFound) // Only kt and java files
+            assertEquals(2, result.filesProcessed)
+            assertEquals(2, result.contentRoots.size)
+
+            val titles = result.contentRoots.map { it.title }
+            // Since both are plain text files without markdown headers,
+            // they will use the first line as title (truncated to 50 chars)
+            assertTrue(titles.any { it.contains("/**") || it.contains("Example") }) // Kotlin file
+            assertTrue(titles.any { it.contains("public class") || it.contains("Main") }) // Java file
+        }
+
+        @Test
+        fun `test parseFromDirectory with max depth limit`(@TempDir tempDir: Path) {
+            // Create nested directory structure
+            val level1 = tempDir.resolve("level1")
+            Files.createDirectory(level1)
+            val level2 = level1.resolve("level2")
+            Files.createDirectory(level2)
+
+            val rootFile = tempDir.resolve("root.md")
+            Files.writeString(rootFile, "# Root\nRoot content", StandardOpenOption.CREATE)
+
+            val level1File = level1.resolve("level1.md")
+            Files.writeString(level1File, "# Level1\nLevel1 content", StandardOpenOption.CREATE)
+
+            val level2File = level2.resolve("level2.md")
+            Files.writeString(level2File, "# Level2\nLevel2 content", StandardOpenOption.CREATE)
+
+            val fileTools = mockk<FileReadTools>()
+            every { fileTools.listFiles("") } returns listOf("f:root.md", "d:level1")
+            every { fileTools.listFiles("level1") } returns listOf("f:level1.md", "d:level2")
+            every { fileTools.resolvePath("root.md") } returns rootFile
+            every { fileTools.resolvePath("level1/level1.md") } returns level1File
+            every { fileTools.safeReadFile("root.md") } returns Files.readString(rootFile)
+            every { fileTools.safeReadFile("level1/level1.md") } returns Files.readString(level1File)
+
+            val config = DirectoryParsingConfig(
+                includedExtensions = setOf("md"),
+                maxDepth = 1 // Should stop at level1, not go to level2
+            )
+
+            val result = reader.parseFromDirectory(fileTools, "", config)
+
+            assertTrue(result.success)
+            assertEquals(2, result.totalFilesFound) // Only root.md and level1.md
+            assertEquals(2, result.filesProcessed)
+            assertEquals(2, result.contentRoots.size)
+
+            val titles = result.contentRoots.map { it.title }
+            assertTrue(titles.contains("Root"))
+            assertTrue(titles.contains("Level1"))
+            assertFalse(titles.contains("Level2")) // Should not be included due to depth limit
+        }
+
+        @Test
+        fun `test all leaf sections from directory parsing have required metadata`(@TempDir tempDir: Path) {
+            val mdFile = tempDir.resolve("test.md")
+            val markdown = """
             # Test Document
             This is a test document.
 
             ## First Section
             Content of the first section.
         """.trimIndent()
-        Files.writeString(mdFile, markdown, StandardOpenOption.CREATE)
+            Files.writeString(mdFile, markdown, StandardOpenOption.CREATE)
 
-        val fileTools = mockk<FileReadTools>()
-        every { fileTools.listFiles("") } returns listOf("f:test.md")
-        every { fileTools.resolvePath("test.md") } returns mdFile
-        every { fileTools.safeReadFile("test.md") } returns Files.readString(mdFile)
+            val fileTools = mockk<FileReadTools>()
+            every { fileTools.listFiles("") } returns listOf("f:test.md")
+            every { fileTools.resolvePath("test.md") } returns mdFile
+            every { fileTools.safeReadFile("test.md") } returns Files.readString(mdFile)
 
-        val result = reader.parseFromDirectory(fileTools, "")
+            val result = reader.parseFromDirectory(fileTools, "")
 
-        assertTrue(result.success)
-        assertEquals(1, result.contentRoots.size)
+            assertTrue(result.success)
+            assertEquals(1, result.contentRoots.size)
 
-        val document = result.contentRoots.first()
-        val allLeaves = document.leaves()
+            val document = result.contentRoots.first()
+            val allLeaves = document.leaves()
 
-        // Verify all leaves have required metadata
-        allLeaves.forEach { leaf ->
-            assertNotNull(leaf.metadata["root_document_id"],
-                "Leaf '${leaf.title}' is missing root_document_id")
-            assertNotNull(leaf.metadata["container_section_id"],
-                "Leaf '${leaf.title}' is missing container_section_id")
-            assertNotNull(leaf.metadata["leaf_section_id"],
-                "Leaf '${leaf.title}' is missing leaf_section_id")
+            // Verify all leaves have required metadata
+            allLeaves.forEach { leaf ->
+                assertNotNull(
+                    leaf.metadata["root_document_id"],
+                    "Leaf '${leaf.title}' is missing root_document_id"
+                )
+                assertNotNull(
+                    leaf.metadata["container_section_id"],
+                    "Leaf '${leaf.title}' is missing container_section_id"
+                )
+                assertNotNull(
+                    leaf.metadata["leaf_section_id"],
+                    "Leaf '${leaf.title}' is missing leaf_section_id"
+                )
 
-            assertEquals(document.id, leaf.metadata["root_document_id"])
-            assertEquals(leaf.id, leaf.metadata["leaf_section_id"])
+                assertEquals(document.id, leaf.metadata["root_document_id"])
+                assertEquals(leaf.id, leaf.metadata["leaf_section_id"])
+            }
         }
     }
 }

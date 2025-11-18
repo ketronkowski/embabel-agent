@@ -17,6 +17,8 @@ package com.embabel.agent.rag.ingestion
 
 import com.embabel.agent.rag.LeafSection
 import com.embabel.agent.tools.file.FileReadTools
+import org.apache.tika.detect.DefaultDetector
+import org.apache.tika.detect.Detector
 import org.apache.tika.exception.ZeroByteFileException
 import org.apache.tika.metadata.Metadata
 import org.apache.tika.metadata.TikaCoreProperties
@@ -26,6 +28,7 @@ import org.apache.tika.sax.BodyContentHandler
 import org.slf4j.LoggerFactory
 import org.springframework.core.io.DefaultResourceLoader
 import org.springframework.core.io.Resource
+import java.io.BufferedInputStream
 import java.io.File
 import java.io.InputStream
 import java.nio.file.Files
@@ -78,6 +81,7 @@ data class DirectoryParsingResult(
 
 /**
  * Reads various content types using Apache Tika and extracts LeafSection objects containing the actual content.
+ * Can read local files or URLs via Spring Resource loading.
  *
  * This reader can handle Markdown, HTML, PDF, Word documents, and many other formats
  * supported by Apache Tika and returns a list of LeafSection objects that can be processed for RAG.
@@ -86,6 +90,13 @@ class HierarchicalContentReader {
 
     private val logger = LoggerFactory.getLogger(javaClass)
     private val parser = AutoDetectParser()
+    private val detector: Detector = DefaultDetector()
+
+    @JvmOverloads
+    fun parseUrl(
+        resourcePath: String,
+        metadata: Metadata = Metadata(),
+    ): MaterializedDocument = parseResource(resourcePath, metadata)
 
     /**
      * Parse content from a Spring Resource and return materialized content root
@@ -128,15 +139,37 @@ class HierarchicalContentReader {
         uri: String,
         metadata: Metadata = Metadata(),
     ): MaterializedDocument {
-        val handler = BodyContentHandler(-1) // No limit on content size
-        val parseContext = ParseContext()
-
         try {
-            parser.parse(inputStream, handler, metadata, parseContext)
-            val content = handler.toString()
-            val mimeType = metadata.get(TikaCoreProperties.CONTENT_TYPE_HINT) ?: "text/plain"
+            // Wrap in BufferedInputStream to support mark/reset for detection
+            val bufferedStream = if (inputStream is BufferedInputStream) {
+                inputStream
+            } else {
+                BufferedInputStream(inputStream)
+            }
 
-            logger.debug("Parsed content of type: {}, length: {}", mimeType, content.length)
+            // Autodetect content type if not explicitly provided
+            val detectedType = if (metadata.get(TikaCoreProperties.CONTENT_TYPE_HINT) != null) {
+                metadata.get(TikaCoreProperties.CONTENT_TYPE_HINT)
+            } else {
+                val mediaType = detector.detect(bufferedStream, metadata)
+                mediaType.toString()
+            }
+
+            logger.debug("Detected content type: {}", detectedType)
+
+            // For HTML content, read raw bytes to preserve HTML structure
+            if (detectedType.contains("html")) {
+                val rawContent = bufferedStream.readBytes().toString(Charsets.UTF_8)
+                return parseHtml(rawContent, metadata, uri)
+            }
+
+            val handler = BodyContentHandler(-1) // No limit on content size
+            val parseContext = ParseContext()
+
+            parser.parse(bufferedStream, handler, metadata, parseContext)
+            val content = handler.toString()
+
+            logger.debug("Parsed content of type: {}, length: {}", detectedType, content.length)
 
             // Detect markdown by content patterns if MIME type detection fails
             val hasMarkdownHeaders = content.lines().any { line ->
@@ -144,13 +177,9 @@ class HierarchicalContentReader {
             }
 
             return when {
-                mimeType.contains("markdown") || metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY)
+                detectedType.contains("markdown") || metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY)
                     ?.endsWith(".md") == true || hasMarkdownHeaders -> {
                     parseMarkdown(content, metadata, uri)
-                }
-
-                mimeType.contains("html") -> {
-                    parseHtml(content, metadata, uri)
                 }
 
                 else -> {
@@ -287,14 +316,95 @@ class HierarchicalContentReader {
         metadata: Metadata,
         uri: String,
     ): MaterializedDocument {
-        // For HTML, we'll use a simplified approach similar to markdown
-        // In a full implementation, you might want to use JSoup or similar
-        val cleanContent = content
-            .replace(Regex("<[^>]+>"), " ") // Remove HTML tags
-            .replace(Regex("\\s+"), " ") // Normalize whitespace
-            .trim()
+        // Parse HTML headings and create sections similar to markdown
+        val headingPattern = Regex("<h([1-6])[^>]*>(.*?)</h\\1>", RegexOption.IGNORE_CASE)
+        val headingMatches = headingPattern.findAll(content).toList()
 
-        return parsePlainText(cleanContent, metadata, uri)
+        if (headingMatches.isEmpty()) {
+            // No headings found, treat as plain text
+            val cleanContent = content
+                .replace(Regex("<[^>]+>"), " ") // Remove HTML tags
+                .replace(Regex("\\s+"), " ") // Normalize whitespace
+                .trim()
+            return parsePlainText(cleanContent, metadata, uri)
+        }
+
+        // Build sections from HTML headings
+        val leafSections = mutableListOf<LeafSection>()
+        val rootId = UUID.randomUUID().toString()
+        val sectionStack = mutableMapOf<Int, String>() // level -> sectionId
+
+        for (i in headingMatches.indices) {
+            val match = headingMatches[i]
+            val level = match.groupValues[1].toInt()
+            val title = match.groupValues[2]
+                .replace(Regex("<[^>]+>"), "") // Remove any HTML tags in title
+                .replace(Regex("\\s+"), " ")
+                .trim()
+
+            // Extract content between this heading and the next
+            val startIdx = match.range.last + 1
+            val endIdx = if (i + 1 < headingMatches.size) {
+                headingMatches[i + 1].range.first
+            } else {
+                content.length
+            }
+
+            val rawContent = if (startIdx < endIdx) {
+                content.substring(startIdx, endIdx)
+            } else {
+                ""
+            }
+
+            // Clean HTML tags from content
+            val cleanContent = rawContent
+                .replace(Regex("<[^>]+>"), " ")
+                .replace(Regex("\\s+"), " ")
+                .trim()
+
+            // Determine parent based on hierarchy
+            val sectionId = UUID.randomUUID().toString()
+            val parentId = when {
+                level == 1 -> rootId
+                level > 1 -> {
+                    // Find the most recent parent at level - 1
+                    (level - 1 downTo 1).firstNotNullOfOrNull { sectionStack[it] } ?: rootId
+                }
+
+                else -> rootId
+            }
+
+            sectionStack[level] = sectionId
+            // Clear deeper levels
+            sectionStack.keys.filter { it > level }.forEach { sectionStack.remove(it) }
+
+            leafSections.add(
+                createLeafSection(
+                    sectionId,
+                    title,
+                    cleanContent,
+                    parentId,
+                    uri,
+                    metadata,
+                    rootId
+                )
+            )
+        }
+
+        logger.debug("Created {} leaf sections from HTML content", leafSections.size)
+
+        // Build the hierarchical structure
+        val documentTitle = metadata.get(TikaCoreProperties.TITLE)
+            ?: metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY)
+            ?: (if (leafSections.isNotEmpty()) leafSections.first().title else "Document")
+
+        return MaterializedDocument(
+            id = rootId,
+            uri = uri,
+            title = documentTitle,
+            children = leafSections,
+            metadata = extractMetadataMap(metadata)
+        )
     }
 
     /**
