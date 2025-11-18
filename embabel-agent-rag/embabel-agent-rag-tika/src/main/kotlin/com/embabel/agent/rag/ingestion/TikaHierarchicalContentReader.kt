@@ -16,6 +16,7 @@
 package com.embabel.agent.rag.ingestion
 
 import com.embabel.agent.rag.LeafSection
+import com.embabel.agent.rag.NavigableSection
 import com.embabel.agent.tools.file.FileReadTools
 import org.apache.tika.detect.DefaultDetector
 import org.apache.tika.detect.Detector
@@ -242,11 +243,13 @@ class TikaHierarchicalContentReader : HierarchicalContentReader {
         val documentTitle =
             extractTitle(lines, metadata) ?: metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY) ?: "Document"
 
+        val hierarchicalSections = buildHierarchy(leafSections, rootId)
+
         return MaterializedDocument(
             id = rootId,
             uri = uri,
             title = documentTitle,
-            children = leafSections,
+            children = hierarchicalSections,
             metadata = extractMetadataMap(metadata)
         )
     }
@@ -341,11 +344,13 @@ class TikaHierarchicalContentReader : HierarchicalContentReader {
             ?: metadata.get(TikaCoreProperties.RESOURCE_NAME_KEY)
             ?: (if (leafSections.isNotEmpty()) leafSections.first().title else "Document")
 
+        val hierarchicalSections = buildHierarchy(leafSections, rootId)
+
         return MaterializedDocument(
             id = rootId,
             uri = uri,
             title = documentTitle,
-            children = leafSections,
+            children = hierarchicalSections,
             metadata = extractMetadataMap(metadata)
         )
     }
@@ -381,6 +386,69 @@ class TikaHierarchicalContentReader : HierarchicalContentReader {
             children = listOf(leafSection),
             metadata = extractMetadataMap(metadata)
         )
+    }
+
+    /**
+     * Build hierarchical structure from flat list of sections with parent IDs.
+     * Sections with children become ContainerSections, sections without children remain LeafSections.
+     * If a section has both content and children, the content is preserved as a preamble leaf section.
+     */
+    private fun buildHierarchy(
+        sections: List<LeafSection>,
+        rootId: String
+    ): List<NavigableSection> {
+        if (sections.isEmpty()) return emptyList()
+
+        // Group sections by their parent ID
+        val sectionsByParent = sections.groupBy { it.parentId }
+
+        // Recursive function to build a section with its children
+        fun buildSection(section: LeafSection): NavigableSection {
+            val children = sectionsByParent[section.id] ?: emptyList()
+
+            return if (children.isEmpty()) {
+                // No children - keep as LeafSection
+                section
+            } else {
+                // Has children - convert to ContainerSection
+                // If section has content, preserve it as a preamble/introduction leaf
+                val childSections = mutableListOf<NavigableSection>()
+
+                if (section.content.isNotBlank()) {
+                    // Create a preamble leaf section to preserve the content
+                    val preambleId = "${section.id}_preamble"
+                    val preambleMetadata = section.metadata.toMutableMap().apply {
+                        // Update leaf_section_id to match the preamble's id
+                        put("leaf_section_id", preambleId)
+                    }
+                    val preambleSection = LeafSection(
+                        id = preambleId,
+                        uri = section.uri,
+                        title = section.title,
+                        text = section.content,
+                        parentId = section.id,
+                        metadata = preambleMetadata
+                    )
+                    childSections.add(preambleSection)
+                }
+
+                // Add the actual child sections
+                childSections.addAll(children.map { buildSection(it) })
+
+                DefaultMaterializedContainerSection(
+                    id = section.id,
+                    uri = section.uri,
+                    title = section.title,
+                    children = childSections,
+                    parentId = section.parentId,
+                    metadata = section.metadata
+                )
+            }
+        }
+
+        // Build the tree starting from top-level sections (those with rootId as parent)
+        val topLevelSections = sectionsByParent[rootId] ?: emptyList()
+        return topLevelSections.map { buildSection(it) }
     }
 
     private fun createLeafSection(

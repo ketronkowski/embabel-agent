@@ -61,19 +61,22 @@ class TikaHierarchicalContentReaderTest {
 
             val result = reader.parseContent(inputStream, metadata = metadata, uri = "test://example.md")
 
-            assertEquals(4, result.children.toList().size) // Introduction + Section 1 + Subsection 1.1 + Section 2
+            // Check descendants (all sections in hierarchy including preambles)
+            val allDescendants = result.descendants()
+            // Main Title container + preamble, Section 1 container + preamble, Subsection 1.1 leaf, Section 2 leaf = 6
+            assertEquals(6, allDescendants.size)
             assertEquals("test://example.md", result.uri)
             assertNotNull(result.id)
 
             // Check that all sections have proper titles and content
-            val titles = result.children.map { it.title }
+            val titles = allDescendants.map { it.title }
             assertTrue(titles.contains("Main Title"))
             assertTrue(titles.contains("Section 1"))
             assertTrue(titles.contains("Subsection 1.1"))
             assertTrue(titles.contains("Section 2"))
 
             // Check that all sections have the same URL
-            result.children.forEach { section ->
+            allDescendants.forEach { section ->
                 assertEquals("test://example.md", section.uri)
                 assertNotNull(section.id)
             }
@@ -108,10 +111,14 @@ class TikaHierarchicalContentReaderTest {
 
             val result = reader.parseContent(inputStream, "x", metadata)
 
-            assertEquals(6, result.children.toList().size) // All leaf sections
+            // Check all descendants (all sections in hierarchy including preambles)
+            val allDescendants = result.descendants()
+            // Document Title, Chapter 1, Section 1.1, Subsection 1.1.1, Section 1.2, Chapter 2 (sections)
+            // + preambles for Document Title, Chapter 1, Section 1.1 = 9 total
+            assertEquals(9, allDescendants.size)
             assertNotNull(result.id)
 
-            val titles = result.children.map { it.title }
+            val titles = allDescendants.map { it.title }
             assertTrue(titles.contains("Document Title"))
             assertTrue(titles.contains("Chapter 1"))
             assertTrue(titles.contains("Section 1.1"))
@@ -119,10 +126,10 @@ class TikaHierarchicalContentReaderTest {
             assertTrue(titles.contains("Section 1.2"))
             assertTrue(titles.contains("Chapter 2"))
 
-            // Verify all sections have content
-            result.children.forEach { section ->
-                assertTrue((section as LeafSection).content.isNotBlank())
-                assertNotNull(section.id)
+            // Verify all leaf sections have content
+            result.leaves().forEach { leaf ->
+                assertTrue(leaf.content.isNotBlank())
+                assertNotNull(leaf.id)
             }
         }
 
@@ -150,13 +157,15 @@ class TikaHierarchicalContentReaderTest {
 
             val result = reader.parseContent(inputStream, "x", metadata)
 
-            assertEquals(2, result.children.toList().size)
-            val titles = result.children.map { it.title }
+            val allDescendants = result.descendants()
+            // Code Examples container + preamble + Another Section leaf = 3
+            assertEquals(3, allDescendants.size)
+            val titles = allDescendants.map { it.title }
             assertTrue(titles.contains("Code Examples"))
             assertTrue(titles.contains("Another Section"))
 
-            // Find the Code Examples section and verify it contains the code block
-            val codeSection = result.children.find { it.title == "Code Examples" } as LeafSection?
+            // Find the Code Examples preamble section and verify it contains the code block
+            val codeSection = result.leaves().find { it.title == "Code Examples" }
             assertNotNull(codeSection)
             assertTrue(codeSection!!.content.contains("```kotlin"))
             assertTrue(codeSection.content.contains("fun main()"))
@@ -220,16 +229,19 @@ class TikaHierarchicalContentReaderTest {
 
             val result = reader.parseContent(inputStream, "uri")
 
-            assertEquals(4, result.children.toList().size)
-            val titles = result.children.map { it.title }
-            assertEquals(listOf("Level 1 Title", "Level 2 Title", "Level 3 Title", "Level 4 Title"), titles)
+            // Check all descendants (including preambles)
+            val allDescendants = result.descendants()
+            // Each level has content so gets preamble: L1, L1_preamble, L2, L2_preamble, L3, L3_preamble, L4 = 7
+            assertEquals(7, allDescendants.size)
+            // Note: titles will include duplicates due to preambles having same title as their container
+            val uniqueTitles = allDescendants.map { it.title }.distinct()
+            assertTrue(uniqueTitles.containsAll(listOf("Level 1 Title", "Level 2 Title", "Level 3 Title", "Level 4 Title")))
 
-            // Verify each section has appropriate content
-            result.children.forEach { section ->
-                val leafSection = section as LeafSection
-                assertTrue(leafSection.content.startsWith("Content under"))
-                assertNotNull(leafSection.id)
-                assertNotNull(leafSection.parentId) // All sections should have parent references
+            // Verify each leaf section has appropriate content
+            result.leaves().forEach { leaf ->
+                assertTrue(leaf.content.startsWith("Content under"))
+                assertNotNull(leaf.id)
+                assertNotNull(leaf.parentId) // All sections should have parent references
             }
         }
 
@@ -250,21 +262,26 @@ class TikaHierarchicalContentReaderTest {
 
             val result = reader.parseContent(inputStream, "uri")
 
-            assertEquals(3, result.children.toList().size)
+            // Check all descendants (including preambles)
+            val allDescendants = result.descendants()
+            // Main, Main_preamble, Sub, Sub_preamble, Deep = 5
+            assertEquals(5, allDescendants.size)
 
             // All sections should have parent IDs set
-            result.children.forEach { section ->
+            allDescendants.forEach { section ->
                 assertNotNull(section.parentId)
             }
 
-            // Verify content is correctly assigned
-            val mainSection = result.children.find { it.title == "Main Section" } as LeafSection?
+            // Verify content is correctly assigned (preambles preserve content)
+            val leaves = result.leaves()
+            // Main and Sub sections have preambles (same title), Deep is a leaf
+            val mainSection = leaves.find { it.title == "Main Section" }
             assertEquals("Main content.", mainSection?.content?.trim())
 
-            val subSection = result.children.find { it.title == "Sub Section" } as LeafSection?
+            val subSection = leaves.find { it.title == "Sub Section" }
             assertEquals("Sub content.", subSection?.content?.trim())
 
-            val deepSection = result.children.find { it.title == "Deep Section" } as LeafSection?
+            val deepSection = leaves.find { it.title == "Deep Section" }
             assertEquals("Deep content.", deepSection?.content?.trim())
         }
 
@@ -286,17 +303,144 @@ class TikaHierarchicalContentReaderTest {
 
             val result = reader.parseFile(markdownFile)
 
-            assertEquals(3, result.children.toList().size)
+            // Check all descendants (including preambles)
+            val allDescendants = result.descendants()
+            // Test Document container + preamble + First Section leaf + Second Section leaf = 4
+            assertEquals(4, allDescendants.size)
             assertNotNull(result.id)
-            val titles = result.children.map { it.title }
+            val titles = allDescendants.map { it.title }
             assertTrue(titles.contains("Test Document"))
             assertTrue(titles.contains("First Section"))
             assertTrue(titles.contains("Second Section"))
 
-            result.children.forEach { section ->
+            allDescendants.forEach { section ->
                 assertTrue(section.uri!!.contains("test.md"))
                 assertNotNull(section.id)
             }
+        }
+
+        @Test
+        fun `test markdown builds proper hierarchical structure`() {
+            val markdown = """
+            # Chapter 1
+            Chapter 1 introduction
+
+            ## Section 1.1
+            Content for section 1.1
+
+            ### Subsection 1.1.1
+            Content for subsection 1.1.1
+
+            ## Section 1.2
+            Content for section 1.2
+
+            # Chapter 2
+            Chapter 2 introduction
+        """.trimIndent()
+
+            val inputStream = ByteArrayInputStream(markdown.toByteArray())
+            val metadata = Metadata().apply {
+                set(TikaCoreProperties.RESOURCE_NAME_KEY, "test.md")
+            }
+
+            val result = reader.parseContent(inputStream, metadata = metadata, uri = "test://hierarchy.md")
+
+            // Root document should have 2 direct children (Chapter 1 and Chapter 2)
+            assertEquals(2, result.children.size, "Root should have 2 H1 chapters as direct children")
+
+            // Find Chapter 1
+            val chapter1 = result.children.find { it.title == "Chapter 1" }
+            assertNotNull(chapter1, "Chapter 1 should exist")
+            assertTrue(chapter1 is NavigableContainerSection, "Chapter 1 should be a ContainerSection")
+
+            if (chapter1 is NavigableContainerSection) {
+                // Chapter 1 should have 3 children (preamble + Section 1.1 and Section 1.2)
+                assertEquals(3, chapter1.children.toList().size, "Chapter 1 should have preamble + 2 H2 sections as children")
+
+                // Find Section 1.1
+                val section11 = chapter1.children.find { it.title == "Section 1.1" }
+                assertNotNull(section11, "Section 1.1 should exist")
+                assertTrue(section11 is NavigableContainerSection, "Section 1.1 should be a ContainerSection")
+
+                if (section11 is NavigableContainerSection) {
+                    // Section 1.1 should have 2 children (preamble + Subsection 1.1.1)
+                    assertEquals(2, section11.children.toList().size, "Section 1.1 should have preamble + 1 H3 subsection as children")
+
+                    val subsection111 = section11.children.find { it.title == "Subsection 1.1.1" }
+                    assertNotNull(subsection111, "Subsection 1.1.1 should exist")
+                    assertTrue(subsection111 is LeafSection, "Subsection 1.1.1 should be a LeafSection")
+                }
+
+                // Section 1.2 should be a leaf
+                val section12 = chapter1.children.find { it.title == "Section 1.2" }
+                assertNotNull(section12, "Section 1.2 should exist")
+                assertTrue(section12 is LeafSection, "Section 1.2 should be a LeafSection")
+            }
+
+            // Chapter 2 should be a leaf
+            val chapter2 = result.children.find { it.title == "Chapter 2" }
+            assertNotNull(chapter2, "Chapter 2 should exist")
+            assertTrue(chapter2 is LeafSection, "Chapter 2 should be a LeafSection")
+        }
+
+        @Test
+        fun `test markdown with only top-level headings`() {
+            val markdown = """
+            # Section 1
+            Content 1
+
+            # Section 2
+            Content 2
+
+            # Section 3
+            Content 3
+        """.trimIndent()
+
+            val inputStream = ByteArrayInputStream(markdown.toByteArray())
+            val metadata = Metadata().apply {
+                set(TikaCoreProperties.RESOURCE_NAME_KEY, "flat.md")
+            }
+
+            val result = reader.parseContent(inputStream, metadata = metadata, uri = "test://flat.md")
+
+            // All top-level sections should be direct children and leaves
+            assertEquals(3, result.children.size)
+            result.children.forEach { section ->
+                assertTrue(section is LeafSection, "${section.title} should be a LeafSection")
+            }
+        }
+
+        @Test
+        fun `test markdown hierarchy with leaves method`() {
+            val markdown = """
+            # Top
+            Top content
+
+            ## Mid1
+            Mid1 content
+
+            ### Deep1
+            Deep1 content
+
+            ## Mid2
+            Mid2 content
+        """.trimIndent()
+
+            val inputStream = ByteArrayInputStream(markdown.toByteArray())
+            val metadata = Metadata().apply {
+                set(TikaCoreProperties.RESOURCE_NAME_KEY, "test.md")
+            }
+
+            val result = reader.parseContent(inputStream, metadata = metadata, uri = "test://test.md")
+
+            // Test leaves() method (includes preambles)
+            val allLeaves = result.leaves()
+            // Top preamble, Mid1 preamble, Deep1 leaf, Mid2 leaf = 4
+            assertEquals(4, allLeaves.size, "Should have 4 leaves (Top preamble, Mid1 preamble, Deep1, and Mid2)")
+
+            val leafTitles = allLeaves.map { it.title }
+            assertTrue(leafTitles.contains("Deep1"))
+            assertTrue(leafTitles.contains("Mid2"))
         }
     }
 
@@ -323,9 +467,11 @@ class TikaHierarchicalContentReaderTest {
 
             val result = reader.parseContent(inputStream, metadata = metadata, uri = "test://autodetect.html")
 
-            // Should detect HTML and parse headings
-            assertEquals(2, result.children.toList().size)
-            val titles = result.children.map { it.title }
+            // Should detect HTML and parse headings hierarchically (including preambles)
+            val allDescendants = result.descendants()
+            // First Heading container + preamble + Second Heading leaf = 3
+            assertEquals(3, allDescendants.size)
+            val titles = allDescendants.map { it.title }
             assertTrue(titles.contains("First Heading"))
             assertTrue(titles.contains("Second Heading"))
         }
@@ -351,19 +497,20 @@ class TikaHierarchicalContentReaderTest {
 
             val result = reader.parseContent(inputStream, metadata = metadata, uri = "Test")
 
-            // HTML headings should create separate sections
-            assertEquals(2, result.children.toList().size)
+            // HTML headings should create hierarchical sections (including preambles)
+            val allDescendants = result.descendants()
+            // Main Heading container + preamble + Second Heading leaf = 3
+            assertEquals(3, allDescendants.size)
 
-            val titles = result.children.map { it.title }
+            val titles = allDescendants.map { it.title }
             assertTrue(titles.contains("Main Heading"))
             assertTrue(titles.contains("Second Heading"))
 
             // Content should be cleaned HTML (no tags)
-            result.children.forEach { section ->
-                val leafSection = section as LeafSection
-                assertNotNull(leafSection.title)
-                assertFalse(leafSection.content.contains("<"))
-                assertFalse(leafSection.content.contains(">"))
+            result.leaves().forEach { leaf ->
+                assertNotNull(leaf.title)
+                assertFalse(leaf.content.contains("<"))
+                assertFalse(leaf.content.contains(">"))
             }
         }
 
@@ -395,21 +542,22 @@ class TikaHierarchicalContentReaderTest {
 
             val result = reader.parseContent(inputStream, metadata = metadata, uri = "test://example.html")
 
-            // HTML headings should create separate sections like markdown
-            assertEquals(4, result.children.toList().size)
+            // HTML headings should create hierarchical sections like markdown (including preambles)
+            val allDescendants = result.descendants()
+            // Main Heading container + preamble, Second Heading container + preamble, Sub Heading leaf, Third Heading leaf = 6
+            assertEquals(6, allDescendants.size)
 
-            val titles = result.children.map { it.title }
+            val titles = allDescendants.map { it.title }
             assertTrue(titles.contains("Main Heading"))
             assertTrue(titles.contains("Second Heading"))
             assertTrue(titles.contains("Sub Heading"))
             assertTrue(titles.contains("Third Heading"))
 
             // Verify content is properly extracted without HTML tags
-            result.children.forEach { section ->
-                val leafSection = section as LeafSection
-                assertFalse(leafSection.content.contains("<"))
-                assertFalse(leafSection.content.contains(">"))
-                assertTrue(leafSection.content.isNotBlank())
+            result.leaves().forEach { leaf ->
+                assertFalse(leaf.content.contains("<"))
+                assertFalse(leaf.content.contains(">"))
+                assertTrue(leaf.content.isNotBlank())
             }
         }
 
@@ -440,13 +588,119 @@ class TikaHierarchicalContentReaderTest {
 
             val result = reader.parseUrl("file:${tempFile.toAbsolutePath()}")
 
-            assertEquals(3, result.children.toList().size)
-            val titles = result.children.map { it.title }
+            val allDescendants = result.descendants()
+            // Introduction container + preamble + Features leaf + Conclusion leaf = 4
+            assertEquals(4, allDescendants.size)
+            val titles = allDescendants.map { it.title }
             assertTrue(titles.contains("Introduction"))
             assertTrue(titles.contains("Features"))
             assertTrue(titles.contains("Conclusion"))
 
             Files.deleteIfExists(tempFile)
+        }
+
+        @Test
+        fun `test HTML builds proper hierarchical structure not flat list`() {
+            val html = """
+            <html>
+            <body>
+                <h1>Chapter 1</h1>
+                <p>Chapter 1 introduction</p>
+
+                <h2>Section 1.1</h2>
+                <p>Content for section 1.1</p>
+
+                <h3>Subsection 1.1.1</h3>
+                <p>Content for subsection 1.1.1</p>
+
+                <h2>Section 1.2</h2>
+                <p>Content for section 1.2</p>
+
+                <h1>Chapter 2</h1>
+                <p>Chapter 2 introduction</p>
+            </body>
+            </html>
+        """.trimIndent()
+
+            val inputStream = ByteArrayInputStream(html.toByteArray())
+            val metadata = Metadata().apply {
+                set(TikaCoreProperties.CONTENT_TYPE_HINT, "text/html")
+            }
+
+            val result = reader.parseContent(inputStream, metadata = metadata, uri = "test://hierarchy.html")
+
+            // Root document should have 2 direct children (Chapter 1 and Chapter 2)
+            assertEquals(2, result.children.size, "Root should have 2 H1 chapters as direct children")
+
+            // Find Chapter 1
+            val chapter1 = result.children.find { it.title == "Chapter 1" }
+            assertNotNull(chapter1, "Chapter 1 should exist")
+            assertTrue(chapter1 is NavigableContainerSection, "Chapter 1 should be a ContainerSection")
+
+            if (chapter1 is NavigableContainerSection) {
+                // Chapter 1 should have 3 children (preamble + Section 1.1 and Section 1.2)
+                assertEquals(3, chapter1.children.toList().size, "Chapter 1 should have preamble + 2 H2 sections as children")
+
+                // Find Section 1.1
+                val section11 = chapter1.children.find { it.title == "Section 1.1" }
+                assertNotNull(section11, "Section 1.1 should exist")
+                assertTrue(section11 is NavigableContainerSection, "Section 1.1 should be a ContainerSection")
+
+                if (section11 is NavigableContainerSection) {
+                    // Section 1.1 should have 2 children (preamble + Subsection 1.1.1)
+                    assertEquals(2, section11.children.toList().size, "Section 1.1 should have preamble + 1 H3 subsection as children")
+
+                    val subsection111 = section11.children.find { it.title == "Subsection 1.1.1" }
+                    assertNotNull(subsection111, "Subsection 1.1.1 should exist")
+                    assertTrue(subsection111 is LeafSection, "Subsection 1.1.1 should be a LeafSection")
+                }
+
+                // Section 1.2 should be a leaf
+                val section12 = chapter1.children.find { it.title == "Section 1.2" }
+                assertNotNull(section12, "Section 1.2 should exist")
+                assertTrue(section12 is LeafSection, "Section 1.2 should be a LeafSection")
+            }
+
+            // Chapter 2 should be a leaf
+            val chapter2 = result.children.find { it.title == "Chapter 2" }
+            assertNotNull(chapter2, "Chapter 2 should exist")
+            assertTrue(chapter2 is LeafSection, "Chapter 2 should be a LeafSection")
+        }
+
+        @Test
+        fun `test HTML hierarchy with descendants and leaves`() {
+            val html = """
+            <html>
+            <body>
+                <h1>Top Level</h1>
+                <p>Top content</p>
+
+                <h2>Mid Level</h2>
+                <p>Mid content</p>
+
+                <h3>Deep Level</h3>
+                <p>Deep content</p>
+            </body>
+            </html>
+        """.trimIndent()
+
+            val inputStream = ByteArrayInputStream(html.toByteArray())
+            val metadata = Metadata().apply {
+                set(TikaCoreProperties.CONTENT_TYPE_HINT, "text/html")
+            }
+
+            val result = reader.parseContent(inputStream, metadata = metadata, uri = "test://deep.html")
+
+            // Test descendants() method (including preambles)
+            val allDescendants = result.descendants()
+            // Top Level container + preamble, Mid Level container + preamble, Deep Level leaf = 5
+            assertEquals(5, allDescendants.size, "Should have 5 total descendants")
+
+            // Test leaves() method (includes preambles)
+            val allLeaves = result.leaves()
+            // Top preamble, Mid preamble, Deep leaf = 3
+            assertEquals(3, allLeaves.size, "Should have 3 leaves (Top preamble, Mid preamble, Deep Level)")
+            assertTrue(allLeaves.any { it.title == "Deep Level" })
         }
     }
 
@@ -569,8 +823,7 @@ class TikaHierarchicalContentReaderTest {
             val result = reader.parseContent(inputStream, "test://example.md", metadata)
 
             // Verify all leaf sections have the required metadata
-            result.children.forEach { section ->
-                val leafSection = section as LeafSection
+            result.leaves().forEach { leafSection ->
                 assertNotNull(
                     leafSection.metadata["root_document_id"],
                     "Section '${leafSection.title}' is missing root_document_id"
@@ -586,6 +839,7 @@ class TikaHierarchicalContentReaderTest {
 
                 // Verify the values are correct
                 assertEquals(result.id, leafSection.metadata["root_document_id"])
+                // Note: leaf_section_id should match the leaf's own id, which might include _preamble suffix
                 assertEquals(leafSection.id, leafSection.metadata["leaf_section_id"])
             }
         }
@@ -676,7 +930,8 @@ class TikaHierarchicalContentReaderTest {
             // Verify parsed content
             val documentRoot = result.contentRoots.find { it.title == "Test Document" }
             assertNotNull(documentRoot)
-            assertEquals(2, documentRoot!!.leaves().size) // 2 sections in document.md
+            // Test Document has preamble + Section 1 leaf = 2 leaves
+            assertEquals(2, documentRoot!!.leaves().size)
 
             val readmeRoot = result.contentRoots.find { it.title == "This is a simple text file." }
             assertNotNull(readmeRoot)
@@ -909,6 +1164,7 @@ class TikaHierarchicalContentReaderTest {
                 )
 
                 assertEquals(document.id, leaf.metadata["root_document_id"])
+                // leaf_section_id equals the leaf's id (which may have _preamble suffix)
                 assertEquals(leaf.id, leaf.metadata["leaf_section_id"])
             }
         }

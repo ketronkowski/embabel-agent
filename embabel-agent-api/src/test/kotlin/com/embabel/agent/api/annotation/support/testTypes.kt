@@ -671,7 +671,7 @@ class FromPersonUsesObjectToolsViaAi {
         ai: Ai,
     ): UserInput {
         return ai.withDefaultLlm()
-            .withToolObjects(ToolObject(FunnyTool()))
+            .withToolObjectInstances(ToolObject(FunnyTool()))
             .createObject("Create a UserInput")
     }
 }

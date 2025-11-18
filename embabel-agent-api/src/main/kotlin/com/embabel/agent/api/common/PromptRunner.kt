@@ -200,10 +200,10 @@ interface PromptRunner : LlmUse, PromptRunnerOperations {
         toolObject: ToolObject,
     ): PromptRunner
 
-    fun withToolObjects(vararg toolObjects: Any?): PromptRunner =
+    fun withToolObjectInstances(vararg toolObjects: Any?): PromptRunner =
         toolObjects.fold(this) { acc, toolObject -> acc.withToolObject(toolObject) }
 
-    fun withToolObjects(toolObjects: List<ToolObject>): PromptRunner =
+    fun withToolObjects(toolObjects: List<Any>): PromptRunner =
         toolObjects.fold(this) { acc, toolObject -> acc.withToolObject(toolObject) }
 
     /**
