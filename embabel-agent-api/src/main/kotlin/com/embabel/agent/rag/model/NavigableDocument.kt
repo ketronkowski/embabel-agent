@@ -13,12 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.embabel.agent.rag.ingestion
-
-import com.embabel.agent.rag.model.ContainerSection
-import com.embabel.agent.rag.model.ContentRoot
-import com.embabel.agent.rag.model.LeafSection
-import com.embabel.agent.rag.model.NavigableSection
+package com.embabel.agent.rag.model
 
 interface NavigableContainerSection : ContainerSection, NavigableSection {
 

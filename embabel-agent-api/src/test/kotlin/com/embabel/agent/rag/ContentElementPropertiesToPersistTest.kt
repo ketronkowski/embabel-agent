@@ -15,8 +15,8 @@
  */
 package com.embabel.agent.rag
 
-import com.embabel.agent.rag.ingestion.DefaultMaterializedContainerSection
-import com.embabel.agent.rag.ingestion.MaterializedDocument
+import com.embabel.agent.rag.model.DefaultMaterializedContainerSection
+import com.embabel.agent.rag.model.MaterializedDocument
 import com.embabel.agent.rag.model.Chunk
 import com.embabel.agent.rag.model.Fact
 import com.embabel.agent.rag.model.LeafSection

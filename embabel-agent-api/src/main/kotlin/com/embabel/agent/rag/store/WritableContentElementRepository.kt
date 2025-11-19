@@ -15,9 +15,8 @@
  */
 package com.embabel.agent.rag.store
 
-import com.embabel.agent.rag.model.Retrievable
 import com.embabel.agent.rag.ingestion.RetrievableEnhancer
-import com.embabel.agent.rag.ingestion.ContentElementRepository
+import com.embabel.agent.rag.model.Retrievable
 
 /**
  * WritableRagService that also allows us to load and save ContentElements.

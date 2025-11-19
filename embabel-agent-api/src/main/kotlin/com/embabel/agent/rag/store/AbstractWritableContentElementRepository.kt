@@ -16,7 +16,7 @@
 package com.embabel.agent.rag.store
 
 import com.embabel.agent.rag.ingestion.ContentChunker
-import com.embabel.agent.rag.ingestion.NavigableDocument
+import com.embabel.agent.rag.model.NavigableDocument
 
 /**
  * Convenience base class for WritableRagService implementations.

@@ -15,7 +15,7 @@
  */
 package com.embabel.agent.rag.store
 
-import com.embabel.agent.rag.ingestion.NavigableDocument
+import com.embabel.agent.rag.model.NavigableDocument
 import com.embabel.common.core.types.Named
 import org.springframework.ai.document.DocumentWriter
 

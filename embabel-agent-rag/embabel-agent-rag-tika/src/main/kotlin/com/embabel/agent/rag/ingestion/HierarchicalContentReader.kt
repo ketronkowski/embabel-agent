@@ -15,6 +15,7 @@
  */
 package com.embabel.agent.rag.ingestion
 
+import com.embabel.agent.rag.model.NavigableDocument
 import com.embabel.agent.tools.file.FileReadTools
 import java.io.File
 import java.io.InputStream

@@ -18,6 +18,7 @@ package com.embabel.agent.rag.ingestion
 import com.embabel.agent.rag.model.Chunk
 import com.embabel.agent.rag.model.ContentRoot
 import com.embabel.agent.rag.model.LeafSection
+import com.embabel.agent.rag.model.NavigableContainerSection
 import org.slf4j.LoggerFactory
 import java.util.*
 

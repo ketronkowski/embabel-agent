@@ -15,7 +15,9 @@
  */
 package com.embabel.agent.rag.ingestion
 
+import com.embabel.agent.rag.model.DefaultMaterializedContainerSection
 import com.embabel.agent.rag.model.LeafSection
+import com.embabel.agent.rag.model.MaterializedDocument
 import com.embabel.agent.rag.model.NavigableSection
 import com.embabel.agent.tools.file.FileReadTools
 import org.apache.tika.detect.DefaultDetector
@@ -395,7 +397,7 @@ class TikaHierarchicalContentReader : HierarchicalContentReader {
      */
     private fun buildHierarchy(
         sections: List<LeafSection>,
-        rootId: String
+        rootId: String,
     ): List<NavigableSection> {
         if (sections.isEmpty()) return emptyList()
 

@@ -16,9 +16,9 @@
 package com.embabel.agent.rag.neo.ogm
 
 import com.embabel.agent.api.common.Embedding
-import com.embabel.agent.rag.ingestion.DefaultMaterializedContainerSection
-import com.embabel.agent.rag.ingestion.MaterializedDocument
-import com.embabel.agent.rag.ingestion.NavigableDocument
+import com.embabel.agent.rag.model.DefaultMaterializedContainerSection
+import com.embabel.agent.rag.model.MaterializedDocument
+import com.embabel.agent.rag.model.NavigableDocument
 import com.embabel.agent.rag.ingestion.RetrievableEnhancer
 import com.embabel.agent.rag.model.Chunk
 import com.embabel.agent.rag.model.ContentElement

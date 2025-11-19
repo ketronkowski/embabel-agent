@@ -15,8 +15,10 @@
  */
 package com.embabel.agent.rag.ingestion
 
-import com.embabel.agent.rag.model.LeafSection
 import com.embabel.agent.rag.model.Chunk
+import com.embabel.agent.rag.model.DefaultMaterializedContainerSection
+import com.embabel.agent.rag.model.LeafSection
+import com.embabel.agent.rag.model.MaterializedDocument
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.util.*

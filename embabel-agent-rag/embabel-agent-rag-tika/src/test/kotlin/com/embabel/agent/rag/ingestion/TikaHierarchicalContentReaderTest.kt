@@ -16,6 +16,7 @@
 package com.embabel.agent.rag.ingestion
 
 import com.embabel.agent.rag.model.LeafSection
+import com.embabel.agent.rag.model.NavigableContainerSection
 import com.embabel.agent.tools.file.FileReadTools
 import io.mockk.every
 import io.mockk.mockk
@@ -235,7 +236,16 @@ class TikaHierarchicalContentReaderTest {
             assertEquals(7, allDescendants.size)
             // Note: titles will include duplicates due to preambles having same title as their container
             val uniqueTitles = allDescendants.map { it.title }.distinct()
-            assertTrue(uniqueTitles.containsAll(listOf("Level 1 Title", "Level 2 Title", "Level 3 Title", "Level 4 Title")))
+            assertTrue(
+                uniqueTitles.containsAll(
+                    listOf(
+                        "Level 1 Title",
+                        "Level 2 Title",
+                        "Level 3 Title",
+                        "Level 4 Title"
+                    )
+                )
+            )
 
             // Verify each leaf section has appropriate content
             result.leaves().forEach { leaf ->
@@ -355,7 +365,11 @@ class TikaHierarchicalContentReaderTest {
 
             if (chapter1 is NavigableContainerSection) {
                 // Chapter 1 should have 3 children (preamble + Section 1.1 and Section 1.2)
-                assertEquals(3, chapter1.children.toList().size, "Chapter 1 should have preamble + 2 H2 sections as children")
+                assertEquals(
+                    3,
+                    chapter1.children.toList().size,
+                    "Chapter 1 should have preamble + 2 H2 sections as children"
+                )
 
                 // Find Section 1.1
                 val section11 = chapter1.children.find { it.title == "Section 1.1" }
@@ -364,7 +378,11 @@ class TikaHierarchicalContentReaderTest {
 
                 if (section11 is NavigableContainerSection) {
                     // Section 1.1 should have 2 children (preamble + Subsection 1.1.1)
-                    assertEquals(2, section11.children.toList().size, "Section 1.1 should have preamble + 1 H3 subsection as children")
+                    assertEquals(
+                        2,
+                        section11.children.toList().size,
+                        "Section 1.1 should have preamble + 1 H3 subsection as children"
+                    )
 
                     val subsection111 = section11.children.find { it.title == "Subsection 1.1.1" }
                     assertNotNull(subsection111, "Subsection 1.1.1 should exist")
@@ -639,7 +657,11 @@ class TikaHierarchicalContentReaderTest {
 
             if (chapter1 is NavigableContainerSection) {
                 // Chapter 1 should have 3 children (preamble + Section 1.1 and Section 1.2)
-                assertEquals(3, chapter1.children.toList().size, "Chapter 1 should have preamble + 2 H2 sections as children")
+                assertEquals(
+                    3,
+                    chapter1.children.toList().size,
+                    "Chapter 1 should have preamble + 2 H2 sections as children"
+                )
 
                 // Find Section 1.1
                 val section11 = chapter1.children.find { it.title == "Section 1.1" }
@@ -648,7 +670,11 @@ class TikaHierarchicalContentReaderTest {
 
                 if (section11 is NavigableContainerSection) {
                     // Section 1.1 should have 2 children (preamble + Subsection 1.1.1)
-                    assertEquals(2, section11.children.toList().size, "Section 1.1 should have preamble + 1 H3 subsection as children")
+                    assertEquals(
+                        2,
+                        section11.children.toList().size,
+                        "Section 1.1 should have preamble + 1 H3 subsection as children"
+                    )
 
                     val subsection111 = section11.children.find { it.title == "Subsection 1.1.1" }
                     assertNotNull(subsection111, "Subsection 1.1.1 should exist")

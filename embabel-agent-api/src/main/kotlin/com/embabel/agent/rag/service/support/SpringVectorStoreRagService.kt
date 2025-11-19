@@ -16,7 +16,7 @@
 package com.embabel.agent.rag.service.support
 
 import com.embabel.agent.rag.model.Chunk
-import com.embabel.agent.rag.ingestion.NavigableDocument
+import com.embabel.agent.rag.model.NavigableDocument
 import com.embabel.agent.rag.service.RagRequest
 import com.embabel.agent.rag.service.RagResponse
 import com.embabel.agent.rag.service.RagService
