@@ -604,7 +604,11 @@ class TikaHierarchicalContentReaderTest {
             val tempFile = Files.createTempFile("test", ".html")
             Files.writeString(tempFile, html)
 
-            val result = reader.parseUrl("file:${tempFile.toAbsolutePath()}")
+            val fileUrl = "file:${tempFile.toAbsolutePath()}"
+            val result = reader.parseUrl(fileUrl)
+
+            // Verify URI is correctly set on document
+            assertEquals(fileUrl, result.uri, "Document URI should match the input file URL")
 
             val allDescendants = result.descendants()
             // Introduction container + preamble + Features leaf + Conclusion leaf = 4
@@ -614,7 +618,49 @@ class TikaHierarchicalContentReaderTest {
             assertTrue(titles.contains("Features"))
             assertTrue(titles.contains("Conclusion"))
 
+            // Verify all descendant sections also have the correct URI
+            allDescendants.forEach { section ->
+                assertEquals(fileUrl, section.uri, "Section '${section.title}' should have URI matching input file URL")
+            }
+
             Files.deleteIfExists(tempFile)
+        }
+
+        @Test
+        fun `test parseUrl preserves exact URI including custom schemes`() {
+            val html = """
+            <html>
+            <body>
+                <h1>Test</h1>
+                <p>Content</p>
+            </body>
+            </html>
+            """.trimIndent()
+
+            // Test with file URL
+            val tempFile = Files.createTempFile("test", ".html")
+            Files.writeString(tempFile, html)
+            val fileUrl = "file:${tempFile.toAbsolutePath()}"
+            val fileResult = reader.parseUrl(fileUrl)
+            assertEquals(fileUrl, fileResult.uri, "Document URI should exactly match input file URL")
+            fileResult.descendants().forEach { section ->
+                assertEquals(fileUrl, section.uri, "All sections should have matching URI")
+            }
+            Files.deleteIfExists(tempFile)
+
+            // Test with classpath resource
+            val classpathUrl = "classpath:application-test.properties"
+            val classpathResult = reader.parseUrl(classpathUrl)
+            assertEquals(classpathUrl, classpathResult.uri, "Document URI should exactly match input classpath URL")
+
+            // Test with HTTP URL simulation via ByteArrayInputStream
+            val httpUrl = "https://example.com/document.html"
+            val inputStream = ByteArrayInputStream(html.toByteArray())
+            val httpResult = reader.parseContent(inputStream, httpUrl)
+            assertEquals(httpUrl, httpResult.uri, "Document URI should exactly match input HTTP URL")
+            httpResult.descendants().forEach { section ->
+                assertEquals(httpUrl, section.uri, "All sections should have matching URI")
+            }
         }
 
         @Test

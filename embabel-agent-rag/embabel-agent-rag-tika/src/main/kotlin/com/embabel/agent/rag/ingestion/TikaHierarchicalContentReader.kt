@@ -57,7 +57,7 @@ class TikaHierarchicalContentReader : HierarchicalContentReader {
     ): MaterializedDocument {
         val resource: Resource = DefaultResourceLoader().getResource(resourcePath)
         return resource.inputStream.use { inputStream ->
-            parseContent(inputStream, resource.uri.toString())
+            parseContent(inputStream, resourcePath)
         }
     }
 
