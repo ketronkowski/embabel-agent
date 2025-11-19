@@ -26,13 +26,6 @@ import java.util.*
  */
 sealed interface Source : Retrievable
 
-/**
- * Implemented by objects that are from a source.
- */
-interface Sourced {
-    val basis: Retrievable
-}
-
 
 /**
  * A fact.
