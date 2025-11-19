@@ -57,6 +57,17 @@ class LuceneRagFacetProviderTest {
         }
     }
 
+    /**
+     * Helper method to call protected commit() using reflection
+     */
+    private fun LuceneRagFacetProvider.commitChanges() {
+        val commitMethod = this::class.functions.find { it.name == "commit" }
+        commitMethod?.let {
+            it.isAccessible = true
+            it.call(this)
+        }
+    }
+
     @BeforeEach
     fun setUp() {
         ragService = LuceneRagFacetProvider(name = "lucene-rag")
@@ -832,6 +843,272 @@ class LuceneRagFacetProviderTest {
             val allChunks = ragService.findAll()
             assertEquals(3, allChunks.size, "findAll should return exactly 3 chunks")
             assertEquals(setOf("doc1", "doc2", "doc3"), allChunks.map { it.id }.toSet())
+        }
+    }
+
+    @Nested
+    inner class DeleteDocumentTests {
+
+        @Test
+        fun `should delete document root and all descendants by URI`() {
+            // Create a document structure
+            val documentUri = "test://doc1"
+            val root = com.embabel.agent.rag.model.MaterializedDocument(
+                id = "doc1",
+                uri = documentUri,
+                title = "Test Document",
+                children = listOf()
+            )
+
+            val section = com.embabel.agent.rag.model.LeafSection(
+                id = "section1",
+                uri = documentUri,
+                title = "Section 1",
+                text = "Section content",
+                parentId = "doc1"
+            )
+
+            val chunk1 = com.embabel.agent.rag.model.Chunk(
+                id = "chunk1",
+                text = "Chunk 1 content",
+                parentId = "section1",
+                metadata = emptyMap()
+            )
+
+            val chunk2 = com.embabel.agent.rag.model.Chunk(
+                id = "chunk2",
+                text = "Chunk 2 content",
+                parentId = "section1",
+                metadata = emptyMap()
+            )
+
+            // Save all elements
+            ragService.save(root)
+            ragService.save(section)
+            ragService.onNewRetrievables(listOf(chunk1, chunk2))
+            ragService.commitChanges()
+
+            // Verify elements exist
+            assertEquals(4, ragService.count())
+
+            // Delete document and descendants
+            val result = ragService.deleteRootAndDescendants(documentUri)
+
+            assertNotNull(result)
+            assertEquals(documentUri, result!!.rootUri)
+            assertEquals(4, result.deletedCount)
+
+            // Verify all elements are deleted
+            assertEquals(0, ragService.count())
+            assertNull(ragService.findById("doc1"))
+            assertNull(ragService.findById("section1"))
+            assertTrue(ragService.findAllChunksById(listOf("chunk1", "chunk2")).isEmpty())
+        }
+
+        @Test
+        fun `should return null when deleting non-existent document`() {
+            val result = ragService.deleteRootAndDescendants("test://nonexistent")
+            assertNull(result)
+        }
+
+        @Test
+        fun `should not affect other documents when deleting one`() {
+            // Create two separate documents
+            val doc1Uri = "test://doc1"
+            val doc1 = com.embabel.agent.rag.model.MaterializedDocument(
+                id = "doc1",
+                uri = doc1Uri,
+                title = "Document 1",
+                children = emptyList()
+            )
+
+            val chunk1 = com.embabel.agent.rag.model.Chunk(
+                id = "chunk1",
+                text = "Chunk from doc1",
+                parentId = "doc1",
+                metadata = emptyMap()
+            )
+
+            val doc2Uri = "test://doc2"
+            val doc2 = com.embabel.agent.rag.model.MaterializedDocument(
+                id = "doc2",
+                uri = doc2Uri,
+                title = "Document 2",
+                children = emptyList()
+            )
+
+            val chunk2 = com.embabel.agent.rag.model.Chunk(
+                id = "chunk2",
+                text = "Chunk from doc2",
+                parentId = "doc2",
+                metadata = emptyMap()
+            )
+
+            // Save all
+            ragService.save(doc1)
+            ragService.save(doc2)
+            ragService.onNewRetrievables(listOf(chunk1, chunk2))
+            ragService.commitChanges()
+
+            assertEquals(4, ragService.count())
+
+            // Delete only doc1
+            val result = ragService.deleteRootAndDescendants(doc1Uri)
+
+            assertNotNull(result)
+            assertEquals(2, result!!.deletedCount)
+
+            // Verify doc1 and its chunk are deleted
+            assertEquals(2, ragService.count())
+            assertNull(ragService.findById("doc1"))
+            assertTrue(ragService.findAllChunksById(listOf("chunk1")).isEmpty())
+
+            // Verify doc2 and its chunk still exist
+            assertNotNull(ragService.findById("doc2"))
+            assertEquals(1, ragService.findAllChunksById(listOf("chunk2")).size)
+        }
+
+        @Test
+        fun `should delete deeply nested hierarchy`() {
+            val documentUri = "test://nested"
+            val root = com.embabel.agent.rag.model.MaterializedDocument(
+                id = "root",
+                uri = documentUri,
+                title = "Root",
+                children = emptyList()
+            )
+
+            val section1 = com.embabel.agent.rag.model.DefaultMaterializedContainerSection(
+                id = "section1",
+                uri = documentUri,
+                title = "Section 1",
+                children = emptyList(),
+                parentId = "root"
+            )
+
+            val section2 = com.embabel.agent.rag.model.DefaultMaterializedContainerSection(
+                id = "section2",
+                uri = documentUri,
+                title = "Section 2",
+                children = emptyList(),
+                parentId = "section1"
+            )
+
+            val leaf = com.embabel.agent.rag.model.LeafSection(
+                id = "leaf",
+                uri = documentUri,
+                title = "Leaf",
+                text = "Leaf content",
+                parentId = "section2"
+            )
+
+            val chunk = com.embabel.agent.rag.model.Chunk(
+                id = "chunk",
+                text = "Chunk content",
+                parentId = "leaf",
+                metadata = emptyMap()
+            )
+
+            // Save all
+            ragService.save(root)
+            ragService.save(section1)
+            ragService.save(section2)
+            ragService.save(leaf)
+            ragService.onNewRetrievables(listOf(chunk))
+            ragService.commitChanges()
+
+            assertEquals(5, ragService.count())
+
+            // Delete root and all descendants
+            val result = ragService.deleteRootAndDescendants(documentUri)
+
+            assertNotNull(result)
+            assertEquals(5, result!!.deletedCount)
+            assertEquals(0, ragService.count())
+        }
+
+        @Test
+        fun `should not find deleted content in search`() {
+            val documentUri = "test://searchable"
+            val root = com.embabel.agent.rag.model.MaterializedDocument(
+                id = "root",
+                uri = documentUri,
+                title = "Searchable Document",
+                children = emptyList()
+            )
+
+            val chunk = com.embabel.agent.rag.model.Chunk(
+                id = "chunk",
+                text = "unique searchable content",
+                parentId = "root",
+                metadata = emptyMap()
+            )
+
+            ragService.save(root)
+            ragService.onNewRetrievables(listOf(chunk))
+            ragService.commitChanges()
+
+            // Verify we can find it before deletion
+            val beforeDelete = ragService.hybridSearch(RagRequest.query("unique searchable").withSimilarityThreshold(0.0))
+            assertTrue(beforeDelete.results.isNotEmpty())
+
+            // Delete the document
+            ragService.deleteRootAndDescendants(documentUri)
+
+            // Verify search returns no results
+            val afterDelete = ragService.hybridSearch(RagRequest.query("unique searchable").withSimilarityThreshold(0.0))
+            assertTrue(afterDelete.results.isEmpty())
+        }
+
+        @Test
+        fun `should handle deletion of document with multiple chunk types`() {
+            val documentUri = "test://mixed"
+            val root = com.embabel.agent.rag.model.MaterializedDocument(
+                id = "root",
+                uri = documentUri,
+                title = "Mixed Document",
+                children = emptyList()
+            )
+
+            val section = com.embabel.agent.rag.model.DefaultMaterializedContainerSection(
+                id = "section",
+                uri = documentUri,
+                title = "Section",
+                children = emptyList(),
+                parentId = "root"
+            )
+
+            val leaf = com.embabel.agent.rag.model.LeafSection(
+                id = "leaf",
+                uri = documentUri,
+                title = "Leaf",
+                text = "Leaf text",
+                parentId = "section"
+            )
+
+            val chunks = (1..5).map { i ->
+                com.embabel.agent.rag.model.Chunk(
+                    id = "chunk$i",
+                    text = "Chunk $i content",
+                    parentId = "leaf",
+                    metadata = emptyMap()
+                )
+            }
+
+            ragService.save(root)
+            ragService.save(section)
+            ragService.save(leaf)
+            ragService.onNewRetrievables(chunks)
+            ragService.commitChanges()
+
+            assertEquals(8, ragService.count())
+
+            // Delete all
+            val result = ragService.deleteRootAndDescendants(documentUri)
+
+            assertNotNull(result)
+            assertEquals(8, result!!.deletedCount)
+            assertEquals(0, ragService.count())
         }
     }
 

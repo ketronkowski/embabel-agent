@@ -27,6 +27,7 @@ import com.embabel.agent.rag.service.support.RagFacet
 import com.embabel.agent.rag.service.support.RagFacetProvider
 import com.embabel.agent.rag.service.support.RagFacetResults
 import com.embabel.agent.rag.store.AbstractChunkingContentElementRepository
+import com.embabel.agent.rag.store.DocumentDeletionResult
 import com.embabel.common.ai.model.DefaultModelSelectionCriteria
 import com.embabel.common.ai.model.ModelProvider
 import com.embabel.common.core.types.SimilarityCutoff
@@ -222,6 +223,34 @@ class OgmRagFacetProvider(
                 "rootId" to root.id,
             )
         )
+    }
+
+    override fun deleteRootAndDescendants(uri: String): DocumentDeletionResult? {
+        logger.info("Deleting document with URI: {}", uri)
+
+        try {
+            val result = ogmCypherSearch.query(
+                "Delete document and descendants",
+                query = "delete_document_and_descendants",
+                params = mapOf("uri" to uri)
+            )
+
+            val deletedCount = result.queryStatistics().nodesDeleted
+
+            if (deletedCount == 0) {
+                logger.warn("No document found with URI: {}", uri)
+                return null
+            }
+
+            logger.info("Deleted {} elements for document with URI: {}", deletedCount, uri)
+            return DocumentDeletionResult(
+                rootUri = uri,
+                deletedCount = deletedCount
+            )
+        } catch (e: Exception) {
+            logger.error("Error deleting document with URI: {}", uri, e)
+            throw e
+        }
     }
 
     override fun facets(): List<RagFacet<out Retrievable>> {

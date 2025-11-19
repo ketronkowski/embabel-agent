@@ -20,6 +20,17 @@ import com.embabel.agent.rag.model.NavigableDocument
 import com.embabel.agent.rag.model.Retrievable
 
 /**
+ * Result of successfully deleting the content root with the given uri
+ * and its descendants
+ * @param rootUri the uri of the deleted root
+ * @param deletedCount number of content elements deleted
+ */
+data class DocumentDeletionResult(
+    val rootUri: String,
+    val deletedCount: Int,
+)
+
+/**
  * WritableRagService that also allows us to load and save ContentElements.
  */
 interface ChunkingContentElementRepository : ContentElementRepository {
@@ -29,6 +40,12 @@ interface ChunkingContentElementRepository : ContentElementRepository {
      * @return list of chunk ids
      */
     fun writeAndChunkDocument(root: NavigableDocument): List<String>
+
+    /**
+     * Delete the document root with this uri
+     * Return null if no such document
+     */
+    fun deleteRootAndDescendants(uri: String): DocumentDeletionResult?
 
     /**
      * List of enhancers

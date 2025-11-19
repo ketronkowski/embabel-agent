@@ -22,6 +22,8 @@ import com.embabel.agent.rag.ingestion.ContentChunker.Companion.SEQUENCE_NUMBER
 import com.embabel.agent.rag.ingestion.RetrievableEnhancer
 import com.embabel.agent.rag.model.Chunk
 import com.embabel.agent.rag.model.ContentElement
+import com.embabel.agent.rag.model.LeafSection
+import com.embabel.agent.rag.model.NavigableContainerSection
 import com.embabel.agent.rag.model.NavigableDocument
 import com.embabel.agent.rag.model.Retrievable
 import com.embabel.agent.rag.service.RagRequest
@@ -30,6 +32,7 @@ import com.embabel.agent.rag.service.support.RagFacet
 import com.embabel.agent.rag.service.support.RagFacetProvider
 import com.embabel.agent.rag.service.support.RagFacetResults
 import com.embabel.agent.rag.store.AbstractChunkingContentElementRepository
+import com.embabel.agent.rag.store.DocumentDeletionResult
 import com.embabel.common.core.types.HasInfoString
 import com.embabel.common.core.types.SimpleSimilaritySearchResult
 import com.embabel.common.util.indent
@@ -684,6 +687,81 @@ class LuceneRagFacetProvider @JvmOverloads constructor(
         directory.close()
         analyzer.close()
         contentElementStorage.clear()
+    }
+
+    override fun deleteRootAndDescendants(uri: String): DocumentDeletionResult? {
+        logger.info("Deleting document with URI: {}", uri)
+        synchronized(this) {
+            // Find the root document with this URI
+            val root = contentElementStorage.values.find {
+                it.uri == uri && it.labels().any { label ->
+                    label.contains("Document") || label.contains("ContentRoot")
+                }
+            }
+
+            if (root == null) {
+                logger.warn("No document found with URI: {}", uri)
+                return null
+            }
+
+            logger.debug("Found root document with id: {}", root.id)
+
+            // Find all elements to delete: root and all descendants (by URI or parent relationships)
+            val toDelete = mutableSetOf<String>()
+            toDelete.add(root.id)
+
+            // Add all elements with the same URI
+            contentElementStorage.values.forEach { element ->
+                if (element.uri == uri) {
+                    toDelete.add(element.id)
+                }
+            }
+
+            // Also find descendants by parent relationships
+            val parentsToCheck = toDelete.toMutableSet()
+            while (parentsToCheck.isNotEmpty()) {
+                val currentParents = parentsToCheck.toSet()
+                parentsToCheck.clear()
+
+                contentElementStorage.values.forEach { element ->
+                    // Check if this element has a parent in our set
+                    val parentId = when (element) {
+                        is Chunk -> element.parentId
+                        is LeafSection -> element.parentId
+                        is NavigableContainerSection -> element.parentId
+                        else -> null
+                    }
+
+                    if (parentId != null && currentParents.contains(parentId) && !toDelete.contains(element.id)) {
+                        toDelete.add(element.id)
+                        parentsToCheck.add(element.id)
+                    }
+                }
+            }
+
+            logger.info("Found {} elements to delete for URI: {}", toDelete.size, uri)
+
+            // Delete from Lucene index
+            toDelete.forEach { id ->
+                indexWriter.deleteDocuments(org.apache.lucene.index.Term(ID_FIELD, id))
+            }
+
+            // Delete from content storage
+            toDelete.forEach { id ->
+                contentElementStorage.remove(id)
+            }
+
+            // Commit changes
+            commit()
+
+            val result = DocumentDeletionResult(
+                rootUri = uri,
+                deletedCount = toDelete.size
+            )
+
+            logger.info("Deleted {} elements for document with URI: {}", toDelete.size, uri)
+            return result
+        }
     }
 
     /**
