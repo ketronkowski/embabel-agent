@@ -16,19 +16,19 @@
 package com.embabel.agent.rag.store
 
 import com.embabel.agent.rag.ingestion.RetrievableEnhancer
+import com.embabel.agent.rag.model.NavigableDocument
 import com.embabel.agent.rag.model.Retrievable
 
 /**
  * WritableRagService that also allows us to load and save ContentElements.
  */
-interface WritableContentElementRepository : WritableStore, ContentElementRepository {
+interface ChunkingContentElementRepository : ContentElementRepository {
 
     /**
-     * Provision this rag service if necessary
+     * Write the given content root and its children to the underlying store.
+     * @return list of chunk ids
      */
-    fun provision() {
-        // Default no-op
-    }
+    fun writeAndChunkDocument(root: NavigableDocument): List<String>
 
     /**
      * List of enhancers

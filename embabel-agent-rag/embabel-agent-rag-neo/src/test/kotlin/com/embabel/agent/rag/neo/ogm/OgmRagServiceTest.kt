@@ -100,7 +100,7 @@ class OgmRagServiceTest(
         @Test
         fun `should find chunk by full-text search`() {
             val mcr = fakeContent()
-            ragService.writeContent(mcr)
+            ragService.writeAndChunkDocument(mcr)
 
             val results = ragService.search(
                 RagRequest("leaf").withSimilarityThreshold(.0)
@@ -115,7 +115,7 @@ class OgmRagServiceTest(
         @Test
         fun `should find chunk by exact text match`() {
             val mcr = fakeContent()
-            ragService.writeContent(mcr)
+            ragService.writeAndChunkDocument(mcr)
 
             val results = ragService.search(
                 RagRequest("content of leaf 1").withSimilarityThreshold(.0)
@@ -129,7 +129,7 @@ class OgmRagServiceTest(
         @Test
         fun `full-text search should work with low similarity threshold`() {
             val mcr = fakeContent()
-            ragService.writeContent(mcr)
+            ragService.writeAndChunkDocument(mcr)
 
             val results = ragService.search(
                 RagRequest("leaf").withSimilarityThreshold(0.1)
@@ -144,7 +144,7 @@ class OgmRagServiceTest(
         @Test
         fun `hybrid search should combine vector and full-text results`() {
             val mcr = fakeContent()
-            ragService.writeContent(mcr)
+            ragService.writeAndChunkDocument(mcr)
 
             val results = ragService.search(
                 RagRequest("leaf").withSimilarityThreshold(.0)
@@ -169,7 +169,7 @@ class OgmRagServiceTest(
         @Test
         fun `hybrid search should not duplicate results`() {
             val mcr = fakeContent()
-            ragService.writeContent(mcr)
+            ragService.writeAndChunkDocument(mcr)
 
             val results = ragService.search(
                 RagRequest("leaf").withSimilarityThreshold(.0)
@@ -206,7 +206,7 @@ class OgmRagServiceTest(
         @Test
         fun `write content`() {
             val mcr = fakeContent()
-            ragService.writeContent(mcr)
+            ragService.writeAndChunkDocument(mcr)
             val results = ragService.findAll()
             assertEquals(4, results.size, "Expected 3 nodes (root, section, leaf) plus one chunk")
         }
@@ -214,7 +214,7 @@ class OgmRagServiceTest(
         @Test
         fun `chunks are embedded`() {
             val mcr = fakeContent()
-            ragService.writeContent(mcr)
+            ragService.writeAndChunkDocument(mcr)
             val chunks = ragService.findAll().filterIsInstance<Chunk>()
             assertTrue(chunks.isNotEmpty(), "Expected chunks to be extracted")
             logger.info("Chunks: {}", chunks)
@@ -233,7 +233,7 @@ class OgmRagServiceTest(
         @Test
         fun `chunks have parents`() {
             val mcr = fakeContent()
-            ragService.writeContent(mcr)
+            ragService.writeAndChunkDocument(mcr)
             val chunks = ragService.findAll().filterIsInstance<Chunk>()
             assertTrue(chunks.isNotEmpty(), "Expected chunks to be extracted")
             logger.info("Chunks: {}", chunks)
@@ -245,7 +245,7 @@ class OgmRagServiceTest(
         @Test
         fun `families are together`() {
             val mcr = fakeContent()
-            ragService.writeContent(mcr)
+            ragService.writeAndChunkDocument(mcr)
             val chunks = ragService.findAll().filterIsInstance<Chunk>()
             assertTrue(chunks.isNotEmpty(), "Expected chunks to be extracted")
             val orphanCount = driver().session().executeRead { tx ->
@@ -266,7 +266,7 @@ class OgmRagServiceTest(
         @Disabled
         fun `single chunk is retrieved`() {
             val mcr = fakeContent()
-            ragService.writeContent(mcr)
+            ragService.writeAndChunkDocument(mcr)
             val chunks = ragService.findAll().filterIsInstance<Chunk>()
             assertEquals(1, chunks.size, "Expected a single chunk to be created")
             val results = ragService.search(RagRequest("anything at all").withSimilarityThreshold(.0))

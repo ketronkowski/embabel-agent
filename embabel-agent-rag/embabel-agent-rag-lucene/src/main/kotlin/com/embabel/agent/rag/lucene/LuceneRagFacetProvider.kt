@@ -29,7 +29,7 @@ import com.embabel.agent.rag.service.support.FunctionRagFacet
 import com.embabel.agent.rag.service.support.RagFacet
 import com.embabel.agent.rag.service.support.RagFacetProvider
 import com.embabel.agent.rag.service.support.RagFacetResults
-import com.embabel.agent.rag.store.AbstractWritableContentElementRepository
+import com.embabel.agent.rag.store.AbstractChunkingContentElementRepository
 import com.embabel.common.core.types.HasInfoString
 import com.embabel.common.core.types.SimpleSimilaritySearchResult
 import com.embabel.common.util.indent
@@ -53,7 +53,6 @@ import java.io.Closeable
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.sqrt
-import org.springframework.ai.document.Document as SpringAiDocument
 
 /**
  * Lucene RAG facet with optional vector search support via an EmbeddingModel.
@@ -77,7 +76,7 @@ class LuceneRagFacetProvider @JvmOverloads constructor(
     private val vectorWeight: Double = 0.5,
     chunkerConfig: ContentChunker.Config = ContentChunker.DefaultConfig(),
     private val indexPath: Path? = null,
-) : RagFacetProvider, AbstractWritableContentElementRepository(chunkerConfig), HasInfoString, Closeable {
+) : RagFacetProvider, AbstractChunkingContentElementRepository(chunkerConfig), HasInfoString, Closeable {
 
     private val logger = LoggerFactory.getLogger(LuceneRagFacetProvider::class.java)
 
@@ -143,7 +142,7 @@ class LuceneRagFacetProvider @JvmOverloads constructor(
         )
     }
 
-    override fun findChunksById(chunkIds: List<String>): List<Chunk> {
+    override fun findAllChunksById(chunkIds: List<String>): List<Chunk> {
         logger.debug("Finding chunks by IDs: {}", chunkIds)
 
         val foundChunks = chunkIds.mapNotNull { chunkId ->
@@ -458,29 +457,6 @@ class LuceneRagFacetProvider @JvmOverloads constructor(
             text = doc.get(CONTENT_FIELD),
             parentId = doc.get(ID_FIELD),
             metadata = metadata,
-        )
-    }
-
-
-    override fun accept(documents: List<SpringAiDocument>) {
-        logger.info("Indexing {} documents into Lucene RAG service and storing as chunks", documents.size)
-        documents.forEach { springDoc ->
-            // Create and store chunk in memory
-            val chunk = Chunk(
-                id = springDoc.id,
-                text = springDoc.text ?: "",
-                parentId = springDoc.id,
-                metadata = springDoc.metadata + mapOf(
-                    "indexed_at" to System.currentTimeMillis(),
-                    "service" to name
-                )
-            )
-            onNewRetrievable(chunk)
-        }
-        commit()
-        logger.info(
-            "Successfully indexed {} documents. Total chunks in storage: {}",
-            documents.size, contentElementStorage.size
         )
     }
 

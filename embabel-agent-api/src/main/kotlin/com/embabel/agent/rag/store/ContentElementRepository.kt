@@ -18,13 +18,21 @@ package com.embabel.agent.rag.store
 import com.embabel.agent.rag.model.Chunk
 import com.embabel.agent.rag.model.ContentElement
 import com.embabel.agent.rag.model.HierarchicalContentElement
+import com.embabel.common.core.types.Named
 
 /**
- * Implemented by services that can retrieve Chunks and other ContentElements by id.
+ * Repository for ContentElements.
  */
-interface ContentElementRepository {
+interface ContentElementRepository : Named {
 
-    fun findChunksById(chunkIds: List<String>): List<Chunk>
+    /**
+     * Provision this rag service if necessary
+     */
+    fun provision() {
+        // Default no-op
+    }
+
+    fun findAllChunksById(chunkIds: List<String>): Iterable<Chunk>
 
     fun findById(id: String): ContentElement?
 

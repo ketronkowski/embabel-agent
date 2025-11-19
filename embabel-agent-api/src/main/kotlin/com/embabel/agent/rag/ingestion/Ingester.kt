@@ -15,9 +15,8 @@
  */
 package com.embabel.agent.rag.ingestion
 
-import com.embabel.agent.rag.store.WritableStore
+import com.embabel.agent.rag.store.ChunkingContentElementRepository
 import com.embabel.common.core.types.HasInfoString
-import org.springframework.ai.document.DocumentWriter
 
 data class IngestionResult(
     val storesWrittenTo: Set<String>,
@@ -31,14 +30,14 @@ data class IngestionResult(
     }
 }
 
-interface Ingester : DocumentWriter, HasInfoString {
+interface Ingester : HasInfoString {
 
     /**
      * Is this ingester presently active?
      */
     fun active(): Boolean
 
-    val stores: List<WritableStore>
+    val stores: List<ChunkingContentElementRepository>
 
     /**
      * Ingest the resource at the given path.

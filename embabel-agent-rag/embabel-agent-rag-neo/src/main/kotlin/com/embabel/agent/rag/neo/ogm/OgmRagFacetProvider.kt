@@ -16,24 +16,17 @@
 package com.embabel.agent.rag.neo.ogm
 
 import com.embabel.agent.api.common.Embedding
-import com.embabel.agent.rag.model.DefaultMaterializedContainerSection
-import com.embabel.agent.rag.model.MaterializedDocument
-import com.embabel.agent.rag.model.NavigableDocument
 import com.embabel.agent.rag.ingestion.RetrievableEnhancer
-import com.embabel.agent.rag.model.Chunk
-import com.embabel.agent.rag.model.ContentElement
-import com.embabel.agent.rag.model.EntityData
-import com.embabel.agent.rag.model.LeafSection
-import com.embabel.agent.rag.model.Retrievable
+import com.embabel.agent.rag.model.*
 import com.embabel.agent.rag.neo.common.CypherQuery
 import com.embabel.agent.rag.schema.SchemaResolver
 import com.embabel.agent.rag.service.EntitySearch
 import com.embabel.agent.rag.service.RagRequest
-import com.embabel.agent.rag.store.AbstractWritableContentElementRepository
 import com.embabel.agent.rag.service.support.FunctionRagFacet
 import com.embabel.agent.rag.service.support.RagFacet
 import com.embabel.agent.rag.service.support.RagFacetProvider
 import com.embabel.agent.rag.service.support.RagFacetResults
+import com.embabel.agent.rag.store.AbstractChunkingContentElementRepository
 import com.embabel.common.ai.model.DefaultModelSelectionCriteria
 import com.embabel.common.ai.model.ModelProvider
 import com.embabel.common.core.types.SimilarityCutoff
@@ -41,7 +34,6 @@ import com.embabel.common.core.types.SimilarityResult
 import com.embabel.common.core.types.SimpleSimilaritySearchResult
 import org.neo4j.ogm.session.SessionFactory
 import org.slf4j.LoggerFactory
-import org.springframework.ai.document.Document
 import org.springframework.stereotype.Service
 import org.springframework.transaction.PlatformTransactionManager
 import org.springframework.transaction.TransactionDefinition
@@ -61,7 +53,7 @@ class OgmRagFacetProvider(
     platformTransactionManager: PlatformTransactionManager,
     private val properties: NeoRagServiceProperties,
     override val enhancers: List<RetrievableEnhancer> = emptyList(),
-) : AbstractWritableContentElementRepository(properties), RagFacetProvider {
+) : AbstractChunkingContentElementRepository(properties), RagFacetProvider {
 
     private val logger = LoggerFactory.getLogger(OgmRagFacetProvider::class.java)
 
@@ -84,7 +76,7 @@ class OgmRagFacetProvider(
         logger.info("Provisioning complete")
     }
 
-    override fun findChunksById(chunkIds: List<String>): List<Chunk> {
+    override fun findAllChunksById(chunkIds: List<String>): List<Chunk> {
         val session = ogmCypherSearch.currentSession()
         val rows = session.query(
             cypherContentElementQuery(" WHERE c:Chunk AND c.id IN \$ids "),
@@ -106,7 +98,7 @@ class OgmRagFacetProvider(
     }
 
     override fun findById(id: String): ContentElement? {
-        return findChunksById(listOf(id)).firstOrNull()
+        return findAllChunksById(listOf(id)).firstOrNull()
     }
 
     override fun save(element: ContentElement): ContentElement {
@@ -230,10 +222,6 @@ class OgmRagFacetProvider(
                 "rootId" to root.id,
             )
         )
-    }
-
-    override fun accept(t: List<Document>) {
-        TODO("Not yet implemented")
     }
 
     override fun facets(): List<RagFacet<out Retrievable>> {

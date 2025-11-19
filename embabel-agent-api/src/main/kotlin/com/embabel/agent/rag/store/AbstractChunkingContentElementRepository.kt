@@ -19,18 +19,18 @@ import com.embabel.agent.rag.ingestion.ContentChunker
 import com.embabel.agent.rag.model.NavigableDocument
 
 /**
- * Convenience base class for WritableRagService implementations.
+ * Convenience base class for ChunkingContentElementRepository implementations.
  */
-abstract class AbstractWritableContentElementRepository(
+abstract class AbstractChunkingContentElementRepository(
     private val chunkerConfig: ContentChunker.Config,
-) : WritableContentElementRepository {
+) : ChunkingContentElementRepository {
 
     /**
      * Will call save on the root and all descendants.
      * The database only needs to store each descendant and link by id,
      * rather than otherwise consider the entire structure.
      */
-    final override fun writeContent(root: NavigableDocument): List<String> {
+    final override fun writeAndChunkDocument(root: NavigableDocument): List<String> {
         val chunker = ContentChunker(chunkerConfig)
         val chunks = chunker.chunk(root)
             .map { enhance(it) }
@@ -51,6 +51,9 @@ abstract class AbstractWritableContentElementRepository(
      */
     protected abstract fun createRelationships(root: NavigableDocument)
 
+    /**
+     * Commit after a write operation if needed.
+     */
     protected abstract fun commit()
 
 }

@@ -25,12 +25,37 @@ import org.springframework.ai.document.Document
 import org.springframework.ai.embedding.EmbeddingModel
 import org.springframework.ai.embedding.EmbeddingRequest
 import org.springframework.ai.embedding.EmbeddingResponse
+import kotlin.reflect.full.functions
+import kotlin.reflect.jvm.isAccessible
 
 class LuceneRagFacetProviderTest {
 
     private lateinit var ragService: LuceneRagFacetProvider
     private lateinit var ragServiceWithEmbedding: LuceneRagFacetProvider
     private val mockEmbeddingModel = MockEmbeddingModel()
+
+    /**
+     * Helper method to convert Spring AI Documents to Chunks and add them to the service
+     */
+    private fun LuceneRagFacetProvider.acceptDocuments(documents: List<Document>) {
+        val chunks = documents.map { doc ->
+            val docId = doc.id ?: error("Document ID cannot be null")
+            com.embabel.agent.rag.model.Chunk(
+                id = docId,
+                text = doc.text ?: "",
+                parentId = docId, // Use the chunk ID as its own parent for test documents
+                metadata = doc.metadata
+            )
+        }
+        this.onNewRetrievables(chunks)
+
+        // Call protected commit() method using reflection
+        val commitMethod = this::class.functions.find { it.name == "commit" }
+        commitMethod?.let {
+            it.isAccessible = true
+            it.call(this)
+        }
+    }
 
     @BeforeEach
     fun setUp() {
@@ -58,7 +83,7 @@ class LuceneRagFacetProviderTest {
     }
 
     @Test
-    fun `should index and search documents using accept method`() {
+    fun `should index and search documents`() {
         // Index some test documents using accept
         val documents = listOf(
             Document("doc1", "This is a test document about machine learning", emptyMap<String, Any>()),
@@ -66,7 +91,7 @@ class LuceneRagFacetProviderTest {
             Document("doc3", "A completely different topic about cooking recipes", emptyMap<String, Any>())
         )
 
-        ragService.accept(documents)
+        ragService.acceptDocuments(documents)
 
         // Search for documents
         val request = RagRequest.query("machine learning")
@@ -82,13 +107,13 @@ class LuceneRagFacetProviderTest {
     }
 
     @Test
-    fun `should respect similarity threshold using accept method`() {
+    fun `should respect similarity threshold`() {
         val documents = listOf(
             Document("doc1", "machine learning algorithms", emptyMap<String, Any>()),
             Document("doc2", "completely unrelated content about cooking", emptyMap<String, Any>())
         )
 
-        ragService.accept(documents)
+        ragService.acceptDocuments(documents)
 
         // High threshold should filter out low-relevance results
         val request = RagRequest.query("machine learning")
@@ -103,12 +128,12 @@ class LuceneRagFacetProviderTest {
     }
 
     @Test
-    fun `should respect topK limit using accept method`() {
+    fun `should respect topK limit`() {
         val documents = (1..10).map { i ->
             Document("doc$i", "machine learning document number $i", emptyMap<String, Any>())
         }
 
-        ragService.accept(documents)
+        ragService.acceptDocuments(documents)
 
         val request = RagRequest.query("machine learning").withTopK(3)
         val response = ragService.hybridSearch(request)
@@ -117,13 +142,13 @@ class LuceneRagFacetProviderTest {
     }
 
     @Test
-    fun `should handle document metadata correctly using accept method`() {
+    fun `should handle document metadata correctly`() {
         val metadata = mapOf("author" to "John Doe", "category" to "AI")
         val documents = listOf(
             Document("doc1", "Test content", metadata)
         )
 
-        ragService.accept(documents)
+        ragService.acceptDocuments(documents)
 
         val request = RagRequest.query("test")
             .withSimilarityThreshold(0.0)
@@ -143,16 +168,16 @@ class LuceneRagFacetProviderTest {
         assertTrue(infoString.contains("lucene-rag"))
         assertTrue(infoString.contains("0 documents"))
 
-        // After adding documents using accept
-        ragService.accept(listOf(Document("doc1", "test content", emptyMap<String, Any>())))
+        // After adding documents using acceptDocuments
+        ragService.acceptDocuments(listOf(Document("doc1", "test content", emptyMap<String, Any>())))
         val infoStringAfter = ragService.infoString(verbose = false, indent = 0)
         assertTrue(infoStringAfter.contains("1 documents"))
     }
 
     @Test
-    fun `retrievable should provide embeddable value using accept method`() {
+    fun `retrievable should provide embeddable value`() {
         val documents = listOf(Document("doc1", "Test document content", emptyMap<String, Any>()))
-        ragServiceWithEmbedding.accept(documents)
+        ragServiceWithEmbedding.acceptDocuments(documents)
 
         val request = RagRequest.query("test")
             .withSimilarityThreshold(.0)
@@ -164,9 +189,9 @@ class LuceneRagFacetProviderTest {
     }
 
     @Test
-    fun `should handle multiple accept calls correctly without vector`() {
+    fun `should handle multiple acceptDocuments calls correctly without vector`() {
         // First batch
-        ragService.accept(
+        ragService.acceptDocuments(
             listOf(
                 Document("doc1", "First batch document about AI and artificial intelligence", emptyMap<String, Any>()),
                 Document("doc2", "Another first batch document about ML", emptyMap<String, Any>())
@@ -174,7 +199,7 @@ class LuceneRagFacetProviderTest {
         )
 
         // Second batch
-        ragService.accept(
+        ragService.acceptDocuments(
             listOf(
                 Document("doc3", "Second batch document about artificial intelligence", emptyMap<String, Any>()),
                 Document("doc4", "Another second batch document about machine learning", emptyMap<String, Any>())
@@ -202,7 +227,7 @@ class LuceneRagFacetProviderTest {
             Document("doc3", "artificial intelligence and neural networks", emptyMap<String, Any>())
         )
 
-        ragServiceWithEmbedding.accept(documents)
+        ragServiceWithEmbedding.acceptDocuments(documents)
 
         // Search should use both text and vector similarity
         val request = RagRequest.query("AI and machine learning")
@@ -234,7 +259,7 @@ class LuceneRagFacetProviderTest {
                 Document("doc2", "artificial intelligence", emptyMap<String, Any>())
             )
 
-            ragServiceHighVector.accept(documents)
+            ragServiceHighVector.acceptDocuments(documents)
 
             // Use a query that should match via text search to ensure we get text results for hybrid
             val request = RagRequest.query("machine")
@@ -257,7 +282,7 @@ class LuceneRagFacetProviderTest {
             Document("doc2", "cooking recipes", emptyMap<String, Any>())
         )
 
-        ragService.accept(documents)
+        ragService.acceptDocuments(documents)
 
         // Use a single word that should match
         val request = RagRequest.query("machine")
@@ -284,7 +309,7 @@ class LuceneRagFacetProviderTest {
                 Document("doc2", "Test document 2", emptyMap<String, Any>())
             )
 
-            ragService.accept(documents)
+            ragService.acceptDocuments(documents)
 
             // Should have chunks stored
             val allChunks = ragService.findAll()
@@ -302,10 +327,10 @@ class LuceneRagFacetProviderTest {
                 Document("ds-doc", "Data science content", emptyMap<String, Any>())
             )
 
-            ragService.accept(documents)
+            ragService.acceptDocuments(documents)
 
             // Test finding existing chunks
-            val foundChunks = ragService.findChunksById(listOf("ml-doc", "ai-doc"))
+            val foundChunks = ragService.findAllChunksById(listOf("ml-doc", "ai-doc"))
             assertEquals(2, foundChunks.size)
 
             val chunkIds = foundChunks.map { it.id }.toSet()
@@ -323,9 +348,9 @@ class LuceneRagFacetProviderTest {
                 Document("existing-doc", "Test content", emptyMap<String, Any>())
             )
 
-            ragService.accept(documents)
+            ragService.acceptDocuments(documents)
 
-            val foundChunks = ragService.findChunksById(listOf("non-existent-1", "non-existent-2"))
+            val foundChunks = ragService.findAllChunksById(listOf("non-existent-1", "non-existent-2"))
             assertTrue(foundChunks.isEmpty())
         }
 
@@ -336,9 +361,9 @@ class LuceneRagFacetProviderTest {
                 Document("doc2", "Content 2", emptyMap<String, Any>())
             )
 
-            ragService.accept(documents)
+            ragService.acceptDocuments(documents)
 
-            val foundChunks = ragService.findChunksById(listOf("doc1", "non-existent", "doc2"))
+            val foundChunks = ragService.findAllChunksById(listOf("doc1", "non-existent", "doc2"))
             assertEquals(2, foundChunks.size)
 
             val chunkIds = foundChunks.map { it.id }.toSet()
@@ -357,24 +382,20 @@ class LuceneRagFacetProviderTest {
                 Document("research-doc", "Research content", metadata)
             )
 
-            ragService.accept(documents)
+            ragService.acceptDocuments(documents)
 
-            val chunks = ragService.findChunksById(listOf("research-doc"))
+            val chunks = ragService.findAllChunksById(listOf("research-doc"))
             assertEquals(1, chunks.size)
 
             val chunk = chunks[0]
             assertEquals("John Doe", chunk.metadata["author"])
             assertEquals("AI", chunk.metadata["category"])
             assertEquals("research-paper", chunk.metadata["source"])
-
-            // Should also have service-added metadata
-            assertNotNull(chunk.metadata["indexed_at"])
-            assertEquals("lucene-rag", chunk.metadata["service"])
         }
 
         @Test
         fun `should handle empty document list`() {
-            ragService.accept(emptyList())
+            ragService.acceptDocuments(emptyList())
 
             val allChunks = ragService.findAll()
             assertTrue(allChunks.isEmpty())
@@ -384,7 +405,7 @@ class LuceneRagFacetProviderTest {
         fun `should handle document with empty text`() {
             val document = Document("empty-doc", "", emptyMap<String, Any>())
 
-            ragService.accept(listOf(document))
+            ragService.acceptDocuments(listOf(document))
 
             val chunks = ragService.findAll()
             assertEquals(1, chunks.size)
@@ -394,14 +415,14 @@ class LuceneRagFacetProviderTest {
         @Test
         fun `should update chunk when document with same ID is added again`() {
             // Add initial document
-            ragService.accept(listOf(Document("dup-doc", "Initial content", emptyMap<String, Any>())))
+            ragService.acceptDocuments(listOf(Document("dup-doc", "Initial content", emptyMap<String, Any>())))
 
             val initialChunks = ragService.findAll()
             assertEquals(1, initialChunks.size)
             assertEquals("Initial content", initialChunks[0].text)
 
             // Add document with same ID
-            ragService.accept(listOf(Document("dup-doc", "Updated content", emptyMap<String, Any>())))
+            ragService.acceptDocuments(listOf(Document("dup-doc", "Updated content", emptyMap<String, Any>())))
 
             val updatedChunks = ragService.findAll()
             assertEquals(1, updatedChunks.size) // Should still have only 1 chunk
@@ -415,7 +436,7 @@ class LuceneRagFacetProviderTest {
                 Document("doc2", "Content 2", emptyMap<String, Any>())
             )
 
-            ragService.accept(documents)
+            ragService.acceptDocuments(documents)
             assertEquals(2, ragService.findAll().size)
 
             // Clear everything
@@ -444,7 +465,7 @@ class LuceneRagFacetProviderTest {
                 Document("doc2", "This is a longer document", emptyMap<String, Any>())
             )
 
-            ragService.accept(documents)
+            ragService.acceptDocuments(documents)
 
             val updatedStats = ragService.getStatistics()
             assertEquals(2, updatedStats.totalChunks)
@@ -460,7 +481,7 @@ class LuceneRagFacetProviderTest {
             val infoString = ragService.infoString(verbose = false, indent = 0)
             assertTrue(infoString.contains("0 documents, 0 chunks"))
 
-            ragService.accept(listOf(Document("test-doc", "Test content", emptyMap<String, Any>())))
+            ragService.acceptDocuments(listOf(Document("test-doc", "Test content", emptyMap<String, Any>())))
 
             val infoStringAfter = ragService.infoString(verbose = false, indent = 0)
             assertTrue(infoStringAfter.contains("1 documents, 1 chunks"))
@@ -502,7 +523,7 @@ class LuceneRagFacetProviderTest {
                 )
             )
 
-            ragService.accept(documents)
+            ragService.acceptDocuments(documents)
 
             // Search for documents with keywords: cars, pedestrians, speed
             val results = ragService.findChunkIdsByKeywords(
@@ -552,7 +573,7 @@ class LuceneRagFacetProviderTest {
                 )
             )
 
-            ragService.accept(documents)
+            ragService.acceptDocuments(documents)
 
             // Search for documents with specific keywords
             val results = ragService.findChunkIdsByKeywords(
@@ -580,7 +601,7 @@ class LuceneRagFacetProviderTest {
                 Document("doc1", "Content about something", emptyMap<String, Any>())
             )
 
-            ragService.accept(documents)
+            ragService.acceptDocuments(documents)
 
             val results = ragService.findChunkIdsByKeywords(
                 keywords = setOf("nonexistent", "keywords", "here"),
@@ -600,7 +621,7 @@ class LuceneRagFacetProviderTest {
                 )
             }
 
-            ragService.accept(documents)
+            ragService.acceptDocuments(documents)
 
             val results = ragService.findChunkIdsByKeywords(
                 keywords = setOf("cars", "transportation"),
@@ -623,7 +644,7 @@ class LuceneRagFacetProviderTest {
                 ) // 3 matches
             )
 
-            ragService.accept(documents)
+            ragService.acceptDocuments(documents)
 
             val results = ragService.findChunkIdsByKeywords(
                 keywords = setOf("car", "pedestrian", "speedlimit"),
@@ -661,7 +682,7 @@ class LuceneRagFacetProviderTest {
                 )
             )
 
-            ragService.accept(documents)
+            ragService.acceptDocuments(documents)
 
             // Find chunks by keywords
             val keywordResults = ragService.findChunkIdsByKeywords(
@@ -674,7 +695,7 @@ class LuceneRagFacetProviderTest {
             val chunkIds = keywordResults.map { it.first }
 
             // Now load the actual chunks
-            val chunks = ragService.findChunksById(chunkIds)
+            val chunks = ragService.findAllChunksById(chunkIds)
             assertEquals(2, chunks.size)
 
             val chunkTexts = chunks.map { it.text }
@@ -688,7 +709,7 @@ class LuceneRagFacetProviderTest {
                 Document("doc1", "Some content", emptyMap<String, Any>())
             )
 
-            ragService.accept(documents)
+            ragService.acceptDocuments(documents)
 
             val results = ragService.findChunkIdsByKeywords(
                 keywords = emptySet(),
@@ -704,7 +725,7 @@ class LuceneRagFacetProviderTest {
                 Document("doc1", "Machine learning is a subset of artificial intelligence", emptyMap<String, Any>())
             )
 
-            ragService.accept(documents)
+            ragService.acceptDocuments(documents)
 
             // Search for keywords that were not provided
             val results = ragService.findChunkIdsByKeywords(
@@ -722,7 +743,7 @@ class LuceneRagFacetProviderTest {
                 Document("doc2", "Weather content", mapOf("keywords" to listOf("weather", "forecast")))
             )
 
-            ragService.accept(documents)
+            ragService.acceptDocuments(documents)
 
             // Verify initial keywords work
             val initialResults = ragService.findChunkIdsByKeywords(
@@ -754,7 +775,7 @@ class LuceneRagFacetProviderTest {
             assertEquals(2, afterUpdateNewKeywords[0].second)
 
             // Verify keywords are in chunk metadata
-            val updatedChunk = ragService.findChunksById(listOf("doc1"))[0]
+            val updatedChunk = ragService.findAllChunksById(listOf("doc1"))[0]
             val keywords = updatedChunk.metadata["keywords"]
             assertNotNull(keywords)
             @Suppress("UNCHECKED_CAST")
@@ -785,7 +806,7 @@ class LuceneRagFacetProviderTest {
                 Document("doc3", "Sports content", mapOf("keywords" to listOf("sports", "football")))
             )
 
-            ragService.accept(documents)
+            ragService.acceptDocuments(documents)
 
             // Verify initial count
             assertEquals(3, ragService.count())
@@ -831,7 +852,7 @@ class LuceneRagFacetProviderTest {
                             emptyMap<String, Any>()
                         )
                     }
-                    ragService.accept(documents)
+                    ragService.acceptDocuments(documents)
                 }
             }
 
@@ -852,11 +873,11 @@ class LuceneRagFacetProviderTest {
             val initialDocs = (1..100).map {
                 Document("init-$it", "Initial doc $it", emptyMap<String, Any>())
             }
-            ragService.accept(initialDocs)
+            ragService.acceptDocuments(initialDocs)
 
             val writerThread = Thread {
                 repeat(50) { i ->
-                    ragService.accept(
+                    ragService.acceptDocuments(
                         listOf(
                             Document("writer-$i", "Writer doc $i", emptyMap<String, Any>())
                         )
@@ -867,7 +888,7 @@ class LuceneRagFacetProviderTest {
             val readerThread = Thread {
                 repeat(100) {
                     ragService.findAll()
-                    ragService.findChunksById(listOf("init-1", "init-50", "writer-1"))
+                    ragService.findAllChunksById(listOf("init-1", "init-50", "writer-1"))
                 }
             }
 

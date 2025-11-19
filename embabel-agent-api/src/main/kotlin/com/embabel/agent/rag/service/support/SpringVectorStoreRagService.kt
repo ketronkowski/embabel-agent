@@ -16,11 +16,9 @@
 package com.embabel.agent.rag.service.support
 
 import com.embabel.agent.rag.model.Chunk
-import com.embabel.agent.rag.model.NavigableDocument
 import com.embabel.agent.rag.service.RagRequest
 import com.embabel.agent.rag.service.RagResponse
 import com.embabel.agent.rag.service.RagService
-import com.embabel.agent.rag.store.WritableStore
 import com.embabel.common.core.types.SimilarityResult
 import com.embabel.common.core.types.ZeroToOne
 import com.embabel.common.util.indent
@@ -38,7 +36,7 @@ import org.springframework.ai.vectorstore.VectorStore
 class SpringVectorStoreRagService(
     private val vectorStore: VectorStore,
     override val description: String,
-) : WritableStore, RagService {
+) : RagService {
 
     private val logger = LoggerFactory.getLogger(javaClass)
 
@@ -63,15 +61,6 @@ class SpringVectorStoreRagService(
                 )
             }
         )
-    }
-
-    override fun accept(documents: List<Document>) {
-        logger.info("Writing ${documents.size} documents into Spring vector store")
-        vectorStore.accept(documents)
-    }
-
-    override fun writeContent(root: NavigableDocument): List<String> {
-        TODO("Not yet implemented")
     }
 
     override fun infoString(
