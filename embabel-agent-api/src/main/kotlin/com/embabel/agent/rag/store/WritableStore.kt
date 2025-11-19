@@ -13,20 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.embabel.agent.rag
+package com.embabel.agent.rag.store
+
+import com.embabel.agent.rag.ingestion.NavigableDocument
+import com.embabel.common.core.types.Named
+import org.springframework.ai.document.DocumentWriter
 
 /**
- * Allow enhancement of retrievable objects when they are stored,
- * or actions to be taken on them.
+ * RagService that can accept documents
  */
-interface RetrievableEnhancer {
+interface WritableStore : DocumentWriter, Named {
 
     /**
-     * Enhance this retrievable.
-     * Will be called before the retrievable is persisted.
-     * Implementations may return the same instance or a modified copy.
-     * Typical usages are to add metadata or modify content:
-     * for example, to add a summary from context.
+     * Write the given content root and its children to the underlying store.
+     * @return list of chunk ids
      */
-    fun <T : Retrievable> enhance(retrievable: T): T
+    fun writeContent(root: NavigableDocument): List<String>
 }

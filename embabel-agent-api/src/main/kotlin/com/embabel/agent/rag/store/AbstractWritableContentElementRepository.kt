@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.embabel.agent.rag
+package com.embabel.agent.rag.store
 
 import com.embabel.agent.rag.ingestion.ContentChunker
 import com.embabel.agent.rag.ingestion.NavigableDocument

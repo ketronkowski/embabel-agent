@@ -15,7 +15,8 @@
  */
 package com.embabel.agent.rag.tools
 
-import com.embabel.agent.rag.*
+import com.embabel.agent.rag.model.Chunk
+import com.embabel.agent.rag.service.*
 import com.embabel.common.core.types.SimpleSimilaritySearchResult
 import io.mockk.every
 import io.mockk.mockk

@@ -15,7 +15,7 @@
  */
 package com.embabel.agent.rag.pipeline
 
-import com.embabel.agent.rag.*
+import com.embabel.agent.rag.service.*
 
 object DeduplicatingEnhancer : RagResponseEnhancer {
 

@@ -16,8 +16,8 @@
 package com.embabel.agent.rag.tools
 
 import com.embabel.agent.core.AgentProcess
-import com.embabel.agent.rag.RagResponse
-import com.embabel.agent.rag.RagResponseSummarizer
+import com.embabel.agent.rag.service.RagResponse
+import com.embabel.agent.rag.service.RagResponseSummarizer
 import com.embabel.common.util.loggerFor
 import org.springframework.ai.tool.annotation.Tool
 import org.springframework.ai.tool.annotation.ToolParam

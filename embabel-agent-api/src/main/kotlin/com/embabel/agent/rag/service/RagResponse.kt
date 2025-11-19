@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.embabel.agent.rag
+package com.embabel.agent.rag.service
 
+import com.embabel.agent.rag.model.Retrievable
 import com.embabel.common.core.types.SimilarityResult
 import com.embabel.common.core.types.ZeroToOne
 import java.time.Instant

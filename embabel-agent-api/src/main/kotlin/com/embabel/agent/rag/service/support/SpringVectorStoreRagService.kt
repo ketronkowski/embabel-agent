@@ -13,10 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.embabel.agent.rag.support
+package com.embabel.agent.rag.service.support
 
-import com.embabel.agent.rag.*
+import com.embabel.agent.rag.model.Chunk
 import com.embabel.agent.rag.ingestion.NavigableDocument
+import com.embabel.agent.rag.service.RagRequest
+import com.embabel.agent.rag.service.RagResponse
+import com.embabel.agent.rag.service.RagService
+import com.embabel.agent.rag.store.WritableStore
 import com.embabel.common.core.types.SimilarityResult
 import com.embabel.common.core.types.ZeroToOne
 import com.embabel.common.util.indent

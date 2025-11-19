@@ -15,9 +15,11 @@
  */
 package com.embabel.agent.rag.pipeline
 
-import com.embabel.agent.rag.*
+import com.embabel.agent.rag.model.Chunk
+import com.embabel.agent.rag.model.Retrievable
 import com.embabel.agent.rag.ingestion.ContentChunker.Companion.ROOT_DOCUMENT_ID
 import com.embabel.agent.rag.ingestion.ContentChunker.Companion.SEQUENCE_NUMBER
+import com.embabel.agent.rag.service.*
 import com.embabel.common.core.types.SimilarityResult
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory

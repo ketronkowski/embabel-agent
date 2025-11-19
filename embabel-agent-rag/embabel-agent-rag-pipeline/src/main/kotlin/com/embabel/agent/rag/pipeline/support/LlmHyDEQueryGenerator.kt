@@ -16,8 +16,8 @@
 package com.embabel.agent.rag.pipeline.support
 
 import com.embabel.agent.api.common.Ai
-import com.embabel.agent.rag.RagRequest
 import com.embabel.agent.rag.pipeline.HyDEQueryGenerator
+import com.embabel.agent.rag.service.RagRequest
 import com.embabel.common.ai.model.LlmOptions
 import com.embabel.common.textio.template.TemplateRenderer
 import org.slf4j.LoggerFactory

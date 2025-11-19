@@ -17,6 +17,9 @@ package com.embabel.agent.rag
 
 import com.embabel.agent.rag.ingestion.DefaultMaterializedContainerSection
 import com.embabel.agent.rag.ingestion.MaterializedDocument
+import com.embabel.agent.rag.model.Chunk
+import com.embabel.agent.rag.model.Fact
+import com.embabel.agent.rag.model.LeafSection
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 

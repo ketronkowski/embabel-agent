@@ -18,6 +18,8 @@ package com.embabel.agent.rag
 import com.embabel.agent.rag.pipeline.HyDEQueryGenerator
 import com.embabel.agent.rag.pipeline.PipelinedRagServiceEnhancer
 import com.embabel.agent.rag.pipeline.support.LlmHyDEQueryGenerator
+import com.embabel.agent.rag.service.RagServiceEnhancer
+import com.embabel.agent.rag.service.RagServiceEnhancerProperties
 import com.embabel.common.textio.template.TemplateRenderer
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.annotation.Bean

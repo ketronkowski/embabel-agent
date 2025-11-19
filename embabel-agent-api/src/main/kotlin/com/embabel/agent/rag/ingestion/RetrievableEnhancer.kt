@@ -13,14 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.embabel.agent.rag
+package com.embabel.agent.rag.ingestion
 
-import com.embabel.common.ai.model.LlmOptions
-import org.springframework.boot.context.properties.ConfigurationProperties
+import com.embabel.agent.rag.model.Retrievable
 
-@ConfigurationProperties(prefix = "embabel.agent.rag")
-data class RagServiceEnhancerProperties(
-    val compressionLlm: LlmOptions = LlmOptions.withAutoLlm(),
-    val rerankingLlm: LlmOptions = LlmOptions.withAutoLlm(),
-    val maxConcurrency: Int = 12,
-)
+/**
+ * Allow enhancement of retrievable objects when they are stored,
+ * or actions to be taken on them.
+ */
+interface RetrievableEnhancer {
+
+    /**
+     * Enhance this retrievable.
+     * Will be called before the retrievable is persisted.
+     * Implementations may return the same instance or a modified copy.
+     * Typical usages are to add metadata or modify content:
+     * for example, to add a summary from context.
+     */
+    fun <T : Retrievable> enhance(retrievable: T): T
+}

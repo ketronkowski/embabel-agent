@@ -15,8 +15,8 @@
  */
 package com.embabel.agent.rag.neo.ogm
 
-import com.embabel.agent.rag.Chunk
-import com.embabel.agent.rag.RetrievableEntity
+import com.embabel.agent.rag.model.Chunk
+import com.embabel.agent.rag.model.RetrievableEntity
 import com.embabel.common.core.types.NamedAndDescribed
 import org.neo4j.ogm.annotation.Id
 import org.neo4j.ogm.annotation.NodeEntity

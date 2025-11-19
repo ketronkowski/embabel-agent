@@ -15,8 +15,8 @@
  */
 package com.embabel.agent.rag.ingestion
 
-import com.embabel.agent.rag.LeafSection
-import com.embabel.agent.rag.NavigableSection
+import com.embabel.agent.rag.model.LeafSection
+import com.embabel.agent.rag.model.NavigableSection
 import com.embabel.agent.tools.file.FileReadTools
 import org.apache.tika.detect.DefaultDetector
 import org.apache.tika.detect.Detector

@@ -15,7 +15,7 @@
  */
 package com.embabel.agent.rag.ingestion
 
-import com.embabel.agent.rag.LeafSection
+import com.embabel.agent.rag.model.LeafSection
 import com.embabel.agent.tools.file.FileReadTools
 import io.mockk.every
 import io.mockk.mockk

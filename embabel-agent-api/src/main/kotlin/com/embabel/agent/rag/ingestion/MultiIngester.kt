@@ -15,7 +15,7 @@
  */
 package com.embabel.agent.rag.ingestion
 
-import com.embabel.agent.rag.WritableStore
+import com.embabel.agent.rag.store.WritableStore
 import org.slf4j.LoggerFactory
 import org.springframework.ai.document.Document
 import org.springframework.ai.reader.TextReader
@@ -23,7 +23,7 @@ import org.springframework.ai.transformer.splitter.TextSplitter
 import org.springframework.ai.transformer.splitter.TokenTextSplitter
 
 /**
- * Write to all RAG services that implement [com.embabel.agent.rag.WritableStore].
+ * Write to all RAG services that implement [WritableStore].
  * Users can override the [org.springframework.ai.transformer.splitter.TextSplitter] to control how text is split into documents.
  */
 class MultiIngester(

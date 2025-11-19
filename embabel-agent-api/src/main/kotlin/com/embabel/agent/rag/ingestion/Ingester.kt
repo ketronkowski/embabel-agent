@@ -15,7 +15,7 @@
  */
 package com.embabel.agent.rag.ingestion
 
-import com.embabel.agent.rag.WritableStore
+import com.embabel.agent.rag.store.WritableStore
 import com.embabel.common.core.types.HasInfoString
 import org.springframework.ai.document.DocumentWriter
 

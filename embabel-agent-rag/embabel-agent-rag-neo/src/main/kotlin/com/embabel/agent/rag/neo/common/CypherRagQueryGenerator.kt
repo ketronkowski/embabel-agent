@@ -15,7 +15,7 @@
  */
 package com.embabel.agent.rag.neo.common
 
-import com.embabel.agent.rag.RagRequest
+import com.embabel.agent.rag.service.RagRequest
 
 data class CypherQuery(val query: String)
 

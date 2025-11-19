@@ -15,7 +15,7 @@
  */
 package com.embabel.agent.rag.tools
 
-import com.embabel.agent.rag.*
+import com.embabel.agent.rag.service.*
 import com.embabel.common.ai.model.LlmOptions
 import com.embabel.common.core.types.ZeroToOne
 import java.time.Duration

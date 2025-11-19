@@ -15,10 +15,10 @@
  */
 package com.embabel.agent.rag.ingestion
 
-import com.embabel.agent.rag.ContainerSection
-import com.embabel.agent.rag.ContentRoot
-import com.embabel.agent.rag.LeafSection
-import com.embabel.agent.rag.NavigableSection
+import com.embabel.agent.rag.model.ContainerSection
+import com.embabel.agent.rag.model.ContentRoot
+import com.embabel.agent.rag.model.LeafSection
+import com.embabel.agent.rag.model.NavigableSection
 
 interface NavigableContainerSection : ContainerSection, NavigableSection {
 

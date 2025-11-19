@@ -15,6 +15,9 @@
  */
 package com.embabel.agent.rag
 
+import com.embabel.agent.rag.service.RagRequest
+import com.embabel.agent.rag.service.RagResponse
+import com.embabel.agent.rag.service.RagService
 import com.embabel.common.ai.model.EmbeddingService
 import com.embabel.common.test.ai.FakeEmbeddingModel
 import com.embabel.common.util.indent

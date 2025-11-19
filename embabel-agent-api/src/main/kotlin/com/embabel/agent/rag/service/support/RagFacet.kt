@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.embabel.agent.rag.support
+package com.embabel.agent.rag.service.support
 
-import com.embabel.agent.rag.Chunk
-import com.embabel.agent.rag.EntityData
-import com.embabel.agent.rag.RagRequest
-import com.embabel.agent.rag.Retrievable
+import com.embabel.agent.rag.model.Chunk
+import com.embabel.agent.rag.model.EntityData
+import com.embabel.agent.rag.model.Retrievable
+import com.embabel.agent.rag.service.RagRequest
 import com.embabel.common.core.types.Described
 import com.embabel.common.core.types.Named
 import com.embabel.common.core.types.SimilarityResult

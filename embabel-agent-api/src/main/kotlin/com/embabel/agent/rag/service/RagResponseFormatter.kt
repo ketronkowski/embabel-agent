@@ -13,7 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.embabel.agent.rag
+package com.embabel.agent.rag.service
+
+import com.embabel.agent.rag.model.Chunk
+import com.embabel.agent.rag.model.EntityData
+import com.embabel.agent.rag.model.Fact
 
 /**
  * Implemented by classes that can format RagResponse objects into a string

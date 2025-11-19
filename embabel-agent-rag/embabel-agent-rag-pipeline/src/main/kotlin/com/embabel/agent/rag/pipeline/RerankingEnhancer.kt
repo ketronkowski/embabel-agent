@@ -16,7 +16,8 @@
 package com.embabel.agent.rag.pipeline
 
 import com.embabel.agent.api.common.OperationContext
-import com.embabel.agent.rag.*
+import com.embabel.agent.rag.model.Retrievable
+import com.embabel.agent.rag.service.*
 import com.embabel.common.ai.model.LlmOptions
 import com.embabel.common.core.types.SimilarityResult
 import com.embabel.common.core.types.SimpleSimilaritySearchResult

@@ -16,8 +16,8 @@
 package com.embabel.agent.rag.neo.ogm
 
 import com.embabel.agent.core.DataDictionary
-import com.embabel.agent.rag.EntitySearch
 import com.embabel.agent.rag.schema.SchemaResolver
+import com.embabel.agent.rag.service.EntitySearch
 import org.neo4j.ogm.session.SessionFactory
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service

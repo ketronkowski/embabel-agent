@@ -16,9 +16,9 @@
 package com.embabel.agent.rag.pipeline
 
 import com.embabel.agent.event.RagEventListener
-import com.embabel.agent.rag.*
 import com.embabel.agent.rag.pipeline.event.EnhancementCompletedRagPipelineEvent
 import com.embabel.agent.rag.pipeline.event.EnhancementStartingRagPipelineEvent
+import com.embabel.agent.rag.service.*
 import org.slf4j.LoggerFactory
 
 /**

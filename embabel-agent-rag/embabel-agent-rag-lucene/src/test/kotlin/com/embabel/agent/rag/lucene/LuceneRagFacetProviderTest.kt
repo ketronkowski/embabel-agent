@@ -15,7 +15,7 @@
  */
 package com.embabel.agent.rag.lucene
 
-import com.embabel.agent.rag.RagRequest
+import com.embabel.agent.rag.service.RagRequest
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach

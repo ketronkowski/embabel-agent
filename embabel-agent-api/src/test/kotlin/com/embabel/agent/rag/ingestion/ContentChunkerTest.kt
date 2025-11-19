@@ -15,8 +15,8 @@
  */
 package com.embabel.agent.rag.ingestion
 
-import com.embabel.agent.rag.Chunk
-import com.embabel.agent.rag.LeafSection
+import com.embabel.agent.rag.model.Chunk
+import com.embabel.agent.rag.model.LeafSection
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 

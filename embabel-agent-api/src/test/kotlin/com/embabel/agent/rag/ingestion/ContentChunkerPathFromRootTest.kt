@@ -15,7 +15,8 @@
  */
 package com.embabel.agent.rag.ingestion
 
-import com.embabel.agent.rag.LeafSection
+import com.embabel.agent.rag.model.LeafSection
+import com.embabel.agent.rag.model.Chunk
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.util.*
@@ -277,7 +278,7 @@ class ContentChunkerPathFromRootTest {
         val rootId = UUID.randomUUID().toString()
         val chunkId = UUID.randomUUID().toString()
 
-        val chunk = com.embabel.agent.rag.Chunk(
+        val chunk = Chunk(
             id = chunkId,
             text = "Test content",
             metadata = mapOf(
@@ -296,7 +297,7 @@ class ContentChunkerPathFromRootTest {
     fun `test chunk without root_document_id has null pathFromRoot`() {
         val chunkId = UUID.randomUUID().toString()
 
-        val chunk = com.embabel.agent.rag.Chunk(
+        val chunk = Chunk(
             id = chunkId,
             text = "Test content",
             metadata = emptyMap(), // Missing root_document_id

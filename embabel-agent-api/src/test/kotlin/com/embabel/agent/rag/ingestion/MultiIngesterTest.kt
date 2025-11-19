@@ -15,7 +15,7 @@
  */
 package com.embabel.agent.rag.ingestion
 
-import com.embabel.agent.rag.WritableStore
+import com.embabel.agent.rag.store.WritableStore
 import io.mockk.*
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach

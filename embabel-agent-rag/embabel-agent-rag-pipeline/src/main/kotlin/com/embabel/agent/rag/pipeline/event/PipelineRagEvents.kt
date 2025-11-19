@@ -16,8 +16,8 @@
 package com.embabel.agent.rag.pipeline.event
 
 import com.embabel.agent.event.RagEvent
-import com.embabel.agent.rag.RagRequest
-import com.embabel.agent.rag.RagResponse
+import com.embabel.agent.rag.service.RagRequest
+import com.embabel.agent.rag.service.RagResponse
 import java.time.Instant
 
 /**

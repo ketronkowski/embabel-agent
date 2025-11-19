@@ -21,9 +21,12 @@ import com.embabel.agent.event.AgentProcessRagEvent
 import com.embabel.agent.event.RagEventListener
 import com.embabel.agent.event.RagRequestReceivedEvent
 import com.embabel.agent.event.RagResponseEvent
-import com.embabel.agent.rag.*
+import com.embabel.agent.rag.model.Chunk
+import com.embabel.agent.rag.model.ContentElement
+import com.embabel.agent.rag.model.RetrievableEntity
 import com.embabel.agent.rag.pipeline.event.InitialRequestRagPipelineEvent
 import com.embabel.agent.rag.pipeline.event.InitialResponseRagPipelineEvent
+import com.embabel.agent.rag.service.*
 import org.slf4j.LoggerFactory
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 

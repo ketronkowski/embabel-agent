@@ -15,8 +15,8 @@
  */
 package com.embabel.agent.event
 
-import com.embabel.agent.rag.RagRequest
-import com.embabel.agent.rag.RagResponse
+import com.embabel.agent.rag.service.RagRequest
+import com.embabel.agent.rag.service.RagResponse
 import com.embabel.common.core.types.Timestamped
 import org.slf4j.LoggerFactory
 import java.time.Instant

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.embabel.agent.rag
+package com.embabel.agent.rag.service
 
 import com.embabel.agent.api.common.OperationContext
 import com.embabel.agent.event.RagEventListener

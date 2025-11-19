@@ -16,9 +16,9 @@
 package com.embabel.agent.rag.neo.ogm
 
 import com.embabel.agent.core.DataDictionary
-import com.embabel.agent.rag.RagRequest
 import com.embabel.agent.rag.neo.common.CypherQuery
 import com.embabel.agent.rag.neo.common.CypherRagQueryGenerator
+import com.embabel.agent.rag.service.RagRequest
 import com.embabel.common.ai.model.ModelProvider
 import com.embabel.common.ai.model.ModelSelectionCriteria.Companion.byRole
 import com.embabel.common.util.loggerFor

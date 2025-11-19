@@ -16,7 +16,7 @@
 package com.embabel.agent.rag.pipeline
 
 import com.embabel.agent.api.common.Ai
-import com.embabel.agent.rag.RagRequest
+import com.embabel.agent.rag.service.RagRequest
 import com.embabel.common.ai.model.LlmOptions
 
 /**

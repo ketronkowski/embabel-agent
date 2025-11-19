@@ -15,9 +15,9 @@
  */
 package com.embabel.agent.rag.ingestion
 
-import com.embabel.agent.rag.Chunk
-import com.embabel.agent.rag.ContentElement
-import com.embabel.agent.rag.HierarchicalContentElement
+import com.embabel.agent.rag.model.Chunk
+import com.embabel.agent.rag.model.ContentElement
+import com.embabel.agent.rag.model.HierarchicalContentElement
 
 /**
  * Implemented by services that can retrieve Chunks and other ContentElements by id.

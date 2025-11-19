@@ -15,9 +15,9 @@
  */
 package com.embabel.agent.rag.pipeline
 
-import com.embabel.agent.rag.Chunk
-import com.embabel.agent.rag.RagRequest
-import com.embabel.agent.rag.RagResponse
+import com.embabel.agent.rag.model.Chunk
+import com.embabel.agent.rag.service.RagRequest
+import com.embabel.agent.rag.service.RagResponse
 import com.embabel.common.core.types.SimpleSimilaritySearchResult
 import io.mockk.mockk
 import io.mockk.verify

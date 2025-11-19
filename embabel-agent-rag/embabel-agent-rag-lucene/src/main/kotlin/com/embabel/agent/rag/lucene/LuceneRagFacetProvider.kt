@@ -16,15 +16,20 @@
 package com.embabel.agent.rag.lucene
 
 import com.embabel.agent.api.common.primitive.KeywordExtractor
-import com.embabel.agent.rag.*
+import com.embabel.agent.rag.model.Chunk
+import com.embabel.agent.rag.model.ContentElement
+import com.embabel.agent.rag.model.Retrievable
+import com.embabel.agent.rag.ingestion.RetrievableEnhancer
 import com.embabel.agent.rag.ingestion.ContentChunker
 import com.embabel.agent.rag.ingestion.ContentChunker.Companion.CONTAINER_SECTION_ID
 import com.embabel.agent.rag.ingestion.ContentChunker.Companion.SEQUENCE_NUMBER
 import com.embabel.agent.rag.ingestion.NavigableDocument
-import com.embabel.agent.rag.support.FunctionRagFacet
-import com.embabel.agent.rag.support.RagFacet
-import com.embabel.agent.rag.support.RagFacetProvider
-import com.embabel.agent.rag.support.RagFacetResults
+import com.embabel.agent.rag.service.RagRequest
+import com.embabel.agent.rag.store.AbstractWritableContentElementRepository
+import com.embabel.agent.rag.service.support.FunctionRagFacet
+import com.embabel.agent.rag.service.support.RagFacet
+import com.embabel.agent.rag.service.support.RagFacetProvider
+import com.embabel.agent.rag.service.support.RagFacetResults
 import com.embabel.common.core.types.HasInfoString
 import com.embabel.common.core.types.SimpleSimilaritySearchResult
 import com.embabel.common.util.indent

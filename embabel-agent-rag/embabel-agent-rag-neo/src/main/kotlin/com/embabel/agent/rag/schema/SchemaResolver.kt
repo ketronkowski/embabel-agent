@@ -16,7 +16,7 @@
 package com.embabel.agent.rag.schema
 
 import com.embabel.agent.core.DataDictionary
-import com.embabel.agent.rag.EntitySearch
+import com.embabel.agent.rag.service.EntitySearch
 
 /**
  * Resolve schema by name

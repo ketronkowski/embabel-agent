@@ -13,20 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.embabel.agent.rag
+package com.embabel.agent.rag.service
 
-import com.embabel.agent.rag.ingestion.NavigableDocument
-import com.embabel.common.core.types.Named
-import org.springframework.ai.document.DocumentWriter
+import com.embabel.common.ai.model.LlmOptions
+import org.springframework.boot.context.properties.ConfigurationProperties
 
-/**
- * RagService that can accept documents
- */
-interface WritableStore : DocumentWriter, Named {
-
-    /**
-     * Write the given content root and its children to the underlying store.
-     * @return list of chunk ids
-     */
-    fun writeContent(root: NavigableDocument): List<String>
-}
+@ConfigurationProperties(prefix = "embabel.agent.rag")
+data class RagServiceEnhancerProperties(
+    val compressionLlm: LlmOptions = LlmOptions.withAutoLlm(),
+    val rerankingLlm: LlmOptions = LlmOptions.withAutoLlm(),
+    val maxConcurrency: Int = 12,
+)

@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.embabel.agent.rag
+package com.embabel.agent.rag.service
 
+import com.embabel.agent.rag.model.Chunk
+import com.embabel.agent.rag.model.ContentElement
 import com.embabel.common.core.types.SimilarityCutoff
 import com.embabel.common.core.types.TextSimilaritySearchRequest
 import com.embabel.common.core.types.Timestamped

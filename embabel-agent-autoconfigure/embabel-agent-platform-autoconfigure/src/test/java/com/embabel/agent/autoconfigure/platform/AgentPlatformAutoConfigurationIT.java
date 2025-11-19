@@ -17,7 +17,7 @@ package com.embabel.agent.autoconfigure.platform;
 
 import com.embabel.agent.config.annotation.AgentPlatform;
 import com.embabel.agent.event.AgenticEventListener;
-import com.embabel.agent.rag.RagService;
+import com.embabel.agent.rag.service.RagService;
 import com.embabel.agent.spi.Ranker;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
@@ -34,7 +34,7 @@ import org.springframework.test.annotation.DirtiesContext;
  * Test employs OPEN API KEY.
  *
  */
-@SpringBootTest(classes= AgentPlatformAutoConfigurationIT.class)
+@SpringBootTest(classes = AgentPlatformAutoConfigurationIT.class)
 @ComponentScan(basePackages = "com.embabel.agent.autoconfigure")
 @ImportAutoConfiguration(classes = {AgentPlatformAutoConfiguration.class})
 @AgentPlatform("my-domain")
