@@ -17,16 +17,25 @@ package com.embabel.agent.rag.model
 
 interface NavigableContainerSection : ContainerSection, NavigableSection {
 
-    fun descendants(): List<NavigableSection> =
-        children + children.filterIsInstance<NavigableContainerSection>().flatMap { containerChild ->
-            containerChild.descendants()
+    /**
+     * All descendant sections of this container
+     */
+    fun descendants(): Iterable<NavigableSection> = sequence {
+        yieldAll(children)
+        children.filterIsInstance<NavigableContainerSection>().forEach { containerChild ->
+            yieldAll(containerChild.descendants())
         }
+    }.asIterable()
 
-    fun leaves(): List<LeafSection> =
-        children.filterIsInstance<LeafSection>() +
-                children.filterIsInstance<NavigableContainerSection>().flatMap { containerChild ->
-                    containerChild.leaves()
-                }
+    /**
+     * All descendant leaf sections of this container
+     */
+    fun leaves(): Iterable<LeafSection> = sequence {
+        yieldAll(children.filterIsInstance<LeafSection>())
+        children.filterIsInstance<NavigableContainerSection>().forEach { containerChild ->
+            yieldAll(containerChild.leaves())
+        }
+    }.asIterable()
 }
 
 data class DefaultMaterializedContainerSection(

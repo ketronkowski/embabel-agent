@@ -77,7 +77,7 @@ class ContentChunker(
      * Split a MaterializedContainerSection into one or more Chunks
      */
     fun chunk(section: NavigableContainerSection): List<Chunk> {
-        val leaves = section.leaves()
+        val leaves = section.leaves().toList()
         val totalContentLength = leaves.sumOf { it.content.length + it.title.length + 1 } // +1 for newline after title
 
         // Determine root document ID: if section is a ContentRoot, use its ID, otherwise try to get from metadata

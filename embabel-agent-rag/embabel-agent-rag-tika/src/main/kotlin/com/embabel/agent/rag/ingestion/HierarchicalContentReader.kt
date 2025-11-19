@@ -75,7 +75,7 @@ data class DirectoryParsingResult(
         get() = filesErrored == 0 && errors.isEmpty()
 
     val totalSectionsExtracted: Int
-        get() = contentRoots.sumOf { it.leaves().size }
+        get() = contentRoots.sumOf { it.leaves().count() }
 }
 
 /**

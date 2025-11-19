@@ -612,7 +612,7 @@ class TikaHierarchicalContentReader : HierarchicalContentReader {
 
             logger.info(
                 "Successfully parsed file '{}' - {} sections extracted",
-                filePath, result.leaves().size
+                filePath, result.leaves().count()
             )
 
             result
@@ -734,7 +734,7 @@ class TikaHierarchicalContentReader : HierarchicalContentReader {
                     filesProcessed++
                     logger.debug(
                         "Successfully processed file {} ({}/{}): {} sections",
-                        filePath, index + 1, files.size, result.leaves().size
+                        filePath, index + 1, files.size, result.leaves().count()
                     )
                 } else {
                     filesSkipped++
@@ -752,7 +752,7 @@ class TikaHierarchicalContentReader : HierarchicalContentReader {
 
         logger.info("Directory parsing completed in {} ms", processingTime.toMillis())
         logger.info("Files processed: {}, skipped: {}, errors: {}", filesProcessed, filesSkipped, filesErrored)
-        logger.info("Total sections extracted: {}", contentRoots.sumOf { it.leaves().size })
+        logger.info("Total sections extracted: {}", contentRoots.sumOf { it.leaves().count() })
 
         return DirectoryParsingResult(
             totalFilesFound = files.size,
