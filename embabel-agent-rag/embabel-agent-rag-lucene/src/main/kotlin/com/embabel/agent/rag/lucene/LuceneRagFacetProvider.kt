@@ -764,6 +764,19 @@ class LuceneRagFacetProvider @JvmOverloads constructor(
         }
     }
 
+    override fun existsRootWithUri(uri: String): Boolean {
+        logger.debug("Checking if root document exists with URI: {}", uri)
+        synchronized(this) {
+            val exists = contentElementStorage.values.any {
+                it.uri == uri && it.labels().any { label ->
+                    label.contains("Document") || label.contains("ContentRoot")
+                }
+            }
+            logger.debug("Root document with URI {} exists: {}", uri, exists)
+            return exists
+        }
+    }
+
     /**
      * Clear all stored content - useful for testing
      */

@@ -253,6 +253,30 @@ class OgmRagFacetProvider(
         }
     }
 
+    override fun existsRootWithUri(uri: String): Boolean {
+        logger.debug("Checking if root document exists with URI: {}", uri)
+
+        try {
+            val session = ogmCypherSearch.currentSession()
+            val result = session.query(
+                """
+                MATCH (root:ContentElement {uri: ${'$'}uri})
+                WHERE 'Document' IN labels(root) OR 'ContentRoot' IN labels(root)
+                RETURN count(root) > 0 AS exists
+                """.trimIndent(),
+                mapOf("uri" to uri),
+                true
+            )
+
+            val exists = result.firstOrNull()?.get("exists") as? Boolean ?: false
+            logger.debug("Root document with URI {} exists: {}", uri, exists)
+            return exists
+        } catch (e: Exception) {
+            logger.error("Error checking if root exists with URI: {}", uri, e)
+            return false
+        }
+    }
+
     override fun facets(): List<RagFacet<out Retrievable>> {
         return listOf(
             FunctionRagFacet(

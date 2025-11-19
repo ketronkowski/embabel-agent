@@ -48,6 +48,11 @@ interface ChunkingContentElementRepository : ContentElementRepository {
     fun deleteRootAndDescendants(uri: String): DocumentDeletionResult?
 
     /**
+     * Does a root with the given uri exist?
+     */
+    fun existsRootWithUri(uri: String): Boolean
+
+    /**
      * List of enhancers
      */
     val enhancers: List<RetrievableEnhancer>
