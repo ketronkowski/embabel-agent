@@ -84,9 +84,11 @@ class PipelinedRagServiceEnhancer(
         override fun search(ragRequest: RagRequest): RagResponse {
             listener.onRagEvent(RagRequestReceivedEvent(ragRequest))
             logger.info("Performing initial rag search for {} using RagService {}", ragRequest, delegate.name)
-            val initialQuery = ragRequest.hyDE?.let {
+            val hyDE = ragRequest.hintOfType<HyDE>()
+            val initialQuery = hyDE?.let { hyDE ->
                 hyDEQueryGenerator.hydeQuery(
                     ragRequest = ragRequest,
+                    hyDE = hyDE,
                     llm = ragServiceEnhancerProperties.compressionLlm,
                     ai = operationContext.ai(),
                 )
@@ -108,7 +110,8 @@ class PipelinedRagServiceEnhancer(
                 enhancers = buildList {
                     add(DeduplicatingEnhancer)
                     add(ChunkMergingEnhancer)
-                    if (ragRequest.compressionConfig.enabled) {
+                    val resultCompression = ragRequest.hintOfType<ResultCompression>()
+                    if (resultCompression?.enabled == true) {
                         add(
                             PromptedContextualCompressionEnhancer(
                                 operationContext,

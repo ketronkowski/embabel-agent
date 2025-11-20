@@ -47,6 +47,8 @@ data class AdaptivePipelineRagResponseEnhancer @JvmOverloads constructor(
         var current = response
         val startTime = System.currentTimeMillis()
 
+        val desiredMaxLatency = response.request.hintOfType<DesiredMaxLatency>() ?: DesiredMaxLatency.UNBOUNDED
+
         for (enhancer in enhancers) {
             if (adaptiveExecution) {
                 val estimate = enhancer.estimateImpact(current)
@@ -59,12 +61,12 @@ data class AdaptivePipelineRagResponseEnhancer @JvmOverloads constructor(
                         continue
                     }
 
-                    elapsedMs > response.request.desiredMaxLatency.toMillis() -> {
+                    elapsedMs > desiredMaxLatency.duration.toMillis() -> {
                         logger.info(
                             "Skipping enhancer {} as elapsed time is {}ms with latency limit of {}ms",
                             estimate,
                             enhancer.name,
-                            response.request.desiredMaxLatency,
+                            desiredMaxLatency,
                         )
                         break
                     }

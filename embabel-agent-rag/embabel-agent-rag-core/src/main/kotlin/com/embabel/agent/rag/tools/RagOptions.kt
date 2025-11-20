@@ -18,7 +18,6 @@ package com.embabel.agent.rag.tools
 import com.embabel.agent.rag.service.*
 import com.embabel.common.ai.model.LlmOptions
 import com.embabel.common.core.types.ZeroToOne
-import java.time.Duration
 
 data class DualShotConfig(
     val summaryWords: Int = 100,
@@ -38,9 +37,7 @@ data class RagOptions @JvmOverloads constructor(
     val ragService: RagService,
     override val similarityThreshold: ZeroToOne = 0.7,
     override val topK: Int = 8,
-    override val hyDE: HyDE? = null,
-    override val desiredMaxLatency: Duration = Duration.ofMillis(5000),
-    override val compressionConfig: CompressionConfig = CompressionConfig(),
+    override val hints: List<RagHint> = emptyList(),
     val llm: LlmOptions = LlmOptions.withAutoLlm(),
     override val contentElementSearch: ContentElementSearch = ContentElementSearch.CHUNKS_ONLY,
     override val entitySearch: EntitySearch? = null,
@@ -48,8 +45,8 @@ data class RagOptions @JvmOverloads constructor(
     val dualShot: DualShotConfig? = null,
 ) : RagRequestRefinement<RagOptions> {
 
-    override fun withHyDE(hyDE: HyDE): RagOptions {
-        return this.copy(hyDE = hyDE)
+    override fun withHint(hint: RagHint): RagOptions {
+        return this.copy(hints = hints + hint)
     }
 
     override fun withSimilarityThreshold(similarityThreshold: ZeroToOne): RagOptions {
@@ -58,14 +55,6 @@ data class RagOptions @JvmOverloads constructor(
 
     override fun withTopK(topK: Int): RagOptions {
         return copy(topK = topK)
-    }
-
-    override fun withDesiredMaxLatency(desiredMaxLatency: Duration): RagOptions {
-        return copy(desiredMaxLatency = desiredMaxLatency)
-    }
-
-    override fun withCompression(compressionConfig: CompressionConfig): RagOptions {
-        return copy(compressionConfig = compressionConfig)
     }
 
     override fun withContentElementSearch(contentElementSearch: ContentElementSearch): RagOptions {

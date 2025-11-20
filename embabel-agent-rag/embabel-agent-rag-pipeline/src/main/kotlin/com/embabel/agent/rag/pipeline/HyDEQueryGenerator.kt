@@ -16,6 +16,7 @@
 package com.embabel.agent.rag.pipeline
 
 import com.embabel.agent.api.common.Ai
+import com.embabel.agent.rag.service.HyDE
 import com.embabel.agent.rag.service.RagRequest
 import com.embabel.common.ai.model.LlmOptions
 
@@ -37,6 +38,7 @@ interface HyDEQueryGenerator {
      */
     fun hydeQuery(
         ragRequest: RagRequest,
+        hyDE: HyDE,
         llm: LlmOptions,
         ai: Ai,
     ): String?

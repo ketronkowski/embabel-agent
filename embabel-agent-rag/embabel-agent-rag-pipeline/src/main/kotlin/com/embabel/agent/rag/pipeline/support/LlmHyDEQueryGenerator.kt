@@ -17,9 +17,9 @@ package com.embabel.agent.rag.pipeline.support
 
 import com.embabel.agent.api.common.Ai
 import com.embabel.agent.rag.pipeline.HyDEQueryGenerator
+import com.embabel.agent.rag.service.HyDE
 import com.embabel.agent.rag.service.RagRequest
 import com.embabel.common.ai.model.LlmOptions
-import com.embabel.common.textio.template.TemplateRenderer
 import org.slf4j.LoggerFactory
 
 /**
@@ -28,27 +28,23 @@ import org.slf4j.LoggerFactory
  */
 class LlmHyDEQueryGenerator(
     val promptPath: String,
-    private val templateRenderer: TemplateRenderer,
 ) : HyDEQueryGenerator {
 
     private val logger = LoggerFactory.getLogger(HyDEQueryGenerator::class.java)
 
     override fun hydeQuery(
         ragRequest: RagRequest,
+        hyDE: HyDE,
         llm: LlmOptions,
         ai: Ai,
-    ): String? {
-        ragRequest.hyDE ?: run {
-            logger.warn("No HyDE parameters specified in RagRequest; skipping HyDE query generation")
-            return null
-        }
-
+    ): String {
         val hydeQuery = ai
             .withLlm(llm)
             .withTemplate(promptPath)
             .generateText(
                 mapOf(
                     "ragRequest" to ragRequest,
+                    "hyDE" to hyDE,
                 )
             )
         logger.info("Initial query '{}' -> Generated HyDE query '{}'", ragRequest.query, hydeQuery)

@@ -20,7 +20,6 @@ import com.embabel.agent.rag.pipeline.PipelinedRagServiceEnhancer
 import com.embabel.agent.rag.pipeline.support.LlmHyDEQueryGenerator
 import com.embabel.agent.rag.service.RagServiceEnhancer
 import com.embabel.agent.rag.service.RagServiceEnhancerProperties
-import com.embabel.common.textio.template.TemplateRenderer
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -43,7 +42,7 @@ class RagPipelineConfiguration {
 
     @Bean
     @ConditionalOnMissingBean(HyDEQueryGenerator::class)
-    fun hyDEQueryGenerator(templateRenderer: TemplateRenderer): HyDEQueryGenerator {
-        return LlmHyDEQueryGenerator(promptPath = "default_hyde", templateRenderer = templateRenderer)
+    fun hyDEQueryGenerator(): HyDEQueryGenerator {
+        return LlmHyDEQueryGenerator(promptPath = "default_hyde")
     }
 }
