@@ -16,6 +16,9 @@
 package com.embabel.agent.api.common.support
 
 import com.embabel.agent.api.common.*
+import com.embabel.agent.api.common.nested.ObjectCreator
+import com.embabel.agent.api.common.nested.PromptRunnerObjectCreator
+import com.embabel.agent.api.common.nested.TemplateOperations
 import com.embabel.agent.core.ProcessOptions
 import com.embabel.agent.core.ToolGroup
 import com.embabel.agent.core.ToolGroupRequirement

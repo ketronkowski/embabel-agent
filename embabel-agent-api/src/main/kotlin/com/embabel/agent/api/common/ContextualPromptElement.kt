@@ -25,6 +25,9 @@ import com.embabel.common.ai.prompt.PromptElement
  */
 interface ContextualPromptElement : PromptElement {
 
+    /**
+     * Make a dynamic PromptContribution based on the operation context.
+     */
     fun promptContribution(context: OperationContext): PromptContribution {
         return PromptContribution(
             content = contribution(context),

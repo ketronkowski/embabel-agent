@@ -15,6 +15,7 @@
  */
 package com.embabel.agent.api.common
 
+import com.embabel.agent.api.common.nested.TemplateOperations
 import com.embabel.chat.AssistantMessage
 import com.embabel.chat.Message
 import com.embabel.chat.UserMessage

@@ -16,6 +16,8 @@
 package com.embabel.agent.api.common
 
 import com.embabel.agent.api.annotation.support.AgenticInfo
+import com.embabel.agent.api.common.nested.ObjectCreator
+import com.embabel.agent.api.common.nested.TemplateOperations
 import com.embabel.agent.core.Agent
 import com.embabel.agent.core.AgentPlatform
 import com.embabel.agent.core.ToolGroup
@@ -298,7 +300,7 @@ interface PromptRunner : LlmUse, PromptRunnerOperations {
     /**
      * Set whether to generate examples of the output in the prompt
      * on a per-PromptRunner basis. This overrides platform defaults.
-     * Note that adding individual examples with [ObjectCreator.withExample]
+     * Note that adding individual examples with [com.embabel.agent.api.common.nested.ObjectCreator.withExample]
      * will always override this.
      */
     fun withGenerateExamples(generateExamples: Boolean): PromptRunner

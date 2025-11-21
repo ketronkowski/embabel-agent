@@ -21,6 +21,7 @@ import com.embabel.common.ai.prompt.PromptContributor
 import org.springframework.validation.annotation.Validated
 
 /**
+ * Core abstraction for an LLM with tools and a persona.
  * An Actor plays a role: Convenient way to combine a PromptContributor
  * with an LLM and tools.
  * Open to allow subclasses to add tools via @Tool methods

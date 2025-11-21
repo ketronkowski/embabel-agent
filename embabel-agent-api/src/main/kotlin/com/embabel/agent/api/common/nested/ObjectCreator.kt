@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.embabel.agent.api.common
+package com.embabel.agent.api.common.nested
 
+import com.embabel.agent.api.common.PromptRunner
 import com.embabel.chat.Message
 import com.embabel.chat.UserMessage
 import com.embabel.common.ai.prompt.PromptContributor

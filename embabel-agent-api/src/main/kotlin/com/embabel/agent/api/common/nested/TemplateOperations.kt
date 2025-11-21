@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.embabel.agent.api.common
+package com.embabel.agent.api.common.nested
 
+import com.embabel.agent.api.common.PromptRunnerOperations
 import com.embabel.chat.AssistantMessage
 import com.embabel.chat.Conversation
 import com.embabel.chat.SystemMessage
@@ -22,7 +23,7 @@ import com.embabel.common.textio.template.TemplateRenderer
 
 /**
  * Llm operations based on a compiled template.
- * Similar to [PromptRunnerOperations], but taking a model instead of a template string.
+ * Similar to [com.embabel.agent.api.common.PromptRunnerOperations], but taking a model instead of a template string.
  * Template names will be resolved by the [com.embabel.common.textio.template.TemplateRenderer] provided.
  */
 class TemplateOperations(

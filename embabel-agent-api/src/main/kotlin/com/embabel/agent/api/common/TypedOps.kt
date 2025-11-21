@@ -100,18 +100,5 @@ fun <I : Any, O : Any> TypedOps.transform(
     )
 }
 
-/**
- * Turn user input into this type
- */
-inline fun <reified O> TypedOps.handleUserInput(
-    intent: String,
-    processOptions: ProcessOptions = ProcessOptions(),
-): O =
-    handleUserInput(
-        intent = intent,
-        outputClass = O::class.java,
-        processOptions = processOptions,
-    )
-
 inline fun <I : Any, reified O> TypedOps.asFunction(
 ): AgentFunction<I, O> = asFunction(O::class.java)

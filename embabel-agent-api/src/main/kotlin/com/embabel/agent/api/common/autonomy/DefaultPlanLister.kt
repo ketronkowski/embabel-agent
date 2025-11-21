@@ -19,13 +19,13 @@ import com.embabel.agent.core.AgentPlatform
 import com.embabel.agent.core.ProcessOptions
 import com.embabel.common.util.time
 import com.embabel.plan.Plan
-import com.embabel.plan.common.condition.ConditionPlanningSystem
 import com.embabel.plan.common.condition.ConditionPlanner
+import com.embabel.plan.common.condition.ConditionPlanningSystem
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 
 @Service
-class DefaultPlanLister(
+internal class DefaultPlanLister(
     private val agentPlatform: AgentPlatform,
 ) : PlanLister {
 
