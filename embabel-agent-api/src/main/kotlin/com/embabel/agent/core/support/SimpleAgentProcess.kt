@@ -60,8 +60,8 @@ open class SimpleAgentProcess(
     }
 
     protected fun handlePlanNotFound(worldState: WorldState): AgentProcess {
-        logger.info(
-            "❌ Process $id stuck\n" +
+        logger.debug(
+            "🚦 Process $id stuck\n" +
                     """|No plan from:
                    |${worldState.infoString(verbose = true, indent = 1)}
                    |in:

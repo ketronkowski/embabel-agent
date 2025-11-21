@@ -17,7 +17,6 @@ package com.embabel.agent.spi.support.springai
 
 import com.embabel.agent.core.ToolGroupMetadata
 import com.embabel.common.util.loggerFor
-import com.embabel.common.util.trim
 import org.springframework.ai.tool.ToolCallback
 import org.springframework.ai.tool.definition.ToolDefinition
 
@@ -37,8 +36,8 @@ class MetadataEnrichedToolCallback(
         } catch (t: Throwable) {
             // Ensures logs aren't too verbose, but still informative.
             loggerFor<MetadataEnrichedToolCallback>().warn(
-                "Tool call failure on ${delegate.toolDefinition.name()}: {}",
-                trim(s = t.message, max = 120, keepRight = 5),
+                "Tool call failure on ${delegate.toolDefinition.name()}",
+                t,
             )
             throw t
         }
