@@ -36,7 +36,7 @@ class MetadataEnrichedToolCallback(
         } catch (t: Throwable) {
             // Ensures logs aren't too verbose, but still informative.
             loggerFor<MetadataEnrichedToolCallback>().warn(
-                "Tool call failure on ${delegate.toolDefinition.name()}",
+                "Tool call failure on ${delegate.toolDefinition.name()}: input from LLM was <$toolInput>",
                 t,
             )
             throw t
