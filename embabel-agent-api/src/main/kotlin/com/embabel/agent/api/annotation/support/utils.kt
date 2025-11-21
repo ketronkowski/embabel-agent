@@ -16,27 +16,15 @@
 package com.embabel.agent.api.annotation.support
 
 import com.embabel.agent.api.annotation.RequireNameMatch
-import com.embabel.agent.core.AgentPlatform
 import com.embabel.agent.core.IoBinding
 
-/**
- * Convenient method to deploy instances to an agent platform
- */
-fun AgentPlatform.deployAnnotatedInstances(
-    agentMetadataReader: AgentMetadataReader,
-    vararg instances: Any,
-) {
-    instances
-        .mapNotNull { agentMetadataReader.createAgentMetadata(it) }
-        .forEach { deploy(it) }
-}
 
 /**
  * Returns the name of the parameter based on the provided [RequireNameMatch].
  */
 fun getBindingParameterName(
     parameterName: String?,
-    requireNameMatch: RequireNameMatch?
+    requireNameMatch: RequireNameMatch?,
 ): String? {
     if (requireNameMatch == null) {
         return IoBinding.DEFAULT_BINDING

@@ -24,7 +24,7 @@ import com.embabel.plan.CostComputation
 /**
  * Action that has input preconditions, but produces no output
  */
-class ConsumerAction<I>(
+internal class ConsumerAction<I>(
     name: String,
     description: String = name,
     pre: List<String> = emptyList(),

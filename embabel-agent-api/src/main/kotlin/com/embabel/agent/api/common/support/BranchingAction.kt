@@ -45,7 +45,7 @@ data class Branch<B, C>(
  * Action that declares one of two types of output.
  * The code block must return a Branch object, which will be used to determine which output to use.
  */
-open class BranchingAction<I, O1, O2>(
+internal open class BranchingAction<I, O1, O2>(
     name: String,
     description: String = name,
     pre: List<String> = emptyList(),

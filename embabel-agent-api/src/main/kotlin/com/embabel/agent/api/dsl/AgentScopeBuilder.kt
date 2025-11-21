@@ -377,7 +377,7 @@ inline fun <reified A, reified B : Any, reified C> repeatableAggregate(
         bClass = B::class.java,
         cClass = C::class.java,
     )
-    val populator: Action = SupplierAction<C>(
+    val populator: Action = SupplierAction(
         name = "repeatable-aggregate",
         description = "Repeatable aggregate",
         pre = emptyList(),
