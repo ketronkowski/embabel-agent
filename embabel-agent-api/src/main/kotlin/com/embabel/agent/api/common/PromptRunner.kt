@@ -181,7 +181,8 @@ interface PromptRunner : LlmUse, PromptRunnerOperations {
 
     /**
      * Add a tool object to the prompt runner.
-     * @param toolObject the object to add. If it is null, nothing is done.
+     * The tool object should have @Tool annotations.
+     * @param toolObject the object to add. If it is null or has no Tool annotations, nothing is done.
      * This is not an error
      * @return PromptRunner instance with the added tool object
      */
