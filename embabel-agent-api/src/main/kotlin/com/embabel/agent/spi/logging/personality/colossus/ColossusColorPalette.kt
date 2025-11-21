@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.embabel.agent.event.logging.personality.colossus
+package com.embabel.agent.spi.logging.personality.colossus
 
-import com.embabel.agent.event.logging.personality.ColorPalette
+import com.embabel.agent.spi.logging.ColorPalette
 import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Component
 

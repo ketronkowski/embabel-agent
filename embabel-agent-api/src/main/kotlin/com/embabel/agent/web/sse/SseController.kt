@@ -15,9 +15,9 @@
  */
 package com.embabel.agent.web.sse
 
+import com.embabel.agent.api.event.AgentProcessEvent
+import com.embabel.agent.api.event.AgenticEventListener
 import com.embabel.agent.spi.config.spring.AgentPlatformProperties
-import com.embabel.agent.event.AgentProcessEvent
-import com.embabel.agent.event.AgenticEventListener
 import org.slf4j.LoggerFactory
 import org.springframework.http.MediaType.TEXT_EVENT_STREAM_VALUE
 import org.springframework.stereotype.Component

@@ -17,8 +17,8 @@ package com.embabel.agent.spi
 
 import com.embabel.agent.api.common.ContextualPromptElement
 import com.embabel.agent.api.common.InteractionId
+import com.embabel.agent.api.event.LlmRequestEvent
 import com.embabel.agent.core.*
-import com.embabel.agent.event.LlmRequestEvent
 import com.embabel.chat.Message
 import com.embabel.chat.UserMessage
 import com.embabel.common.ai.model.LlmOptions

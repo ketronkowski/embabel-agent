@@ -15,8 +15,8 @@
  */
 package com.embabel.agent.api.common
 
+import com.embabel.agent.api.event.AbstractAgentProcessEvent
 import com.embabel.agent.core.AgentProcess
-import com.embabel.agent.event.AbstractAgentProcessEvent
 
 enum class StuckHandlingResultCode {
     REPLAN,

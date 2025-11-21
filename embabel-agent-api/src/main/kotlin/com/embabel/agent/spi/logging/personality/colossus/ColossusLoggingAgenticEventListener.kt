@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.embabel.agent.event.logging.personality.colossus
+package com.embabel.agent.spi.logging.personality.colossus
 
-import com.embabel.agent.event.*
-import com.embabel.agent.event.logging.LoggingAgenticEventListener
+import com.embabel.agent.api.event.AgentDeploymentEvent
+import com.embabel.agent.api.event.AgentProcessPlanFormulatedEvent
+import com.embabel.agent.api.event.ObjectBoundEvent
+import com.embabel.agent.spi.logging.LoggingAgenticEventListener
 import com.embabel.common.util.color
 import com.embabel.common.util.hexToRgb
 import org.slf4j.LoggerFactory
@@ -66,7 +68,9 @@ class ColossusLoggingAgenticEventListener : LoggingAgenticEventListener(
      * @return A formatted, colored string message about the formulated plan
      */
     override fun getAgentProcessPlanFormulatedEventMessage(e: AgentProcessPlanFormulatedEvent): String =
-        "[${e.processId}] world control formulated plan ${e.plan.infoString(verbose = e.agentProcess.processContext.processOptions.verbosity.showLongPlans)} from ${e.worldState.infoString()}".color(ColossusColorPalette.PANEL)
+        "[${e.processId}] world control formulated plan ${e.plan.infoString(verbose = e.agentProcess.processContext.processOptions.verbosity.showLongPlans)} from ${e.worldState.infoString()}".color(
+            ColossusColorPalette.PANEL
+        )
 
     /**
      * Generates a themed message when an agent is deployed.

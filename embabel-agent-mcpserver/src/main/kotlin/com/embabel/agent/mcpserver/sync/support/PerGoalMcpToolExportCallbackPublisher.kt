@@ -16,10 +16,10 @@
 package com.embabel.agent.mcpserver.sync.support
 
 import com.embabel.agent.api.common.autonomy.Autonomy
-import com.embabel.agent.event.AgentProcessEvent
-import com.embabel.agent.event.AgenticEventListener
-import com.embabel.agent.event.ObjectAddedEvent
-import com.embabel.agent.event.ObjectBoundEvent
+import com.embabel.agent.api.event.AgentProcessEvent
+import com.embabel.agent.api.event.AgenticEventListener
+import com.embabel.agent.api.event.ObjectAddedEvent
+import com.embabel.agent.api.event.ObjectBoundEvent
 import com.embabel.agent.mcpserver.McpToolExportCallbackPublisher
 import com.embabel.agent.tools.agent.GoalToolCallback
 import com.embabel.agent.tools.agent.PerGoalToolCallbackFactory

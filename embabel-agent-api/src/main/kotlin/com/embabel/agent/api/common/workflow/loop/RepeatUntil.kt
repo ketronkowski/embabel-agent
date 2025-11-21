@@ -19,8 +19,8 @@ import com.embabel.agent.api.common.InputActionContext
 import com.embabel.agent.api.common.OperationContext
 import com.embabel.agent.api.common.support.TransformationAction
 import com.embabel.agent.api.dsl.AgentScopeBuilder
+import com.embabel.agent.api.event.AgenticEventListener
 import com.embabel.agent.core.*
-import com.embabel.agent.event.AgenticEventListener
 import com.embabel.common.core.MobyNameGenerator
 import com.embabel.common.core.types.Timed
 import com.embabel.common.core.types.Timestamped

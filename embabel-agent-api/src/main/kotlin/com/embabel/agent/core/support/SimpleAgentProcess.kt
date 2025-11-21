@@ -16,9 +16,9 @@
 package com.embabel.agent.core.support
 
 import com.embabel.agent.api.common.PlatformServices
+import com.embabel.agent.api.event.AgentProcessPlanFormulatedEvent
+import com.embabel.agent.api.event.GoalAchievedEvent
 import com.embabel.agent.core.*
-import com.embabel.agent.event.AgentProcessPlanFormulatedEvent
-import com.embabel.agent.event.GoalAchievedEvent
 import com.embabel.agent.spi.PlannerFactory
 import com.embabel.common.util.indentLines
 import com.embabel.plan.Plan

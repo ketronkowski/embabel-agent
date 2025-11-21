@@ -13,13 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.embabel.agent.event.logging.personality.severance
+package com.embabel.agent.spi.logging.personality
 
 import com.embabel.common.util.bold
 import com.embabel.common.util.color
 import com.embabel.common.util.italic
 
 /**
- * Severance personality utility functions
+ * Format a saying of a character
  */
-fun kier(text: String) = "👔 ${"Kier".bold()} ${text.italic().color(LumonColorPalette.MEMBRANE)}"
+fun character(
+    name: String,
+    text: String,
+    color: Int,
+): String {
+    val namePart = if (name.isNotBlank()) {
+        "${name.bold()}: "
+    } else {
+        ""
+    }
+    return "$namePart${text.italic().color(color)}"
+}

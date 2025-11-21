@@ -13,18 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.embabel.agent.event
+package com.embabel.agent.spi.logging.personality.hitchhiker
 
-import com.embabel.common.core.types.Timestamped
-import com.fasterxml.jackson.annotation.JsonTypeInfo
+import com.embabel.agent.spi.logging.ColorPalette
+import org.springframework.context.annotation.Profile
+import org.springframework.stereotype.Component
 
-/**
- * Root of event hierarchy
- * Any event relating to an agent platform
- */
-@JsonTypeInfo(
-    use = JsonTypeInfo.Id.SIMPLE_NAME,
-    include = JsonTypeInfo.As.PROPERTY,
-    property = "type"
-)
-sealed interface AgenticEvent : Timestamped
+@Component
+@Profile("hh")
+object HitchhikerColorPalette : ColorPalette {
+    const val BABEL_GREEN: Int = 0x00ff66 // Guide text green
+    const val TOWEL_YELLOW: Int = 0xffe066
+    const val DEEP_SPACE_BLUE: Int = 0x003366
+    const val PANIC_RED: Int = 0xff0055
+
+    override val highlight: Int
+        get() = BABEL_GREEN
+    override val color2: Int
+        get() = TOWEL_YELLOW
+}

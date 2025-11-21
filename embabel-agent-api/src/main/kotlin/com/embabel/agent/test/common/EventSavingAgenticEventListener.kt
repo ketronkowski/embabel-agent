@@ -15,12 +15,12 @@
  */
 package com.embabel.agent.test.common
 
-import com.embabel.agent.event.AgentPlatformEvent
-import com.embabel.agent.event.AgentProcessEvent
-import com.embabel.agent.event.AgenticEventListener
+import com.embabel.agent.api.event.AgentPlatformEvent
+import com.embabel.agent.api.event.AgentProcessEvent
+import com.embabel.agent.api.event.AgenticEventListener
 
 /**
- * Simple implementation of [com.embabel.agent.event.AgenticEventListener] that saves each kind of event to a list.
+ * Simple implementation of [AgenticEventListener] that saves each kind of event to a list.
  */
 class EventSavingAgenticEventListener : AgenticEventListener {
 

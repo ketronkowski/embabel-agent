@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.embabel.agent.event.logging.personality.severance
+package com.embabel.agent.spi.logging.personality.severance
 
+import com.embabel.agent.api.event.*
 import com.embabel.agent.core.EarlyTermination
-import com.embabel.agent.event.*
-import com.embabel.agent.event.logging.LoggingAgenticEventListener
-import com.embabel.agent.event.logging.LoggingPersonality.Companion.BANNER_WIDTH
+import com.embabel.agent.spi.logging.LoggingAgenticEventListener
+import com.embabel.agent.spi.logging.LoggingPersonality.Companion.BANNER_WIDTH
 import com.embabel.common.util.color
 import com.embabel.common.util.hexToRgb
 import org.slf4j.LoggerFactory

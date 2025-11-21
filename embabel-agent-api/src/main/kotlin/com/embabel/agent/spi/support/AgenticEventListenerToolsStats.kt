@@ -17,9 +17,9 @@ package com.embabel.agent.spi.support
 
 import com.embabel.agent.api.common.ToolStats
 import com.embabel.agent.api.common.ToolsStats
-import com.embabel.agent.event.AgentProcessEvent
-import com.embabel.agent.event.AgenticEventListener
-import com.embabel.agent.event.ToolCallResponseEvent
+import com.embabel.agent.api.event.AgentProcessEvent
+import com.embabel.agent.api.event.AgenticEventListener
+import com.embabel.agent.api.event.ToolCallResponseEvent
 
 class AgenticEventListenerToolsStats : AgenticEventListener, ToolsStats {
 

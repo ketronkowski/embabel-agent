@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.embabel.agent.event.logging.personality.hitchhiker
+package com.embabel.agent.spi.logging.personality.hitchhiker
 
+import com.embabel.agent.api.event.*
 import com.embabel.agent.core.EarlyTermination
-import com.embabel.agent.event.*
-import com.embabel.agent.event.logging.LoggingAgenticEventListener
+import com.embabel.agent.spi.logging.LoggingAgenticEventListener
 import com.embabel.common.util.color
 import com.embabel.common.util.hexToRgb
 import org.slf4j.LoggerFactory
@@ -146,10 +146,16 @@ The standard repository for all knowledge and wisdom in the universe
     override fun getToolCallRequestEventMessage(e: ToolCallRequestEvent): String =
         "[${e.processId}] ${highlight("INFINITE IMPROBABILITY")}: (${e.action?.shortName()}) calling tool ${e.tool}(${e.toolInput})"
 
-    override fun getToolCallSuccessResponseEventMessage(e: ToolCallResponseEvent, resultToShow: String): String =
+    override fun getToolCallSuccessResponseEventMessage(
+        e: ToolCallResponseEvent,
+        resultToShow: String,
+    ): String =
         "[${e.processId}] ${highlight("HEART OF GOLD")}: (${e.request.action?.shortName()}) tool ${e.request.tool} returned $resultToShow in ${e.runningTime.toMillis()}ms with payload ${e.request.toolInput}"
 
-    override fun getToolCallFailureResponseEventMessage(e: ToolCallResponseEvent, throwable: Throwable?): String =
+    override fun getToolCallFailureResponseEventMessage(
+        e: ToolCallResponseEvent,
+        throwable: Throwable?,
+    ): String =
         "[${e.processId}] ${highlight("DISASTER AREA")}: (${e.request.action?.shortName()}) tool ${e.request.tool} failed $throwable in ${e.runningTime.toMillis()}ms with payload ${e.request.toolInput}"
 
     override fun getLlmRequestEventMessage(e: LlmRequestEvent<*>): String =

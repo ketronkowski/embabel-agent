@@ -16,6 +16,7 @@
 package com.embabel.agent.event
 
 import com.embabel.agent.api.dsl.evenMoreEvilWizard
+import com.embabel.agent.api.event.*
 import com.embabel.agent.domain.io.UserInput
 import com.embabel.agent.test.common.EventSavingAgenticEventListener
 import com.embabel.agent.test.integration.IntegrationTestUtils.dummyAgentPlatform

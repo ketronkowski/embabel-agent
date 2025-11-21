@@ -15,8 +15,8 @@
  */
 package com.embabel.agent.a2a.server
 
+import com.embabel.agent.api.event.AgentPlatformEvent
 import com.embabel.agent.core.AgentPlatform
-import com.embabel.agent.event.AgentPlatformEvent
 import io.a2a.spec.JSONRPCRequest
 import io.a2a.spec.JSONRPCResponse
 import java.time.Instant

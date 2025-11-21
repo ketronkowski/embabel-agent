@@ -24,9 +24,9 @@ import com.embabel.agent.api.channel.*
 import com.embabel.agent.api.common.autonomy.*
 import com.embabel.agent.core.AgentPlatform
 import com.embabel.agent.core.hitl.*
-import com.embabel.agent.event.logging.personality.ColorPalette
-import com.embabel.agent.event.logging.personality.DefaultColorPalette
 import com.embabel.agent.shell.config.ShellProperties
+import com.embabel.agent.spi.logging.ColorPalette
+import com.embabel.agent.spi.logging.DefaultColorPalette
 import com.embabel.chat.AssistantMessage
 import com.embabel.chat.ChatSession
 import com.embabel.chat.UserMessage

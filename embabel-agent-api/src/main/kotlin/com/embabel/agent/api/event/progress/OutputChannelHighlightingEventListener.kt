@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.embabel.agent.event.progress
+package com.embabel.agent.api.event.progress
 
 import com.embabel.agent.api.channel.OutputChannel
 import com.embabel.agent.api.channel.ProgressOutputChannelEvent
-import com.embabel.agent.event.AgentProcessEvent
-import com.embabel.agent.event.AgenticEventListener
-import com.embabel.agent.event.LlmRequestEvent
-import com.embabel.agent.event.ToolCallRequestEvent
+import com.embabel.agent.api.event.AgentProcessEvent
+import com.embabel.agent.api.event.AgenticEventListener
+import com.embabel.agent.api.event.LlmRequestEvent
+import com.embabel.agent.api.event.ToolCallRequestEvent
 
 /**
  * Event listener that highlights important events in the output channel.

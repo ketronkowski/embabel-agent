@@ -18,7 +18,7 @@ package com.embabel.agent.shell
 import com.embabel.agent.api.common.autonomy.AgentProcessExecution
 import com.embabel.agent.domain.library.HasContent
 import com.embabel.agent.domain.library.InternetResources
-import com.embabel.agent.event.logging.personality.ColorPalette
+import com.embabel.agent.spi.logging.ColorPalette
 import com.embabel.common.util.color
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.apache.commons.text.WordUtils

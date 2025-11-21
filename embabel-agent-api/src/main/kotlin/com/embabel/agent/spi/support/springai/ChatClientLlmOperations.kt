@@ -15,10 +15,10 @@
  */
 package com.embabel.agent.spi.support.springai
 
+import com.embabel.agent.api.event.LlmRequestEvent
 import com.embabel.agent.core.LlmInvocation
 import com.embabel.agent.core.support.AbstractLlmOperations
 import com.embabel.agent.core.support.toEmbabelUsage
-import com.embabel.agent.event.LlmRequestEvent
 import com.embabel.agent.spi.AutoLlmSelectionCriteriaResolver
 import com.embabel.agent.spi.LlmCall
 import com.embabel.agent.spi.LlmInteraction
@@ -392,7 +392,8 @@ internal class ChatClientLlmOperations(
      **/
     private fun createChatClient(llm: Llm): ChatClient {
         return ChatClient
-            .builder(llm.model, observationRegistry, DefaultChatClientObservationConvention(),
+            .builder(
+                llm.model, observationRegistry, DefaultChatClientObservationConvention(),
                 DefaultAdvisorObservationConvention()
             )
             .build()

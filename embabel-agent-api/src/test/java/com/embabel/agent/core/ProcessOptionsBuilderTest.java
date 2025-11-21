@@ -15,8 +15,8 @@
  */
 package com.embabel.agent.core;
 
+import com.embabel.agent.api.event.AgenticEventListener;
 import com.embabel.agent.core.support.InMemoryBlackboard;
-import com.embabel.agent.event.AgenticEventListener;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;

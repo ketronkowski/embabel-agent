@@ -15,9 +15,9 @@
  */
 package com.embabel.agent.spi.support
 
+import com.embabel.agent.api.event.ActionExecutionStartEvent
+import com.embabel.agent.api.event.ToolCallRequestEvent
 import com.embabel.agent.core.Delay
-import com.embabel.agent.event.ActionExecutionStartEvent
-import com.embabel.agent.event.ToolCallRequestEvent
 import com.embabel.agent.spi.ActionExecutionSchedule
 import com.embabel.agent.spi.DelayedActionExecutionSchedule
 import com.embabel.agent.spi.OperationScheduler
@@ -37,7 +37,7 @@ class ProcessOptionsOperationScheduler(
         Delay.NONE to 0L,
         Delay.MEDIUM to 400L,
         Delay.LONG to 2000L,
-    )
+    ),
 ) : OperationScheduler {
 
     override fun scheduleAction(actionExecutionStartEvent: ActionExecutionStartEvent): ActionExecutionSchedule {

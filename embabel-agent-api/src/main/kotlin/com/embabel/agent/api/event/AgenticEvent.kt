@@ -13,13 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.embabel.agent.event.logging.personality.hitchhiker
+package com.embabel.agent.api.event
 
-import com.embabel.common.util.bold
-import com.embabel.common.util.color
-import com.embabel.common.util.italic
+import com.embabel.common.core.types.Timestamped
+import com.fasterxml.jackson.annotation.JsonTypeInfo
 
 /**
- * Hitchhiker's Guide personality utility functions
+ * Root of event hierarchy
+ * Any event relating to an agent platform
  */
-fun guide(text: String) = "📕 ${"Guide".bold()} ${text.italic().color(HitchhikerColorPalette.BABEL_GREEN)}"
+@JsonTypeInfo(
+    use = JsonTypeInfo.Id.SIMPLE_NAME,
+    include = JsonTypeInfo.As.PROPERTY,
+    property = "type"
+)
+sealed interface AgenticEvent : Timestamped

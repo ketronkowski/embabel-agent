@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.embabel.agent.event.logging.personality
+package com.embabel.agent.spi.logging.personality.hitchhiker
 
-interface ColorPalette {
-    val highlight: Int
-    val color2: Int
-}
+import com.embabel.common.util.bold
+import com.embabel.common.util.color
+import com.embabel.common.util.italic
 
-data class DefaultColorPalette(
-    override val highlight: Int = 0xbeb780,
-    override val color2: Int = 0x7da17e,
-) : ColorPalette
+/**
+ * Hitchhiker's Guide personality utility functions
+ */
+fun guide(text: String) = "📕 ${"Guide".bold()} ${text.italic().color(HitchhikerColorPalette.BABEL_GREEN)}"

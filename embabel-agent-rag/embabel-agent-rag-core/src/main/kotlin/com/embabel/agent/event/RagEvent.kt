@@ -15,6 +15,7 @@
  */
 package com.embabel.agent.event
 
+import com.embabel.agent.api.event.AbstractAgentProcessEvent
 import com.embabel.agent.core.AgentProcess
 import com.embabel.agent.rag.service.RagRequest
 import com.embabel.agent.rag.service.RagResponse

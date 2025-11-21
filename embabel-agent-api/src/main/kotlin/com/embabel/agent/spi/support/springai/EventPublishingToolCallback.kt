@@ -15,9 +15,9 @@
  */
 package com.embabel.agent.spi.support.springai
 
+import com.embabel.agent.api.event.ToolCallRequestEvent
 import com.embabel.agent.core.Action
 import com.embabel.agent.core.AgentProcess
-import com.embabel.agent.event.ToolCallRequestEvent
 import com.embabel.common.ai.model.LlmOptions
 import com.embabel.common.util.time
 import org.springframework.ai.tool.ToolCallback

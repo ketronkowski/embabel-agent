@@ -15,9 +15,9 @@
  */
 package com.embabel.agent.core.support
 
+import com.embabel.agent.api.event.LlmRequestEvent
 import com.embabel.agent.core.Action
 import com.embabel.agent.core.AgentProcess
-import com.embabel.agent.event.LlmRequestEvent
 import com.embabel.agent.spi.*
 import com.embabel.agent.spi.support.LlmDataBindingProperties
 import com.embabel.agent.spi.validation.DefaultValidationPromptGenerator

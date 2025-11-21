@@ -15,7 +15,7 @@
  */
 package com.embabel.agent.shell
 
-import com.embabel.agent.event.logging.personality.character
+import com.embabel.agent.spi.logging.personality.character
 import com.embabel.common.util.MessageGenerator
 import com.embabel.common.util.color
 import org.jline.utils.AttributedString

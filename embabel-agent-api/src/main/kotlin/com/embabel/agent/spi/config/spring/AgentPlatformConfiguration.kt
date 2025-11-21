@@ -17,12 +17,12 @@ package com.embabel.agent.spi.config.spring
 
 import com.embabel.agent.api.channel.DevNullOutputChannel
 import com.embabel.agent.api.channel.OutputChannel
+import com.embabel.agent.api.event.AgenticEventListener
 import com.embabel.agent.core.ToolGroup
-import com.embabel.agent.event.AgenticEventListener
-import com.embabel.agent.event.logging.LoggingAgenticEventListener
-import com.embabel.agent.event.logging.personality.ColorPalette
-import com.embabel.agent.event.logging.personality.DefaultColorPalette
 import com.embabel.agent.spi.*
+import com.embabel.agent.spi.logging.ColorPalette
+import com.embabel.agent.spi.logging.DefaultColorPalette
+import com.embabel.agent.spi.logging.LoggingAgenticEventListener
 import com.embabel.agent.spi.support.*
 import com.embabel.agent.spi.support.springai.DefaultToolDecorator
 import com.embabel.common.ai.model.*

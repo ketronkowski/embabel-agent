@@ -15,7 +15,7 @@
  */
 package com.embabel.agent.config.annotation;
 
-import com.embabel.agent.event.AgenticEventListener;
+import com.embabel.agent.api.event.AgenticEventListener;
 import com.embabel.agent.rag.service.RagService;
 import com.embabel.agent.spi.Ranker;
 import org.junit.jupiter.api.DisplayName;

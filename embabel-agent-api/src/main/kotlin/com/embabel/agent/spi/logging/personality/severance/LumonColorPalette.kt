@@ -13,22 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.embabel.agent.event.logging.personality.hitchhiker
+package com.embabel.agent.spi.logging.personality.severance
 
-import com.embabel.agent.event.logging.personality.ColorPalette
+import com.embabel.agent.spi.logging.ColorPalette
 import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Component
 
 @Component
-@Profile("hh")
-object HitchhikerColorPalette : ColorPalette {
-    const val BABEL_GREEN: Int = 0x00ff66 // Guide text green
-    const val TOWEL_YELLOW: Int = 0xffe066
-    const val DEEP_SPACE_BLUE: Int = 0x003366
-    const val PANIC_RED: Int = 0xff0055
+@Profile("severance")
+object LumonColorPalette : ColorPalette {
+    const val MEMBRANE: Int = 0xbeb780
+    const val WELLNESS: Int = 0xf5f5dc
+    const val MDR: Int = 0x00cc66
+    const val ORIGINAL_GREEN: Int = 0x7da17e
+    const val DISCIPLINE: Int = 0x2f4f4f
 
     override val highlight: Int
-        get() = BABEL_GREEN
+        get() = MEMBRANE
     override val color2: Int
-        get() = TOWEL_YELLOW
+        get() = MDR
 }

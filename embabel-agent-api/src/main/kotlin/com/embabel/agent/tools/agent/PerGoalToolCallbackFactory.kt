@@ -18,8 +18,8 @@ package com.embabel.agent.tools.agent
 import com.embabel.agent.api.common.autonomy.AgentProcessExecution
 import com.embabel.agent.api.common.autonomy.Autonomy
 import com.embabel.agent.api.common.autonomy.ProcessWaitingException
+import com.embabel.agent.api.event.AgenticEventListener
 import com.embabel.agent.core.Goal
-import com.embabel.agent.event.AgenticEventListener
 import com.embabel.common.core.types.NamedAndDescribed
 import org.slf4j.LoggerFactory
 import org.springframework.ai.support.ToolCallbacks

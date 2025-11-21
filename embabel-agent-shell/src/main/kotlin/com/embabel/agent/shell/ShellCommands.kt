@@ -19,9 +19,9 @@ import com.embabel.agent.api.common.ToolsStats
 import com.embabel.agent.api.common.autonomy.*
 import com.embabel.agent.core.*
 import com.embabel.agent.domain.io.UserInput
-import com.embabel.agent.event.logging.LoggingPersonality
-import com.embabel.agent.event.logging.personality.ColorPalette
 import com.embabel.agent.shell.config.ShellProperties
+import com.embabel.agent.spi.logging.ColorPalette
+import com.embabel.agent.spi.logging.LoggingPersonality
 import com.embabel.chat.Chatbot
 import com.embabel.chat.agent.AgentProcessChatbot
 import com.embabel.chat.agent.DefaultChatAgentBuilder

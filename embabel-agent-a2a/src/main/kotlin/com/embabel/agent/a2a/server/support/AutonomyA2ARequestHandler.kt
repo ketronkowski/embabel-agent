@@ -20,38 +20,15 @@ import com.embabel.agent.a2a.server.A2ARequestHandler
 import com.embabel.agent.a2a.server.A2AResponseEvent
 import com.embabel.agent.api.common.autonomy.AgentProcessExecution
 import com.embabel.agent.api.common.autonomy.Autonomy
+import com.embabel.agent.api.event.AgenticEventListener
 import com.embabel.agent.core.ProcessOptions
-import com.embabel.agent.event.AgenticEventListener
-import io.a2a.spec.Artifact
-import io.a2a.spec.CancelTaskRequest
-import io.a2a.spec.CancelTaskResponse
-import io.a2a.spec.DataPart
-import io.a2a.spec.EventKind
-import io.a2a.spec.GetTaskRequest
-import io.a2a.spec.GetTaskResponse
-import io.a2a.spec.JSONRPCErrorResponse
-import io.a2a.spec.JSONRPCResponse
-import io.a2a.spec.Message
-import io.a2a.spec.MessageSendParams
-import io.a2a.spec.NonStreamingJSONRPCRequest
-import io.a2a.spec.SendMessageRequest
-import io.a2a.spec.SendMessageResponse
-import io.a2a.spec.SendStreamingMessageRequest
-import io.a2a.spec.StreamingJSONRPCRequest
-import io.a2a.spec.Task
-import io.a2a.spec.TaskIdParams
-import io.a2a.spec.TaskNotFoundError
-import io.a2a.spec.TaskQueryParams
-import io.a2a.spec.TaskState
-import io.a2a.spec.TaskStatus
-import io.a2a.spec.TaskStatusUpdateEvent
-import io.a2a.spec.TextPart
+import io.a2a.spec.*
 import org.slf4j.LoggerFactory
 import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Service
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
 import java.time.LocalDateTime
-import java.util.UUID
+import java.util.*
 
 /**
  * Handle A2A messages according to the A2A protocol.
@@ -76,7 +53,7 @@ class AutonomyA2ARequestHandler(
     }
 
     override fun handleJsonRpc(
-        request: NonStreamingJSONRPCRequest<*>
+        request: NonStreamingJSONRPCRequest<*>,
     ): JSONRPCResponse<*> {
         logger.info("Received JSONRPC message {}: {}", request.method, request::class.java.name)
         agenticEventListener.onPlatformEvent(
@@ -150,7 +127,7 @@ class AutonomyA2ARequestHandler(
                 ensureTaskId(params.message.taskId),
                 TaskNotFoundError(
                     null,
-                   "Internal error: ${e.message}",
+                    "Internal error: ${e.message}",
                     e.stackTraceToString()
                 )
             )
@@ -246,7 +223,10 @@ class AutonomyA2ARequestHandler(
         TODO()
     }
 
-    private fun createFailedTaskStatus(params: MessageSendParams, e: Exception): TaskStatus = TaskStatus(
+    private fun createFailedTaskStatus(
+        params: MessageSendParams,
+        e: Exception,
+    ): TaskStatus = TaskStatus(
         TaskState.FAILED,
         Message.Builder()
             .messageId(UUID.randomUUID().toString())
@@ -260,7 +240,7 @@ class AutonomyA2ARequestHandler(
 
     private fun createCompletedTaskStatus(
         params: MessageSendParams,
-        textPart: String = "Task completed successfully"
+        textPart: String = "Task completed successfully",
     ): TaskStatus = TaskStatus(
         TaskState.COMPLETED,
         Message.Builder()
@@ -275,7 +255,7 @@ class AutonomyA2ARequestHandler(
 
     private fun createWorkingTaskStatus(
         params: MessageSendParams,
-        textPart: String = "Working..."
+        textPart: String = "Working...",
     ): TaskStatus = TaskStatus(
         TaskState.WORKING,
         Message.Builder()
@@ -298,7 +278,7 @@ class AutonomyA2ARequestHandler(
 
     private fun createResultArtifact(
         result: AgentProcessExecution,
-        acceptedOutputModes: List<String>? = emptyList()
+        acceptedOutputModes: List<String>? = emptyList(),
     ): Artifact {
         // TODO result should be based on the outputMode received in the "params.configuration.acceptedOutputModes"
         return Artifact.Builder()

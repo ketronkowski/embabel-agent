@@ -26,12 +26,12 @@ import com.embabel.agent.api.common.StuckHandlingResultCode
 import com.embabel.agent.api.dsl.Frog
 import com.embabel.agent.api.dsl.agent
 import com.embabel.agent.api.dsl.evenMoreEvilWizard
+import com.embabel.agent.api.event.ObjectAddedEvent
+import com.embabel.agent.api.event.ObjectBoundEvent
 import com.embabel.agent.core.*
 import com.embabel.agent.core.hitl.ConfirmationRequest
 import com.embabel.agent.domain.io.UserInput
 import com.embabel.agent.domain.library.Person
-import com.embabel.agent.event.ObjectAddedEvent
-import com.embabel.agent.event.ObjectBoundEvent
 import com.embabel.agent.spi.support.GoapPlannerFactory
 import com.embabel.agent.support.Dog
 import com.embabel.agent.support.SimpleTestAgent

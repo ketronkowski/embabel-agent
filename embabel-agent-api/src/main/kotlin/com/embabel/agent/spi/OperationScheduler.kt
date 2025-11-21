@@ -15,8 +15,8 @@
  */
 package com.embabel.agent.spi
 
-import com.embabel.agent.event.ActionExecutionStartEvent
-import com.embabel.agent.event.ToolCallRequestEvent
+import com.embabel.agent.api.event.ActionExecutionStartEvent
+import com.embabel.agent.api.event.ToolCallRequestEvent
 import com.embabel.common.core.types.Timestamped
 import java.time.Duration
 import java.time.Instant

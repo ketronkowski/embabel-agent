@@ -18,8 +18,8 @@ package com.embabel.agent.spi.support
 import com.embabel.agent.api.common.InteractionId
 import com.embabel.agent.api.common.PlatformServices
 import com.embabel.agent.api.common.ToolsStats
+import com.embabel.agent.api.event.AgenticEventListener
 import com.embabel.agent.core.*
-import com.embabel.agent.event.AgenticEventListener
 import com.embabel.agent.spi.LlmInteraction
 import com.embabel.agent.spi.support.springai.ChatClientLlmOperations
 import com.embabel.agent.spi.support.springai.DefaultToolDecorator

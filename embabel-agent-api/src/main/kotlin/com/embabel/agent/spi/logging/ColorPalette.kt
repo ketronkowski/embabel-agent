@@ -13,23 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.embabel.agent.event.logging.personality.severance
+package com.embabel.agent.spi.logging
 
-import com.embabel.agent.event.logging.personality.ColorPalette
-import org.springframework.context.annotation.Profile
-import org.springframework.stereotype.Component
-
-@Component
-@Profile("severance")
-object LumonColorPalette : ColorPalette {
-    const val MEMBRANE: Int = 0xbeb780
-    const val WELLNESS: Int = 0xf5f5dc
-    const val MDR: Int = 0x00cc66
-    const val ORIGINAL_GREEN: Int = 0x7da17e
-    const val DISCIPLINE: Int = 0x2f4f4f
-
-    override val highlight: Int
-        get() = MEMBRANE
-    override val color2: Int
-        get() = MDR
+interface ColorPalette {
+    val highlight: Int
+    val color2: Int
 }
+
+data class DefaultColorPalette(
+    override val highlight: Int = 0xbeb780,
+    override val color2: Int = 0x7da17e,
+) : ColorPalette

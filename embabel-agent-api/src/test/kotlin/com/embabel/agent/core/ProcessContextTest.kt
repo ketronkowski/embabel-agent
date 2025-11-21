@@ -16,7 +16,7 @@
 package com.embabel.agent.core
 
 import com.embabel.agent.api.dsl.evenMoreEvilWizard
-import com.embabel.agent.event.AgentProcessCompletedEvent
+import com.embabel.agent.api.event.AgentProcessCompletedEvent
 import com.embabel.agent.test.common.EventSavingAgenticEventListener
 import com.embabel.agent.test.integration.IntegrationTestUtils.dummyAgentProcessRunning
 import com.embabel.agent.test.integration.IntegrationTestUtils.dummyPlatformServices

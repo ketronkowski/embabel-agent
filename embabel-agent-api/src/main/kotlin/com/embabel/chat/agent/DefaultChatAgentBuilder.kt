@@ -17,11 +17,11 @@ package com.embabel.chat.agent
 
 import com.embabel.agent.api.common.autonomy.Autonomy
 import com.embabel.agent.api.dsl.agent
+import com.embabel.agent.api.event.AgentProcessEvent
+import com.embabel.agent.api.event.AgenticEventListener
 import com.embabel.agent.core.Agent
 import com.embabel.agent.core.last
 import com.embabel.agent.domain.io.UserInput
-import com.embabel.agent.event.AgentProcessEvent
-import com.embabel.agent.event.AgenticEventListener
 import com.embabel.agent.prompt.persona.Persona
 import com.embabel.agent.tools.agent.AchievableGoalsToolGroupFactory
 import com.embabel.chat.Conversation

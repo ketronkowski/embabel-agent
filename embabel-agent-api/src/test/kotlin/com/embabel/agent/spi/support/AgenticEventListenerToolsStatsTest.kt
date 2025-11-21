@@ -16,8 +16,8 @@
 package com.embabel.agent.spi.support
 
 import com.embabel.agent.api.dsl.evenMoreEvilWizard
-import com.embabel.agent.event.ToolCallRequestEvent
-import com.embabel.agent.event.ToolCallResponseEvent
+import com.embabel.agent.api.event.ToolCallRequestEvent
+import com.embabel.agent.api.event.ToolCallResponseEvent
 import com.embabel.agent.test.integration.IntegrationTestUtils.dummyAgentProcessRunning
 import io.mockk.mockk
 import org.junit.jupiter.api.Assertions.assertEquals

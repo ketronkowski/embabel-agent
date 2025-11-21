@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.embabel.agent.event.logging.personality.starwars
+package com.embabel.agent.spi.logging.personality.starwars
 
-import com.embabel.agent.event.*
-import com.embabel.agent.event.logging.LoggingAgenticEventListener
+import com.embabel.agent.api.event.*
+import com.embabel.agent.spi.logging.LoggingAgenticEventListener
 import com.embabel.common.util.color
 import com.embabel.common.util.indentLines
 import org.slf4j.LoggerFactory

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.embabel.agent.event
+package com.embabel.agent.api.event
 
 import com.embabel.agent.core.Agent
 import com.embabel.agent.core.AgentPlatform
@@ -46,7 +46,7 @@ abstract class RankingEvent<T>(
     override val agentPlatform: AgentPlatform,
     val type: Class<T>,
     val basis: Any,
-    val choices: Collection<T>
+    val choices: Collection<T>,
 ) : AgentPlatformEvent where T : Named, T : Described {
 
     override val timestamp: Instant = Instant.now()
@@ -59,7 +59,10 @@ class RankingChoiceRequestEvent<T>(
     choices: Collection<T>,
 ) : RankingEvent<T>(agentPlatform, type, basis, choices) where T : Named, T : Described {
 
-    fun determinationEvent(choice: Ranking<T>, rankings: Rankings<T>): RankingChoiceMadeEvent<T> {
+    fun determinationEvent(
+        choice: Ranking<T>,
+        rankings: Rankings<T>,
+    ): RankingChoiceMadeEvent<T> {
         return RankingChoiceMadeEvent(
             agentPlatform = agentPlatform,
             type = type,
@@ -72,7 +75,7 @@ class RankingChoiceRequestEvent<T>(
 
     fun noDeterminationEvent(
         rankings: Rankings<T>,
-        confidenceCutoff: ZeroToOne
+        confidenceCutoff: ZeroToOne,
     ): RankingChoiceCouldNotBeMadeEvent<T> {
         return RankingChoiceCouldNotBeMadeEvent(
             agentPlatform = agentPlatform,

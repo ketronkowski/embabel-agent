@@ -17,10 +17,10 @@ package com.embabel.agent.core.support
 
 import com.embabel.agent.api.channel.OutputChannel
 import com.embabel.agent.api.common.Asyncer
+import com.embabel.agent.api.event.AgentDeploymentEvent
+import com.embabel.agent.api.event.AgentProcessCreationEvent
+import com.embabel.agent.api.event.AgenticEventListener
 import com.embabel.agent.core.*
-import com.embabel.agent.event.AgentDeploymentEvent
-import com.embabel.agent.event.AgentProcessCreationEvent
-import com.embabel.agent.event.AgenticEventListener
 import com.embabel.agent.spi.*
 import com.embabel.agent.spi.config.spring.AgentPlatformProperties
 import com.embabel.agent.spi.support.GoapPlannerFactory

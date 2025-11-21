@@ -16,10 +16,10 @@
 package com.embabel.agent.api.common.autonomy
 
 import com.embabel.agent.api.common.support.destructureAndBindIfNecessary
+import com.embabel.agent.api.event.DynamicAgentCreationEvent
+import com.embabel.agent.api.event.RankingChoiceRequestEvent
 import com.embabel.agent.core.*
 import com.embabel.agent.domain.io.UserInput
-import com.embabel.agent.event.DynamicAgentCreationEvent
-import com.embabel.agent.event.RankingChoiceRequestEvent
 import com.embabel.agent.spi.Ranker
 import com.embabel.agent.spi.Ranking
 import com.embabel.agent.spi.Rankings

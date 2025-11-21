@@ -16,8 +16,8 @@
 package com.embabel.chat.support.console
 
 import com.embabel.agent.api.channel.*
-import com.embabel.agent.event.logging.personality.ColorPalette
-import com.embabel.agent.event.logging.personality.DefaultColorPalette
+import com.embabel.agent.spi.logging.ColorPalette
+import com.embabel.agent.spi.logging.DefaultColorPalette
 import com.embabel.common.util.color
 import org.apache.commons.text.WordUtils
 

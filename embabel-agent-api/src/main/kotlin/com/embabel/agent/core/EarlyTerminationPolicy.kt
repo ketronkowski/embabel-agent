@@ -15,8 +15,8 @@
  */
 package com.embabel.agent.core
 
+import com.embabel.agent.api.event.AbstractAgentProcessEvent
 import com.embabel.agent.core.EarlyTerminationPolicy.Companion.maxActions
-import com.embabel.agent.event.AbstractAgentProcessEvent
 
 /**
  * Event triggered when an agent process is terminated early by a policy.

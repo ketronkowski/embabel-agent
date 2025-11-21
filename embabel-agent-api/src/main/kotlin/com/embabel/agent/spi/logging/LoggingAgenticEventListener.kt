@@ -13,14 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.embabel.agent.event.logging
+package com.embabel.agent.spi.logging
 
+import com.embabel.agent.api.event.*
 import com.embabel.agent.core.AgentProcessStatusCode
 import com.embabel.agent.core.EarlyTermination
-import com.embabel.agent.event.*
-import com.embabel.agent.event.logging.personality.ColorPalette
-import com.embabel.agent.event.logging.personality.DefaultColorPalette
-import com.embabel.agent.event.logging.personality.severance.LumonColorPalette
+import com.embabel.agent.spi.logging.personality.severance.LumonColorPalette
 import com.embabel.agent.spi.support.springai.ChatModelCallEvent
 import com.embabel.common.util.AnsiColor
 import com.embabel.common.util.color
