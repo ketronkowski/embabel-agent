@@ -15,7 +15,7 @@
  */
 package com.embabel.agent.spi.support
 
-import com.embabel.agent.common.RetryTemplateProvider
+import com.embabel.agent.spi.common.RetryTemplateProvider
 import org.slf4j.LoggerFactory
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.retry.RetryCallback

@@ -15,10 +15,10 @@
  */
 package com.embabel.agent.core
 
-import com.embabel.agent.channel.DevNullOutputChannel
-import com.embabel.agent.channel.OutputChannel
+import com.embabel.agent.api.channel.DevNullOutputChannel
+import com.embabel.agent.api.channel.OutputChannel
+import com.embabel.agent.api.identity.User
 import com.embabel.agent.event.AgenticEventListener
-import com.embabel.agent.identity.User
 import java.util.function.Consumer
 
 interface LlmVerbosity {

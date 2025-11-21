@@ -16,6 +16,7 @@
 package com.embabel.agent.validation
 
 import com.embabel.agent.api.dsl.evenMoreEvilWizard
+import com.embabel.agent.spi.validation.AgentStructureValidator
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test

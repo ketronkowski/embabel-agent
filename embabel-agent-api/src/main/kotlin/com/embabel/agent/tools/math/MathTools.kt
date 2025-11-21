@@ -16,10 +16,10 @@
 package com.embabel.agent.tools.math
 
 import com.embabel.agent.api.common.support.SelfToolGroup
-import com.embabel.agent.common.Constants
 import com.embabel.agent.core.CoreToolGroups.MATH_DESCRIPTION
 import com.embabel.agent.core.ToolGroupDescription
 import com.embabel.agent.core.ToolGroupPermission
+import com.embabel.agent.spi.common.Constants
 import com.embabel.common.core.types.Semver
 import org.springframework.ai.tool.annotation.Tool
 
@@ -33,16 +33,28 @@ class MathTools : SelfToolGroup {
         get() = emptySet()
 
     @Tool(description = "add two numbers")
-    fun add(a: Double, b: Double) = a + b
+    fun add(
+        a: Double,
+        b: Double,
+    ) = a + b
 
     @Tool(description = "subtract the second number from the first")
-    fun subtract(a: Double, b: Double) = a - b
+    fun subtract(
+        a: Double,
+        b: Double,
+    ) = a - b
 
     @Tool(description = "multiply two numbers")
-    fun multiply(a: Double, b: Double) = a * b
+    fun multiply(
+        a: Double,
+        b: Double,
+    ) = a * b
 
     @Tool(description = "divide the first number by the second")
-    fun divide(a: Double, b: Double): String =
+    fun divide(
+        a: Double,
+        b: Double,
+    ): String =
         if (b == 0.0) "Cannot divide by zero" else ("" + a / b)
 
     @Tool(description = "find the mean of this list of numbers")

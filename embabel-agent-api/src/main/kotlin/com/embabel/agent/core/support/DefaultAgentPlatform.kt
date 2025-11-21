@@ -15,8 +15,8 @@
  */
 package com.embabel.agent.core.support
 
+import com.embabel.agent.api.channel.OutputChannel
 import com.embabel.agent.api.common.Asyncer
-import com.embabel.agent.channel.OutputChannel
 import com.embabel.agent.core.*
 import com.embabel.agent.event.AgentDeploymentEvent
 import com.embabel.agent.event.AgentProcessCreationEvent

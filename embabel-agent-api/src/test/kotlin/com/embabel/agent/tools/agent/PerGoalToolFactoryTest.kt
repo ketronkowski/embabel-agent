@@ -20,9 +20,9 @@ import com.embabel.agent.api.dsl.evenMoreEvilWizard
 import com.embabel.agent.api.dsl.evenMoreEvilWizardWithStructuredInput
 import com.embabel.agent.api.dsl.exportedEvenMoreEvilWizard
 import com.embabel.agent.api.dsl.userInputToFrogOrPersonBranch
-import com.embabel.agent.testing.integration.IntegrationTestUtils
-import com.embabel.agent.testing.integration.RandomRanker
-import com.embabel.agent.testing.integration.forAutonomyTesting
+import com.embabel.agent.test.integration.IntegrationTestUtils
+import com.embabel.agent.test.integration.RandomRanker
+import com.embabel.agent.test.integration.forAutonomyTesting
 import org.junit.Test
 import org.junit.jupiter.api.Assertions.*
 

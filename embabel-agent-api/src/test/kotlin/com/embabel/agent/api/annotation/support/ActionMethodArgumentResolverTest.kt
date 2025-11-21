@@ -19,7 +19,7 @@ import com.embabel.agent.api.common.Ai
 import com.embabel.agent.api.common.OperationContext
 import com.embabel.agent.core.IoBinding
 import com.embabel.agent.core.ProcessContext
-import com.embabel.agent.testing.unit.FakeOperationContext
+import com.embabel.agent.test.unit.FakeOperationContext
 import org.junit.jupiter.api.Test
 import java.lang.reflect.Method
 import kotlin.reflect.full.valueParameters

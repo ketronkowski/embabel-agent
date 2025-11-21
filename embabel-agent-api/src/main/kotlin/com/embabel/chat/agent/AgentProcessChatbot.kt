@@ -15,12 +15,12 @@
  */
 package com.embabel.chat.agent
 
-import com.embabel.agent.channel.LoggingOutputChannelEvent
-import com.embabel.agent.channel.OutputChannel
+import com.embabel.agent.api.channel.LoggingOutputChannelEvent
+import com.embabel.agent.api.channel.OutputChannel
+import com.embabel.agent.api.identity.User
 import com.embabel.agent.core.*
 import com.embabel.agent.event.AgenticEventListener
 import com.embabel.agent.event.progress.OutputChannelHighlightingEventListener
-import com.embabel.agent.identity.User
 import com.embabel.chat.ChatSession
 import com.embabel.chat.Chatbot
 import com.embabel.chat.Conversation

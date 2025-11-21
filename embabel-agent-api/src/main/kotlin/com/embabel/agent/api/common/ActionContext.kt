@@ -15,13 +15,12 @@
  */
 package com.embabel.agent.api.common
 
+import com.embabel.agent.api.channel.MessageOutputChannelEvent
+import com.embabel.agent.api.channel.OutputChannelEvent
+import com.embabel.agent.api.channel.ProgressOutputChannelEvent
 import com.embabel.agent.api.common.support.OperationContextPromptRunner
 import com.embabel.agent.api.dsl.AgentScopeBuilder
-import com.embabel.agent.channel.MessageOutputChannelEvent
-import com.embabel.agent.channel.OutputChannelEvent
-import com.embabel.agent.channel.ProgressOutputChannelEvent
 import com.embabel.agent.core.*
-import com.embabel.agent.prompt.element.ContextualPromptElement
 import com.embabel.chat.Message
 import com.embabel.common.ai.model.LlmOptions
 import com.embabel.common.ai.prompt.CurrentDate

@@ -15,7 +15,7 @@
  */
 package com.embabel.agent.config.models.bedrock
 
-import com.embabel.agent.common.RetryProperties
+import com.embabel.agent.spi.common.RetryProperties
 import com.embabel.common.ai.autoconfig.LlmAutoConfigMetadataLoader
 import com.embabel.common.ai.model.*
 import com.embabel.common.util.ExcludeFromJacocoGeneratedReport

@@ -33,8 +33,8 @@ import com.embabel.agent.domain.library.HasContent
 import com.embabel.agent.spi.LlmOperations
 import com.embabel.agent.spi.Ranking
 import com.embabel.agent.spi.Rankings
-import com.embabel.agent.testing.integration.DummyObjectCreatingLlmOperations
-import com.embabel.agent.testing.integration.FakeRanker
+import com.embabel.agent.test.integration.DummyObjectCreatingLlmOperations
+import com.embabel.agent.test.integration.FakeRanker
 import com.embabel.common.core.types.Described
 import com.embabel.common.core.types.Named
 import com.embabel.example.simple.horoscope.TestHoroscopeService

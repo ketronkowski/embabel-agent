@@ -17,9 +17,9 @@ package com.embabel.agent.core
 
 import com.embabel.agent.api.dsl.evenMoreEvilWizard
 import com.embabel.agent.event.AgentProcessCompletedEvent
-import com.embabel.agent.testing.common.EventSavingAgenticEventListener
-import com.embabel.agent.testing.integration.IntegrationTestUtils.dummyAgentProcessRunning
-import com.embabel.agent.testing.integration.IntegrationTestUtils.dummyPlatformServices
+import com.embabel.agent.test.common.EventSavingAgenticEventListener
+import com.embabel.agent.test.integration.IntegrationTestUtils.dummyAgentProcessRunning
+import com.embabel.agent.test.integration.IntegrationTestUtils.dummyPlatformServices
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 

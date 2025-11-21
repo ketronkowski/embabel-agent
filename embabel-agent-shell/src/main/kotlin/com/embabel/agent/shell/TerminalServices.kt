@@ -20,8 +20,8 @@ import ch.qos.logback.classic.encoder.PatternLayoutEncoder
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.Appender
 import ch.qos.logback.core.FileAppender
+import com.embabel.agent.api.channel.*
 import com.embabel.agent.api.common.autonomy.*
-import com.embabel.agent.channel.*
 import com.embabel.agent.core.AgentPlatform
 import com.embabel.agent.core.hitl.*
 import com.embabel.agent.event.logging.personality.ColorPalette

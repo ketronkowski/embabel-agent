@@ -15,19 +15,19 @@
  */
 package com.embabel.agent.core.support
 
+import com.embabel.agent.api.channel.DevNullOutputChannel
 import com.embabel.agent.api.dsl.evenMoreEvilWizard
-import com.embabel.agent.channel.DevNullOutputChannel
-import com.embabel.agent.spi.config.spring.AgentPlatformProperties.ProcessType
 import com.embabel.agent.core.AgentPlatform
 import com.embabel.agent.core.Context
 import com.embabel.agent.core.ContextId
 import com.embabel.agent.core.ProcessOptions
 import com.embabel.agent.event.AgenticEventListener
 import com.embabel.agent.spi.ContextRepository
+import com.embabel.agent.spi.config.spring.AgentPlatformProperties.ProcessType
 import com.embabel.agent.spi.support.InMemoryContextRepository
 import com.embabel.agent.spi.support.SimpleContext
 import com.embabel.agent.support.Dog
-import com.embabel.agent.testing.common.EventSavingAgenticEventListener
+import com.embabel.agent.test.common.EventSavingAgenticEventListener
 import io.mockk.mockk
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Nested

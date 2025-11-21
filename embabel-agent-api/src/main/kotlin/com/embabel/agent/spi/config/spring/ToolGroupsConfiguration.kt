@@ -16,11 +16,11 @@
 package com.embabel.agent.spi.config.spring
 
 
-import com.embabel.agent.common.Constants.EMBABEL_PROVIDER
 import com.embabel.agent.core.CoreToolGroups
 import com.embabel.agent.core.ToolGroup
 import com.embabel.agent.core.ToolGroupDescription
 import com.embabel.agent.core.ToolGroupPermission
+import com.embabel.agent.spi.common.Constants.EMBABEL_PROVIDER
 import com.embabel.agent.tools.math.MathTools
 import com.embabel.agent.tools.mcp.McpToolGroup
 import com.embabel.common.core.types.Semver

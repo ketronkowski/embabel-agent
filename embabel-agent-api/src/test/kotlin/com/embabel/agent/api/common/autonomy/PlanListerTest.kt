@@ -20,7 +20,7 @@ import com.embabel.agent.api.dsl.*
 import com.embabel.agent.core.Export
 import com.embabel.agent.core.ProcessOptions
 import com.embabel.agent.domain.io.UserInput
-import com.embabel.agent.testing.integration.IntegrationTestUtils.dummyAgentPlatform
+import com.embabel.agent.test.integration.IntegrationTestUtils.dummyAgentPlatform
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 

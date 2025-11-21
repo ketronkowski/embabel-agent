@@ -27,13 +27,13 @@ import com.embabel.agent.core.AgentProcessStatusCode;
 import com.embabel.agent.core.ProcessOptions;
 import com.embabel.agent.core.Verbosity;
 import com.embabel.agent.domain.io.UserInput;
-import com.embabel.agent.testing.integration.IntegrationTestUtils;
+import com.embabel.agent.test.integration.IntegrationTestUtils;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 
-import static com.embabel.agent.testing.integration.IntegrationTestUtils.dummyAgentPlatform;
+import static com.embabel.agent.test.integration.IntegrationTestUtils.dummyAgentPlatform;
 import static org.junit.jupiter.api.Assertions.*;
 
 class RepeatUntilBuilderTest {

@@ -16,10 +16,10 @@
 package com.embabel.agent.support
 
 import com.embabel.agent.api.annotation.support.PersonWithReverseTool
+import com.embabel.agent.api.channel.DevNullOutputChannel
 import com.embabel.agent.api.common.Aggregation
 import com.embabel.agent.api.common.PlatformServices
 import com.embabel.agent.api.dsl.agent
-import com.embabel.agent.channel.DevNullOutputChannel
 import com.embabel.agent.core.AgentProcess
 import com.embabel.agent.core.Blackboard
 import com.embabel.agent.core.ProcessContext
@@ -27,7 +27,7 @@ import com.embabel.agent.core.ProcessOptions
 import com.embabel.agent.core.support.BlackboardWorldStateDeterminer
 import com.embabel.agent.core.support.InMemoryBlackboard
 import com.embabel.agent.domain.io.UserInput
-import com.embabel.agent.testing.common.EventSavingAgenticEventListener
+import com.embabel.agent.test.common.EventSavingAgenticEventListener
 import com.embabel.plan.common.condition.ConditionDetermination
 import io.mockk.every
 import io.mockk.mockk

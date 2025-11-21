@@ -21,7 +21,7 @@ import com.embabel.agent.api.dsl.Frog
 import com.embabel.agent.core.JvmType
 import com.embabel.agent.core.support.Rerun
 import com.embabel.agent.support.containsAll
-import com.embabel.agent.testing.integration.IntegrationTestUtils.dummyAgentPlatform
+import com.embabel.agent.test.integration.IntegrationTestUtils.dummyAgentPlatform
 import com.embabel.plan.common.condition.ConditionDetermination
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Disabled

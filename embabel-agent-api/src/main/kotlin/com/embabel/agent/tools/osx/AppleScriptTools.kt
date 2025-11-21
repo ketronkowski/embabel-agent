@@ -16,9 +16,9 @@
 package com.embabel.agent.tools.osx
 
 import com.embabel.agent.api.common.support.SelfToolGroup
-import com.embabel.agent.common.Constants
 import com.embabel.agent.core.ToolGroupDescription
 import com.embabel.agent.core.ToolGroupPermission
+import com.embabel.agent.spi.common.Constants
 import com.embabel.common.core.types.Semver
 import com.embabel.common.util.MacOSCondition
 import org.springframework.ai.tool.annotation.Tool

@@ -15,10 +15,10 @@
  */
 package com.embabel.agent.api.annotation.support
 
+import com.embabel.agent.api.channel.DevNullOutputChannel
 import com.embabel.agent.api.common.PlatformServices
 import com.embabel.agent.api.dsl.Frog
 import com.embabel.agent.api.dsl.SnakeMeal
-import com.embabel.agent.channel.DevNullOutputChannel
 import com.embabel.agent.core.*
 import com.embabel.agent.core.hitl.ConfirmationRequest
 import com.embabel.agent.core.support.InMemoryBlackboard
@@ -29,9 +29,9 @@ import com.embabel.agent.spi.LlmInteraction
 import com.embabel.agent.spi.LlmOperations
 import com.embabel.agent.spi.support.GoapPlannerFactory
 import com.embabel.agent.support.Dog
-import com.embabel.agent.testing.integration.IntegrationTestUtils
-import com.embabel.agent.testing.integration.IntegrationTestUtils.dummyAgentProcessRunning
-import com.embabel.agent.testing.integration.IntegrationTestUtils.dummyPlatformServices
+import com.embabel.agent.test.integration.IntegrationTestUtils
+import com.embabel.agent.test.integration.IntegrationTestUtils.dummyAgentProcessRunning
+import com.embabel.agent.test.integration.IntegrationTestUtils.dummyPlatformServices
 import com.embabel.common.ai.model.DefaultModelSelectionCriteria
 import com.embabel.common.ai.model.LlmOptions
 import com.embabel.plan.common.condition.ConditionDetermination

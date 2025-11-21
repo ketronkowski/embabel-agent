@@ -28,7 +28,7 @@ import com.embabel.agent.spi.support.springai.DefaultToolDecorator
 import com.embabel.agent.spi.support.springai.MaybeReturn
 import com.embabel.agent.spi.validation.DefaultValidationPromptGenerator
 import com.embabel.agent.support.SimpleTestAgent
-import com.embabel.agent.testing.common.EventSavingAgenticEventListener
+import com.embabel.agent.test.common.EventSavingAgenticEventListener
 import com.embabel.chat.SystemMessage
 import com.embabel.chat.UserMessage
 import com.embabel.common.ai.model.*

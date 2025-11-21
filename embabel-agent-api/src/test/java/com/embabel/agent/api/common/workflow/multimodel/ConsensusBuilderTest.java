@@ -23,7 +23,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.Map;
 
-import static com.embabel.agent.testing.integration.IntegrationTestUtils.dummyAgentPlatform;
+import static com.embabel.agent.test.integration.IntegrationTestUtils.dummyAgentPlatform;
 import static org.junit.jupiter.api.Assertions.*;
 
 

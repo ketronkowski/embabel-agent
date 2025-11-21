@@ -15,8 +15,12 @@
  */
 package com.embabel.agent.channel
 
-import org.junit.jupiter.api.Test
+import com.embabel.agent.api.channel.DevNullOutputChannel
+import com.embabel.agent.api.channel.MulticastOutputChannel
+import com.embabel.agent.api.channel.OutputChannel
+import com.embabel.agent.api.channel.OutputChannelEvent
 import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Test
 
 class OutputChannelTest {
 

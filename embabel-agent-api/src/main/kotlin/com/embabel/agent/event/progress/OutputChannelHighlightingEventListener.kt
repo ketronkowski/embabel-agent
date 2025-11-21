@@ -15,8 +15,8 @@
  */
 package com.embabel.agent.event.progress
 
-import com.embabel.agent.channel.OutputChannel
-import com.embabel.agent.channel.ProgressOutputChannelEvent
+import com.embabel.agent.api.channel.OutputChannel
+import com.embabel.agent.api.channel.ProgressOutputChannelEvent
 import com.embabel.agent.event.AgentProcessEvent
 import com.embabel.agent.event.AgenticEventListener
 import com.embabel.agent.event.LlmRequestEvent

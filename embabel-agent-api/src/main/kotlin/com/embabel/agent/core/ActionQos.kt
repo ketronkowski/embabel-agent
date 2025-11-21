@@ -15,7 +15,7 @@
  */
 package com.embabel.agent.core
 
-import com.embabel.agent.common.RetryProperties
+import com.embabel.agent.spi.common.RetryProperties
 
 /**
  * Quality of service requirements for an action

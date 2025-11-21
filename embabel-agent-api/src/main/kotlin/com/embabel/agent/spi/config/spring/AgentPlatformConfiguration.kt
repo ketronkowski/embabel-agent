@@ -15,8 +15,8 @@
  */
 package com.embabel.agent.spi.config.spring
 
-import com.embabel.agent.channel.DevNullOutputChannel
-import com.embabel.agent.channel.OutputChannel
+import com.embabel.agent.api.channel.DevNullOutputChannel
+import com.embabel.agent.api.channel.OutputChannel
 import com.embabel.agent.core.ToolGroup
 import com.embabel.agent.event.AgenticEventListener
 import com.embabel.agent.event.logging.LoggingAgenticEventListener

@@ -15,9 +15,9 @@
  */
 package com.embabel.agent.config.models.docker
 
-import com.embabel.agent.common.RetryProperties
 import com.embabel.agent.api.models.DockerLocalModels.Companion.PROVIDER
 import com.embabel.agent.openai.OpenAiChatOptionsConverter
+import com.embabel.agent.spi.common.RetryProperties
 import com.embabel.common.ai.model.*
 import com.embabel.common.util.ExcludeFromJacocoGeneratedReport
 import io.micrometer.observation.ObservationRegistry
@@ -200,11 +200,11 @@ class DockerLocalModelsConfig(
                     .apiKey(NoopApiKey())
                     .restClientBuilder(
                         RestClient.builder()
-                        .observationRegistry(observationRegistry.getIfUnique { ObservationRegistry.NOOP })
+                            .observationRegistry(observationRegistry.getIfUnique { ObservationRegistry.NOOP })
                     )
                     .webClientBuilder(
                         WebClient.builder()
-                        .observationRegistry(observationRegistry.getIfUnique { ObservationRegistry.NOOP })
+                            .observationRegistry(observationRegistry.getIfUnique { ObservationRegistry.NOOP })
                     )
                     .build()
             )

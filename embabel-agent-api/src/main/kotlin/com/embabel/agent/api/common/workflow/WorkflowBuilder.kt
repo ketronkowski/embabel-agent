@@ -17,9 +17,9 @@ package com.embabel.agent.api.common.workflow
 
 import com.embabel.agent.api.common.ActionContext
 import com.embabel.agent.api.dsl.AgentScopeBuilder
-import com.embabel.agent.common.Constants
 import com.embabel.agent.core.Agent
 import com.embabel.agent.core.IoBinding
+import com.embabel.agent.spi.common.Constants
 
 /**
  * Ensure consistent naming convention for workflow builders that return a given result type.

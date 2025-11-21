@@ -21,14 +21,15 @@ import com.embabel.agent.domain.library.HasContent
 import com.embabel.agent.event.AgenticEventListener
 import com.embabel.agent.spi.Ranking
 import com.embabel.agent.spi.Rankings
-import com.embabel.agent.testing.integration.FakeRanker
-import com.embabel.agent.testing.integration.forAutonomyTesting
+import com.embabel.agent.test.integration.FakeRanker
+import com.embabel.agent.test.integration.forAutonomyTesting
 import com.embabel.common.core.types.Described
 import com.embabel.common.core.types.Named
 import io.mockk.*
 import org.junit.jupiter.api.*
-import org.junit.jupiter.api.Assertions.*
-import org.junit.jupiter.api.Assertions.assertNotNull //Explicit import to disambiguate from kotlin.test.assertNotNull
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
 
 /**
  * Tests for the goal selection functionality in Autonomy.

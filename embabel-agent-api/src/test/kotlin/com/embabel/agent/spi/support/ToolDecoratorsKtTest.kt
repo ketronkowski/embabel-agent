@@ -21,7 +21,7 @@ import com.embabel.agent.event.ToolCallRequestEvent
 import com.embabel.agent.event.ToolCallResponseEvent
 import com.embabel.agent.spi.OperationScheduler
 import com.embabel.agent.spi.support.springai.withEventPublication
-import com.embabel.agent.testing.common.EventSavingAgenticEventListener
+import com.embabel.agent.test.common.EventSavingAgenticEventListener
 import com.embabel.common.ai.model.LlmOptions
 import io.mockk.every
 import io.mockk.mockk

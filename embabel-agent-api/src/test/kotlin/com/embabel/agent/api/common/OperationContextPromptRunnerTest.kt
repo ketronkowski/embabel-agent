@@ -20,7 +20,7 @@ import com.embabel.agent.api.common.support.OperationContextPromptRunner
 import com.embabel.agent.core.Operation
 import com.embabel.agent.experimental.primitive.Determination
 import com.embabel.agent.support.Dog
-import com.embabel.agent.testing.unit.FakeOperationContext
+import com.embabel.agent.test.unit.FakeOperationContext
 import com.embabel.chat.Message
 import com.embabel.chat.UserMessage
 import com.embabel.common.ai.model.LlmOptions

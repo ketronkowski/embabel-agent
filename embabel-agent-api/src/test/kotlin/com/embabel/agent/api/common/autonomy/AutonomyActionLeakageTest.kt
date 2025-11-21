@@ -17,9 +17,9 @@ package com.embabel.agent.api.common.autonomy
 
 import com.embabel.agent.core.*
 import com.embabel.agent.domain.io.UserInput
-import com.embabel.agent.testing.integration.IntegrationTestUtils
-import com.embabel.agent.testing.integration.RandomRanker
-import com.embabel.agent.testing.integration.forAutonomyTesting
+import com.embabel.agent.test.integration.IntegrationTestUtils
+import com.embabel.agent.test.integration.RandomRanker
+import com.embabel.agent.test.integration.forAutonomyTesting
 import com.embabel.common.util.indent
 import com.embabel.plan.CostComputation
 import com.embabel.plan.common.condition.ConditionDetermination

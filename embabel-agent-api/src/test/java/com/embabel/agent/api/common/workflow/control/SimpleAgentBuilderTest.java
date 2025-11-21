@@ -19,7 +19,7 @@ import com.embabel.agent.api.common.autonomy.AgentInvocation;
 import com.embabel.agent.core.AgentProcessStatusCode;
 import com.embabel.agent.core.ProcessOptions;
 import com.embabel.agent.domain.io.UserInput;
-import com.embabel.agent.testing.integration.IntegrationTestUtils;
+import com.embabel.agent.test.integration.IntegrationTestUtils;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 

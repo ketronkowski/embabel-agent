@@ -18,12 +18,12 @@ package com.embabel.agent.tools.agent
 import com.embabel.agent.api.common.OperationContext
 import com.embabel.agent.api.common.autonomy.Autonomy
 import com.embabel.agent.api.common.autonomy.DefaultPlanLister
-import com.embabel.agent.common.Constants
 import com.embabel.agent.core.JvmType
 import com.embabel.agent.core.ToolGroup
 import com.embabel.agent.core.ToolGroupMetadata
 import com.embabel.agent.domain.io.UserInput
 import com.embabel.agent.event.AgenticEventListener
+import com.embabel.agent.spi.common.Constants
 
 /**
  * Expose tools for all goals achievable by the agent given

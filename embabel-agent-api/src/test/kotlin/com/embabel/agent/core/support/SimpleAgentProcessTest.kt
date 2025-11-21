@@ -35,8 +35,8 @@ import com.embabel.agent.event.ObjectBoundEvent
 import com.embabel.agent.spi.support.GoapPlannerFactory
 import com.embabel.agent.support.Dog
 import com.embabel.agent.support.SimpleTestAgent
-import com.embabel.agent.testing.common.EventSavingAgenticEventListener
-import com.embabel.agent.testing.integration.IntegrationTestUtils.dummyPlatformServices
+import com.embabel.agent.test.common.EventSavingAgenticEventListener
+import com.embabel.agent.test.integration.IntegrationTestUtils.dummyPlatformServices
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue

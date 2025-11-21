@@ -20,7 +20,6 @@ import com.embabel.agent.core.Agent
 import com.embabel.agent.core.AgentPlatform
 import com.embabel.agent.core.ToolGroup
 import com.embabel.agent.core.ToolGroupRequirement
-import com.embabel.agent.prompt.element.ContextualPromptElement
 import com.embabel.agent.spi.LlmUse
 import com.embabel.chat.AssistantMessage
 import com.embabel.chat.Message

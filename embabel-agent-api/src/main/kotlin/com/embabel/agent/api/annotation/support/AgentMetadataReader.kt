@@ -26,10 +26,10 @@ import com.embabel.agent.core.*
 import com.embabel.agent.core.Export
 import com.embabel.agent.core.support.Rerun
 import com.embabel.agent.core.support.safelyGetToolCallbacksFrom
-import com.embabel.agent.validation.AgentStructureValidator
-import com.embabel.agent.validation.AgentValidationManager
-import com.embabel.agent.validation.DefaultAgentValidationManager
-import com.embabel.agent.validation.GoapPathToCompletionValidator
+import com.embabel.agent.spi.validation.AgentStructureValidator
+import com.embabel.agent.spi.validation.AgentValidationManager
+import com.embabel.agent.spi.validation.DefaultAgentValidationManager
+import com.embabel.agent.spi.validation.GoapPathToCompletionValidator
 import com.embabel.common.core.types.Semver
 import com.embabel.common.util.NameUtils
 import com.embabel.common.util.loggerFor

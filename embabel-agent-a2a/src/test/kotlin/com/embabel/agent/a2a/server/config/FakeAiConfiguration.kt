@@ -16,7 +16,7 @@
 package com.embabel.agent.a2a.server.config
 
 import com.embabel.agent.spi.LlmOperations
-import com.embabel.agent.testing.integration.DummyObjectCreatingLlmOperations
+import com.embabel.agent.test.integration.DummyObjectCreatingLlmOperations
 import com.embabel.common.ai.model.DefaultOptionsConverter
 import com.embabel.common.ai.model.EmbeddingService
 import com.embabel.common.ai.model.Llm

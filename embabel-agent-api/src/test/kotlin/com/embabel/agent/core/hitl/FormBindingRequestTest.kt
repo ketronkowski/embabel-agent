@@ -18,7 +18,7 @@ package com.embabel.agent.core.hitl
 import com.embabel.agent.api.dsl.evenMoreEvilWizard
 import com.embabel.agent.core.AgentProcess
 import com.embabel.agent.core.ProcessContext
-import com.embabel.agent.testing.integration.IntegrationTestUtils.dummyAgentProcessRunning
+import com.embabel.agent.test.integration.IntegrationTestUtils.dummyAgentProcessRunning
 import com.embabel.ux.form.*
 import io.mockk.every
 import io.mockk.mockk
@@ -205,6 +205,6 @@ class FormBindingRequestTest {
     // Test data class used for binding
     data class TestData(
         val name: String,
-        val email: String
+        val email: String,
     )
 }
