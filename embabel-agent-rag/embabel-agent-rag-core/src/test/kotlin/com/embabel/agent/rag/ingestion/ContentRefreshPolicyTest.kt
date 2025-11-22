@@ -70,7 +70,7 @@ class ContentRefreshPolicyTest {
         }
 
         @Test
-        fun `shouldRefreshDocument always returns false`() {
+        fun `shouldRefreshDocument always returns true`() {
             val document = MaterializedDocument(
                 id = "doc1",
                 uri = "test://document",
@@ -83,12 +83,12 @@ class ContentRefreshPolicyTest {
                 document
             )
 
-            assertFalse(result)
+            assertTrue(result)
             verify(exactly = 0) { mockRepository.existsRootWithUri(any()) }
         }
 
         @Test
-        fun `shouldRefreshDocument returns false even for different documents`() {
+        fun `shouldRefreshDocument returns true for different documents`() {
             val doc1 = MaterializedDocument(
                 id = "doc1",
                 uri = "test://document1",
@@ -103,8 +103,8 @@ class ContentRefreshPolicyTest {
                 children = emptyList()
             )
 
-            assertFalse(NeverRefreshExistingDocumentContentPolicy.shouldRefreshDocument(mockRepository, doc1))
-            assertFalse(NeverRefreshExistingDocumentContentPolicy.shouldRefreshDocument(mockRepository, doc2))
+            assertTrue(NeverRefreshExistingDocumentContentPolicy.shouldRefreshDocument(mockRepository, doc1))
+            assertTrue(NeverRefreshExistingDocumentContentPolicy.shouldRefreshDocument(mockRepository, doc2))
         }
 
         @Test
@@ -124,6 +124,107 @@ class ContentRefreshPolicyTest {
             verify(exactly = 1) { mockRepository.existsRootWithUri(existingUri) }
             verify(exactly = 1) { mockRepository.existsRootWithUri(newUri1) }
             verify(exactly = 1) { mockRepository.existsRootWithUri(newUri2) }
+        }
+
+        @Test
+        fun `shouldRefreshDocument returns true regardless of repository state`() {
+            val document = MaterializedDocument(
+                id = "doc1",
+                uri = "test://document",
+                title = "Test Document",
+                children = emptyList()
+            )
+
+            // Test with different repository states - shouldRefreshDocument should always return true
+            every { mockRepository.existsRootWithUri(any()) } returns true
+            assertTrue(NeverRefreshExistingDocumentContentPolicy.shouldRefreshDocument(mockRepository, document))
+
+            every { mockRepository.existsRootWithUri(any()) } returns false
+            assertTrue(NeverRefreshExistingDocumentContentPolicy.shouldRefreshDocument(mockRepository, document))
+
+            every { mockRepository.count() } returns 0
+            assertTrue(NeverRefreshExistingDocumentContentPolicy.shouldRefreshDocument(mockRepository, document))
+
+            every { mockRepository.count() } returns 1000
+            assertTrue(NeverRefreshExistingDocumentContentPolicy.shouldRefreshDocument(mockRepository, document))
+        }
+
+        @Test
+        fun `shouldRefreshDocument returns true for documents with children`() {
+            val childDocument = MaterializedDocument(
+                id = "child1",
+                uri = "test://child",
+                title = "Child Document",
+                children = emptyList()
+            )
+
+            val parentDocument = MaterializedDocument(
+                id = "parent",
+                uri = "test://parent",
+                title = "Parent Document",
+                children = listOf(childDocument)
+            )
+
+            assertTrue(NeverRefreshExistingDocumentContentPolicy.shouldRefreshDocument(mockRepository, parentDocument))
+        }
+
+        @Test
+        fun `shouldRefreshDocument returns true for documents with metadata`() {
+            val documentWithTimestamp = MaterializedDocument(
+                id = "doc1",
+                uri = "test://document",
+                title = "Test Document",
+                ingestionTimestamp = java.time.Instant.now(),
+                children = emptyList()
+            )
+
+            assertTrue(NeverRefreshExistingDocumentContentPolicy.shouldRefreshDocument(mockRepository, documentWithTimestamp))
+        }
+
+        @Test
+        fun `ingestUriIfNeeded demonstrates shouldRefreshDocument is reached after successful reread`() {
+            val uri = "test://new-document"
+            val document = MaterializedDocument(
+                id = "doc1",
+                uri = uri,
+                title = "Test Document",
+                children = emptyList()
+            )
+
+            every { mockRepository.existsRootWithUri(uri) } returns false
+            every { mockReader.parseUrl(uri) } returns document
+            every { mockRepository.writeAndChunkDocument(document) } returns emptyList()
+
+            val result = NeverRefreshExistingDocumentContentPolicy.ingestUriIfNeeded(
+                repository = mockRepository,
+                hierarchicalContentReader = mockReader,
+                rootUri = uri
+            )
+
+            // Verify flow: shouldReread returned true (document parsed),
+            // and shouldRefreshDocument returned true (document written)
+            verify(exactly = 1) { mockRepository.existsRootWithUri(uri) }
+            verify(exactly = 1) { mockReader.parseUrl(uri) }
+            verify(exactly = 1) { mockRepository.writeAndChunkDocument(document) }
+            assertEquals(document, result, "Should return the document when it is refreshed")
+        }
+
+        @Test
+        fun `multiple calls to shouldRefreshDocument always return true`() {
+            val document = MaterializedDocument(
+                id = "doc1",
+                uri = "test://document",
+                title = "Test Document",
+                children = emptyList()
+            )
+
+            // Call multiple times to ensure consistency
+            repeat(10) {
+                assertTrue(
+                    NeverRefreshExistingDocumentContentPolicy.shouldRefreshDocument(mockRepository, document),
+                    "shouldRefreshDocument should always return true, even on repeated calls"
+                )
+            }
         }
     }
 
@@ -150,7 +251,7 @@ class ContentRefreshPolicyTest {
         }
 
         @Test
-        fun `ingestUriIfNeeded reads but does not ingest when shouldRefreshDocument returns false`() {
+        fun `ingestUriIfNeeded reads and ingests new document`() {
             val uri = "test://new-document"
             val document = MaterializedDocument(
                 id = "doc1",
@@ -162,6 +263,7 @@ class ContentRefreshPolicyTest {
 
             every { mockRepository.existsRootWithUri(uri) } returns false
             every { mockReader.parseUrl(uri) } returns document
+            every { mockRepository.writeAndChunkDocument(document) } returns emptyList()
 
             policy.ingestUriIfNeeded(
                 repository = mockRepository,
@@ -169,10 +271,10 @@ class ContentRefreshPolicyTest {
                 rootUri = uri
             )
 
-            // Should parse but not ingest (because shouldRefreshDocument always returns false)
+            // Should parse and ingest (because shouldRefreshDocument always returns true when reached)
             verify(exactly = 1) { mockRepository.existsRootWithUri(uri) }
             verify(exactly = 1) { mockReader.parseUrl(uri) }
-            verify(exactly = 0) { mockRepository.writeAndChunkDocument(any()) }
+            verify(exactly = 1) { mockRepository.writeAndChunkDocument(document) }
         }
 
         @Test

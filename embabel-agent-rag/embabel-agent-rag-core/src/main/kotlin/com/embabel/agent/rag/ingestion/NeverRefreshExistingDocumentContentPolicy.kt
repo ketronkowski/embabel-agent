@@ -19,40 +19,21 @@ import com.embabel.agent.rag.model.NavigableDocument
 import com.embabel.agent.rag.store.ChunkingContentElementRepository
 
 /**
- * Policy to determine whether content should be refreshed
- * based on the state of the repository and the root uri or root document.
+ * Never refresh an existing document. Existing documents
+ * will remain unchanged till the end of time.
  */
-interface ContentRefreshPolicy {
+object NeverRefreshExistingDocumentContentPolicy : ContentRefreshPolicy {
 
-    /**
-     * Should we reread the document at the given rootUri
-     */
-    fun shouldReread(
+    override fun shouldReread(
         repository: ChunkingContentElementRepository,
         rootUri: String,
-    ): Boolean
+    ): Boolean = !repository.existsRootWithUri(rootUri)
 
     /**
-     * Should we refresh the given document we've read
+     * Refresh if we get to here
      */
-    fun shouldRefreshDocument(
+    override fun shouldRefreshDocument(
         repository: ChunkingContentElementRepository,
         root: NavigableDocument,
-    ): Boolean
-
-    fun ingestUriIfNeeded(
-        repository: ChunkingContentElementRepository,
-        hierarchicalContentReader: HierarchicalContentReader,
-        rootUri: String,
-    ): NavigableDocument? {
-        if (shouldReread(repository, rootUri)) {
-            val document = hierarchicalContentReader.parseUrl(rootUri)
-            if (shouldRefreshDocument(repository, document)) {
-                repository.writeAndChunkDocument(document)
-                return document
-            }
-        }
-        return null
-    }
-
+    ): Boolean = true
 }
