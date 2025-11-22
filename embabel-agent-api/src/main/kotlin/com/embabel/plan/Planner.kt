@@ -45,6 +45,9 @@ interface Planner<S : PlanningSystem, W : WorldState, P : Plan> {
 
     /**
      * Plan from here to the given goal
+     * Return null if no plan found
+     * @param actions The available actions
+     * @param goal The goal to plan to
      */
     fun planToGoal(
         actions: Collection<Action>,

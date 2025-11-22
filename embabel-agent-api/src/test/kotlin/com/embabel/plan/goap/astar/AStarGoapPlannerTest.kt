@@ -13,13 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.embabel.plan.goap.a
+package com.embabel.plan.goap.astar
 
 import com.embabel.plan.common.condition.ConditionAction
 import com.embabel.plan.common.condition.ConditionDetermination
 import com.embabel.plan.common.condition.ConditionGoal
 import com.embabel.plan.common.condition.WorldStateDeterminer
-import com.embabel.plan.goap.astar.AStarGoapPlanner
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test

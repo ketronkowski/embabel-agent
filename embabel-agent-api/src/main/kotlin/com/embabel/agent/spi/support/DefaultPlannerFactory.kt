@@ -24,6 +24,7 @@ import com.embabel.plan.PlanningSystem
 import com.embabel.plan.WorldState
 import com.embabel.plan.common.condition.WorldStateDeterminer
 import com.embabel.plan.goap.astar.AStarGoapPlanner
+import com.embabel.plan.utility.UtilityPlanner
 
 /**
  * PlannerFactory that knows about GOAP and Utility planners
@@ -37,7 +38,7 @@ object DefaultPlannerFactory : PlannerFactory {
 
         return when (processOptions.plannerType) {
             PlannerType.GOAP -> AStarGoapPlanner(worldStateDeterminer)
-            PlannerType.UTILITY -> TODO("Utility AI planner not yet implemented")
+            PlannerType.UTILITY -> UtilityPlanner(worldStateDeterminer)
         }
     }
 }

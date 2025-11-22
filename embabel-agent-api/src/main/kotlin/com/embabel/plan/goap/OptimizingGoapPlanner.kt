@@ -24,12 +24,8 @@ import com.embabel.plan.common.condition.*
  * Abstract class for a Goap planner with common optimization.
  */
 abstract class OptimizingGoapPlanner(
-    val worldStateDeterminer: WorldStateDeterminer,
-) : ConditionPlanner {
-
-    override fun worldState(): ConditionWorldState {
-        return worldStateDeterminer.determineWorldState()
-    }
+    worldStateDeterminer: WorldStateDeterminer,
+) : AbstractConditionPlanner(worldStateDeterminer) {
 
     final override fun planToGoal(
         actions: Collection<Action>,
