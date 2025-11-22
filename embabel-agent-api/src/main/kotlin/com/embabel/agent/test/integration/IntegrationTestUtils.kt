@@ -26,8 +26,8 @@ import com.embabel.agent.spi.LlmOperations
 import com.embabel.agent.spi.OperationScheduler
 import com.embabel.agent.spi.ToolGroupResolver
 import com.embabel.agent.spi.config.spring.AgentPlatformProperties.ProcessType
+import com.embabel.agent.spi.support.DefaultPlannerFactory
 import com.embabel.agent.spi.support.ExecutorAsyncer
-import com.embabel.agent.spi.support.GoapPlannerFactory
 import com.embabel.agent.spi.support.RegistryToolGroupResolver
 import com.embabel.agent.spi.support.SpringContextPlatformServices
 import com.embabel.agent.test.common.EventSavingAgenticEventListener
@@ -94,7 +94,7 @@ object IntegrationTestUtils {
             blackboard = InMemoryBlackboard(),
             processOptions = ProcessOptions(),
             platformServices = platformServices ?: dummyPlatformServices(),
-            plannerFactory = GoapPlannerFactory,
+            plannerFactory = DefaultPlannerFactory,
         )
     }
 

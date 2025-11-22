@@ -22,7 +22,7 @@ import com.embabel.agent.core.ProcessContext
 import com.embabel.agent.core.ProcessOptions
 import com.embabel.agent.core.support.InMemoryBlackboard
 import com.embabel.agent.core.support.SimpleAgentProcess
-import com.embabel.agent.spi.support.GoapPlannerFactory
+import com.embabel.agent.spi.support.DefaultPlannerFactory
 import com.embabel.agent.support.Dog
 import com.embabel.agent.test.integration.IntegrationTestUtils.dummyPlatformServices
 import com.embabel.common.core.types.Semver
@@ -110,7 +110,7 @@ class AgentBuilderTest {
                     processOptions = ProcessOptions(blackboard = blackboard),
                     platformServices = platformServices,
                     id = "test",
-                    plannerFactory = GoapPlannerFactory,
+                    plannerFactory = DefaultPlannerFactory,
                     parentId = null,
                 ),
                 processOptions = ProcessOptions(blackboard = blackboard),
@@ -140,7 +140,7 @@ class AgentBuilderTest {
                     processOptions = ProcessOptions(blackboard = blackboard),
                     platformServices = platformServices,
                     id = "test",
-                    plannerFactory = GoapPlannerFactory,
+                    plannerFactory = DefaultPlannerFactory,
                     parentId = null,
                 ),
                 processOptions = ProcessOptions(blackboard = blackboard),

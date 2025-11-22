@@ -27,6 +27,9 @@ import com.embabel.plan.common.condition.WorldStateDeterminer
  */
 fun interface PlannerFactory {
 
+    /**
+     * Create a planner for this process
+     */
     fun createPlanner(
         processOptions: ProcessOptions,
         worldStateDeterminer: WorldStateDeterminer,

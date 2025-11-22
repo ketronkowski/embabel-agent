@@ -17,6 +17,7 @@ package com.embabel.agent.core
 
 import com.embabel.agent.api.channel.DevNullOutputChannel
 import com.embabel.agent.api.channel.OutputChannel
+import com.embabel.agent.api.common.PlannerType
 import com.embabel.agent.api.event.AgenticEventListener
 import com.embabel.agent.api.identity.User
 import java.util.function.Consumer
@@ -317,6 +318,8 @@ data class Identities(
  * @param verbosity detailed verbosity settings for logging etc.
  * @param prune whether to prune the agent to only relevant actions
  * @param listeners additional listeners (beyond platform event listeners) to receive events from this process.
+ * @param outputChannel custom output channel to use for this process.
+ * @param plannerType the type of planner to use for this process. Defaults to GOAP planner.
  */
 data class ProcessOptions(
     val contextId: ContextId? = null,
@@ -328,6 +331,7 @@ data class ProcessOptions(
     val prune: Boolean = false,
     val listeners: List<AgenticEventListener> = emptyList(),
     val outputChannel: OutputChannel = DevNullOutputChannel,
+    val plannerType: PlannerType = PlannerType.GOAP,
 ) {
 
     /**

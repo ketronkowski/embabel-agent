@@ -26,4 +26,10 @@ enum class PlannerType {
      * It uses goals, actions and conditions to plan actions.
      */
     GOAP,
+
+    /**
+     * Utility AI planning.
+     * This planner uses utility functions to evaluate actions.
+     */
+    UTILITY,
 }

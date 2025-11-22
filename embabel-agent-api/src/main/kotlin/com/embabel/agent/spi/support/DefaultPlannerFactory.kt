@@ -15,6 +15,7 @@
  */
 package com.embabel.agent.spi.support
 
+import com.embabel.agent.api.common.PlannerType
 import com.embabel.agent.core.ProcessOptions
 import com.embabel.agent.spi.PlannerFactory
 import com.embabel.plan.Plan
@@ -25,13 +26,18 @@ import com.embabel.plan.common.condition.WorldStateDeterminer
 import com.embabel.plan.goap.astar.AStarGoapPlanner
 
 /**
- * PlannerFactory that always creates AStarGoapPlanner
+ * PlannerFactory that knows about GOAP and Utility planners
  */
-object GoapPlannerFactory : PlannerFactory {
+object DefaultPlannerFactory : PlannerFactory {
+
     override fun createPlanner(
         processOptions: ProcessOptions,
         worldStateDeterminer: WorldStateDeterminer,
     ): Planner<out PlanningSystem, out WorldState, out Plan> {
-        return AStarGoapPlanner(worldStateDeterminer)
+
+        return when (processOptions.plannerType) {
+            PlannerType.GOAP -> AStarGoapPlanner(worldStateDeterminer)
+            PlannerType.UTILITY -> TODO("Utility AI planner not yet implemented")
+        }
     }
 }

@@ -23,7 +23,7 @@ import com.embabel.agent.api.event.AgenticEventListener
 import com.embabel.agent.core.*
 import com.embabel.agent.spi.*
 import com.embabel.agent.spi.config.spring.AgentPlatformProperties
-import com.embabel.agent.spi.support.GoapPlannerFactory
+import com.embabel.agent.spi.support.DefaultPlannerFactory
 import com.embabel.agent.spi.support.InMemoryAgentProcessRepository
 import com.embabel.agent.spi.support.InMemoryContextRepository
 import com.embabel.agent.spi.support.SpringContextPlatformServices
@@ -65,7 +65,7 @@ open class DefaultAgentPlatform(
 
     private val logger = LoggerFactory.getLogger(DefaultAgentPlatform::class.java)
 
-    private val plannerFactory: PlannerFactory = GoapPlannerFactory
+    private val plannerFactory: PlannerFactory = DefaultPlannerFactory
 
     private val agents: MutableMap<String, Agent> = ConcurrentHashMap()
 

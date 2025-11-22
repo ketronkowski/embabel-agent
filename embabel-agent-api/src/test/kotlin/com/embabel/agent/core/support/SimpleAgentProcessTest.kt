@@ -32,7 +32,7 @@ import com.embabel.agent.core.*
 import com.embabel.agent.core.hitl.ConfirmationRequest
 import com.embabel.agent.domain.io.UserInput
 import com.embabel.agent.domain.library.Person
-import com.embabel.agent.spi.support.GoapPlannerFactory
+import com.embabel.agent.spi.support.DefaultPlannerFactory
 import com.embabel.agent.support.Dog
 import com.embabel.agent.support.SimpleTestAgent
 import com.embabel.agent.test.common.EventSavingAgenticEventListener
@@ -138,7 +138,7 @@ class SimpleAgentProcessTest {
                 processOptions = ProcessOptions(),
                 blackboard = InMemoryBlackboard(),
                 platformServices = dummyPlatformServices(),
-                plannerFactory = GoapPlannerFactory,
+                plannerFactory = DefaultPlannerFactory,
                 parentId = null,
             )
             assertThrows<IOException> {
@@ -180,7 +180,7 @@ class SimpleAgentProcessTest {
                 processOptions = ProcessOptions(),
                 blackboard = blackboard,
                 platformServices = dummyPlatformServices,
-                plannerFactory = GoapPlannerFactory,
+                plannerFactory = DefaultPlannerFactory,
                 parentId = null,
             )
             val agentStatus = agentProcess.tick()
@@ -199,7 +199,7 @@ class SimpleAgentProcessTest {
                 processOptions = ProcessOptions(),
                 blackboard = blackboard,
                 platformServices = dummyPlatformServices,
-                plannerFactory = GoapPlannerFactory,
+                plannerFactory = DefaultPlannerFactory,
                 parentId = null,
             )
             val agentStatus = agentProcess.run()
@@ -274,7 +274,7 @@ class SimpleAgentProcessTest {
                 processOptions = ProcessOptions(),
                 blackboard = blackboard,
                 platformServices = dummyPlatformServices,
-                plannerFactory = GoapPlannerFactory,
+                plannerFactory = DefaultPlannerFactory,
                 parentId = null,
             )
             return agentProcess.run()
@@ -296,7 +296,7 @@ class SimpleAgentProcessTest {
                 processOptions = ProcessOptions(),
                 blackboard = blackboard,
                 platformServices = dummyPlatformServices,
-                plannerFactory = GoapPlannerFactory,
+                plannerFactory = DefaultPlannerFactory,
                 parentId = null,
             )
             val person = LocalPerson("John")
@@ -315,7 +315,7 @@ class SimpleAgentProcessTest {
                 processOptions = ProcessOptions(),
                 blackboard = blackboard,
                 platformServices = dummyPlatformServices,
-                plannerFactory = GoapPlannerFactory,
+                plannerFactory = DefaultPlannerFactory,
                 parentId = null,
             )
             val person = LocalPerson("John")
@@ -333,7 +333,7 @@ class SimpleAgentProcessTest {
                 processOptions = ProcessOptions(),
                 blackboard = blackboard,
                 platformServices = dummyPlatformServices,
-                plannerFactory = GoapPlannerFactory,
+                plannerFactory = DefaultPlannerFactory,
                 parentId = null,
             )
             val person = LocalPerson("John")
@@ -352,7 +352,7 @@ class SimpleAgentProcessTest {
                 processOptions = ProcessOptions(),
                 blackboard = blackboard,
                 platformServices = dummyPlatformServices,
-                plannerFactory = GoapPlannerFactory,
+                plannerFactory = DefaultPlannerFactory,
                 parentId = null,
             )
             val person = LocalPerson("John")
@@ -379,7 +379,7 @@ class SimpleAgentProcessTest {
                 processOptions = ProcessOptions(),
                 blackboard = blackboard,
                 platformServices = dummyPlatformServices,
-                plannerFactory = GoapPlannerFactory,
+                plannerFactory = DefaultPlannerFactory,
                 parentId = null,
             )
             assertEquals(0, agentProcess.toolsStats.toolsStats.size, "No tools called yet")
@@ -400,7 +400,7 @@ class SimpleAgentProcessTest {
                 processOptions = ProcessOptions(),
                 blackboard = blackboard,
                 platformServices = dummyPlatformServices,
-                plannerFactory = GoapPlannerFactory,
+                plannerFactory = DefaultPlannerFactory,
                 parentId = null,
             )
             assertEquals(AgentProcessStatusCode.NOT_STARTED, agentProcess.status)
