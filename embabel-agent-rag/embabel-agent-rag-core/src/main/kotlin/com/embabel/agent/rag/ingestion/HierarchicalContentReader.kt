@@ -84,8 +84,8 @@ data class DirectoryParsingResult(
 interface HierarchicalContentReader {
 
     fun parseUrl(
-        resourcePath: String,
-    ): NavigableDocument = parseResource(resourcePath)
+        url: String,
+    ): NavigableDocument = parseResource(url)
 
     /**
      * Parse content from a Spring Resource and return materialized content root
