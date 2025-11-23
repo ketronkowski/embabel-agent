@@ -16,20 +16,12 @@
 package com.embabel.plan.utility
 
 import com.embabel.plan.Action
-import com.embabel.plan.CostComputation
 import com.embabel.plan.Goal
-import com.embabel.plan.common.condition.*
+import com.embabel.plan.common.condition.AbstractConditionPlanner
+import com.embabel.plan.common.condition.ConditionPlan
+import com.embabel.plan.common.condition.ConditionPlanningSystem
+import com.embabel.plan.common.condition.WorldStateDeterminer
 import org.jetbrains.annotations.ApiStatus
-
-/**
- * Goal of all Utility planners. Reach nirvana, where there is nothing more to do.
- */
-object Nirvana : ConditionGoal {
-
-    override val preconditions: EffectSpec = emptyMap()
-    override val name: String = "Nirvana: nothing more to do"
-    override val value: CostComputation = { 0.0 }
-}
 
 /**
  * Planner using utility AI
