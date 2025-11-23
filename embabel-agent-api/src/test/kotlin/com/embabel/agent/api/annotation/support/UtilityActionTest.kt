@@ -96,11 +96,11 @@ class UtilityActionTest {
     }
 
     @Test
-    fun `completes with single explicit goal`() {
+    fun `completes with single explicit satisfiable goal`() {
         val reader = AgentMetadataReader()
         val metadata =
             reader.createAgentMetadata(
-                Utility2Actions1Goal()
+                Utility2Actions1SatisfiableGoal()
             )
         assertNotNull(metadata)
         assertEquals(2, metadata!!.actions.size)
@@ -118,6 +118,36 @@ class UtilityActionTest {
         assertEquals(
             AgentProcessStatusCode.COMPLETED, agentProcess.status,
             "Should be completed: status=${agentProcess.status}",
+        )
+        assertTrue(
+            agentProcess.objects.any { it == PersonWithReverseTool("Kermit") },
+            "Should have a person: blackboard=${agentProcess.objects}",
+        )
+    }
+
+    @Test
+    fun `does not complete with single explicit unsatisfiable goal`() {
+        val reader = AgentMetadataReader()
+        val metadata =
+            reader.createAgentMetadata(
+                Utility2Actions1UnsatisfiableGoal()
+            )
+        assertNotNull(metadata)
+        assertEquals(3, metadata!!.actions.size)
+
+        val ap = IntegrationTestUtils.dummyAgentPlatform()
+        val agent = metadata as CoreAgent
+        val agentProcess =
+            ap.runAgentFrom(
+                agent,
+                ProcessOptions(
+                    plannerType = PlannerType.UTILITY,
+                ),
+                emptyMap(),
+            )
+        assertEquals(
+            AgentProcessStatusCode.STUCK, agentProcess.status,
+            "Should be stuck, not completed: status=${agentProcess.status}",
         )
         assertTrue(
             agentProcess.objects.any { it == PersonWithReverseTool("Kermit") },

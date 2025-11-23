@@ -20,6 +20,9 @@ import com.embabel.agent.api.annotation.Action
 import com.embabel.agent.api.annotation.Agent
 import com.embabel.agent.api.common.PlannerType
 import com.embabel.agent.api.dsl.Frog
+import com.embabel.agent.api.dsl.SnakeMeal
+import com.embabel.agent.domain.io.UserInput
+import io.mockk.mockk
 
 @Agent(
     description = "thing",
@@ -43,7 +46,7 @@ class Utility2ActionsNoGoal {
     description = "thing",
     planner = PlannerType.UTILITY
 )
-class Utility2Actions1Goal {
+class Utility2Actions1SatisfiableGoal {
 
     @Action
     fun makeFrog(): Frog {
@@ -56,6 +59,32 @@ class Utility2Actions1Goal {
     )
     fun makePerson(frog: Frog): PersonWithReverseTool {
         return PersonWithReverseTool(frog.name)
+    }
+
+}
+
+@Agent(
+    description = "thing",
+    planner = PlannerType.UTILITY
+)
+class Utility2Actions1UnsatisfiableGoal {
+
+    @Action
+    fun makeFrog(): Frog {
+        return Frog("Kermit")
+    }
+
+    @Action
+    fun makePerson(frog: Frog): PersonWithReverseTool {
+        return PersonWithReverseTool(frog.name)
+    }
+
+    @Action
+    @AchievesGoal(
+        description = "Unsatisfiable goal",
+    )
+    fun unsatisfiableMakeSnakeMeal(userInput: UserInput): SnakeMeal {
+        return mockk()
     }
 
 }
