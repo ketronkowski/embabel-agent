@@ -22,7 +22,6 @@ import com.embabel.agent.core.ProcessOptions
 import com.embabel.agent.test.integration.IntegrationTestUtils
 import com.embabel.plan.utility.UtilityPlanner
 import org.junit.jupiter.api.Assertions.*
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import com.embabel.agent.core.Agent as CoreAgent
 
@@ -65,7 +64,6 @@ class UtilityActionTest {
     }
 
     @Test
-    @Disabled
     fun `invoke two actions`() {
         val reader = AgentMetadataReader()
         val metadata =

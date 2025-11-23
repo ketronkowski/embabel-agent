@@ -17,10 +17,7 @@ package com.embabel.plan.utility
 
 import com.embabel.plan.Action
 import com.embabel.plan.Goal
-import com.embabel.plan.common.condition.AbstractConditionPlanner
-import com.embabel.plan.common.condition.ConditionPlan
-import com.embabel.plan.common.condition.ConditionPlanningSystem
-import com.embabel.plan.common.condition.WorldStateDeterminer
+import com.embabel.plan.common.condition.*
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -34,8 +31,17 @@ class UtilityPlanner(
     override fun planToGoal(
         actions: Collection<Action>,
         goal: Goal,
-    ): ConditionPlan? {
-        TODO("Not yet implemented")
+    ): ConditionPlan {
+        val currentState = worldStateDeterminer.determineWorldState()
+        val availableActions = actions
+            .filterIsInstance<ConditionAction>()
+            .filter { it.isAchievable(currentState) }
+            .sortedByDescending { it.netValue(currentState) }
+        return ConditionPlan(
+            actions = listOfNotNull(availableActions.firstOrNull()),
+            goal = goal,
+            worldState = currentState,
+        )
     }
 
     override fun prune(planningSystem: ConditionPlanningSystem): ConditionPlanningSystem {
