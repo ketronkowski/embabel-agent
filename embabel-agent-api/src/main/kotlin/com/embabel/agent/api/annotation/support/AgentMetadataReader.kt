@@ -183,14 +183,16 @@ class AgentMetadataReader(
             Pair(action, createGoalFromActionMethod(actionMethod, action, instance))
         }.unzip()
 
-        val goals =
-            if (agenticInfo.agentAnnotation?.planner == PlannerType.UTILITY) {
+        val plannerType = agenticInfo.agentAnnotation?.planner ?: PlannerType.GOAP
+
+        val goals = buildSet {
+            addAll(getterGoals)
+            addAll(actionGoals.filterNotNull())
+            if (plannerType == PlannerType.UTILITY) {
                 // Synthetic goal for utility-based agents
-                // TODO complain if multiple goals defined
-                listOf(NIRVANA)
-            } else {
-                getterGoals + actionGoals.filterNotNull()
+                add(NIRVANA)
             }
+        }
 
         if (actionMethods.isEmpty() && goals.isEmpty() && conditionMethods.isEmpty()) {
             logger.warn(
@@ -212,7 +214,7 @@ class AgentMetadataReader(
                 version = Semver(agenticInfo.agentAnnotation.version),
                 conditions = conditions,
                 actions = actions,
-                goals = goals.toSet(),
+                goals = goals,
                 stuckHandler = instance as? StuckHandler,
                 opaque = agenticInfo.agentAnnotation.opaque,
             )
@@ -221,15 +223,17 @@ class AgentMetadataReader(
                 name = agenticInfo.type.name,
                 conditions = conditions,
                 actions = actions,
-                goals = goals.toSet(),
+                goals = goals,
             )
         }
 
-        val validationResult = agentValidationManager.validate(agent)
-        if (!validationResult.isValid) {
-            logger.warn("Agent validation failed:\n${validationResult.errors.joinToString("\n")}")
-            // TODO: Uncomment to strengthen validation and refactor the test if needed. Because some tests might fail.
-            // return null
+        if (plannerType == PlannerType.GOAP) {
+            val validationResult = agentValidationManager.validate(agent)
+            if (!validationResult.isValid) {
+                logger.warn("Agent validation failed:\n${validationResult.errors.joinToString("\n")}")
+                // TODO: Uncomment to strengthen validation and refactor the test if needed. Because some tests might fail.
+                // return null
+            }
         }
 
         return agent

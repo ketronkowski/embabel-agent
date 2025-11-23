@@ -31,14 +31,20 @@ class UtilityPlanner(
     override fun planToGoal(
         actions: Collection<Action>,
         goal: Goal,
-    ): ConditionPlan {
+    ): ConditionPlan? {
         val currentState = worldStateDeterminer.determineWorldState()
         val availableActions = actions
             .filterIsInstance<ConditionAction>()
             .filter { it.isAchievable(currentState) }
-            .sortedByDescending { it.netValue(currentState) }
+            .map { Pair(it, it.netValue(currentState)) }
+            .sortedByDescending { it.second }
+        logger.info("${availableActions.size}/${actions.size} available: ${availableActions.map { "${it.first.name} - ${it.second}" }}")
+        if (goal.name == NIRVANA && availableActions.isEmpty()) {
+            // Special case. No available actions for Nirvana goal
+            return null
+        }
         return ConditionPlan(
-            actions = listOfNotNull(availableActions.firstOrNull()),
+            actions = listOfNotNull(availableActions.map { it.first }.firstOrNull()),
             goal = goal,
             worldState = currentState,
         )
@@ -46,5 +52,9 @@ class UtilityPlanner(
 
     override fun prune(planningSystem: ConditionPlanningSystem): ConditionPlanningSystem {
         return planningSystem
+    }
+
+    companion object {
+        const val NIRVANA = "Nirvana"
     }
 }

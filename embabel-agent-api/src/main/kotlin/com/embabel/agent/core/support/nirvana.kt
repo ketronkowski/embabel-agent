@@ -16,11 +16,16 @@
 package com.embabel.agent.core.support
 
 import com.embabel.agent.core.Goal
+import com.embabel.plan.utility.UtilityPlanner
 
 /**
  * Goal of all Utility planners. Reach nirvana, where there is nothing more to do.
+ * It's important that this goal cannot be satisfied, to prevent the planner from ending up prematurely.
  */
 val NIRVANA = Goal(
-    name = "Nirvana",
+    name = UtilityPlanner.NIRVANA,
     description = "Nirvana: Nothing more to do",
+    // Preconditions cannot be satisfied
+    pre = setOf("trishna_overcome"),
+    outputType = null,
 )

@@ -32,7 +32,7 @@ class UtilityActionTest {
         val reader = AgentMetadataReader()
         val metadata =
             reader.createAgentMetadata(
-                Utility1()
+                Utility2ActionsNoGoal()
             )
         assertNotNull(metadata)
         assertEquals(2, metadata!!.actions.size)
@@ -56,7 +56,7 @@ class UtilityActionTest {
         val reader = AgentMetadataReader()
         val metadata =
             reader.createAgentMetadata(
-                Utility1()
+                Utility2ActionsNoGoal()
             )
         assertNotNull(metadata)
         val goal = metadata!!.goals.singleOrNull()
@@ -68,7 +68,7 @@ class UtilityActionTest {
         val reader = AgentMetadataReader()
         val metadata =
             reader.createAgentMetadata(
-                Utility1()
+                Utility2ActionsNoGoal()
             )
         assertNotNull(metadata)
         assertEquals(2, metadata!!.actions.size)
@@ -81,10 +81,43 @@ class UtilityActionTest {
                 ProcessOptions(plannerType = PlannerType.UTILITY),
                 emptyMap(),
             )
-        assertEquals(AgentProcessStatusCode.COMPLETED, agentProcess.status)
+        assertEquals(
+            AgentProcessStatusCode.STUCK, agentProcess.status,
+            "Should be stuck, not finished: status=${agentProcess.status}",
+        )
         assertTrue(
             agentProcess.objects.any { it == Frog("Kermit") },
             "Should have a frog: blackboard=${agentProcess.objects}"
+        )
+        assertTrue(
+            agentProcess.objects.any { it == PersonWithReverseTool("Kermit") },
+            "Should have a person: blackboard=${agentProcess.objects}",
+        )
+    }
+
+    @Test
+    fun `completes with single explicit goal`() {
+        val reader = AgentMetadataReader()
+        val metadata =
+            reader.createAgentMetadata(
+                Utility2Actions1Goal()
+            )
+        assertNotNull(metadata)
+        assertEquals(2, metadata!!.actions.size)
+
+        val ap = IntegrationTestUtils.dummyAgentPlatform()
+        val agent = metadata as CoreAgent
+        val agentProcess =
+            ap.runAgentFrom(
+                agent,
+                ProcessOptions(
+                    plannerType = PlannerType.UTILITY,
+                ),
+                emptyMap(),
+            )
+        assertEquals(
+            AgentProcessStatusCode.COMPLETED, agentProcess.status,
+            "Should be completed: status=${agentProcess.status}",
         )
         assertTrue(
             agentProcess.objects.any { it == PersonWithReverseTool("Kermit") },

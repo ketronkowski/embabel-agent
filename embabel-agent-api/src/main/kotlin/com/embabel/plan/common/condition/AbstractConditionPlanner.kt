@@ -15,9 +15,14 @@
  */
 package com.embabel.plan.common.condition
 
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+
 abstract class AbstractConditionPlanner(
     protected val worldStateDeterminer: WorldStateDeterminer,
 ) : ConditionPlanner {
+
+    protected val logger: Logger = LoggerFactory.getLogger(javaClass)
 
     final override fun worldState(): ConditionWorldState {
         return worldStateDeterminer.determineWorldState()

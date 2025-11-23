@@ -15,6 +15,7 @@
  */
 package com.embabel.agent.api.annotation.support
 
+import com.embabel.agent.api.annotation.AchievesGoal
 import com.embabel.agent.api.annotation.Action
 import com.embabel.agent.api.annotation.Agent
 import com.embabel.agent.api.common.PlannerType
@@ -24,7 +25,7 @@ import com.embabel.agent.api.dsl.Frog
     description = "thing",
     planner = PlannerType.UTILITY
 )
-class Utility1 {
+class Utility2ActionsNoGoal {
 
     @Action
     fun makeFrog(): Frog {
@@ -32,6 +33,27 @@ class Utility1 {
     }
 
     @Action
+    fun makePerson(frog: Frog): PersonWithReverseTool {
+        return PersonWithReverseTool(frog.name)
+    }
+
+}
+
+@Agent(
+    description = "thing",
+    planner = PlannerType.UTILITY
+)
+class Utility2Actions1Goal {
+
+    @Action
+    fun makeFrog(): Frog {
+        return Frog("Kermit")
+    }
+
+    @Action
+    @AchievesGoal(
+        description = "Create a person with reverse tool from a frog",
+    )
     fun makePerson(frog: Frog): PersonWithReverseTool {
         return PersonWithReverseTool(frog.name)
     }
