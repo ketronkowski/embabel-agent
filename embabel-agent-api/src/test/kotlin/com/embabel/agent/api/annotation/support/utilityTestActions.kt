@@ -88,3 +88,24 @@ class Utility2Actions1UnsatisfiableGoal {
     }
 
 }
+
+
+@Agent(
+    description = "thing",
+    planner = PlannerType.UTILITY
+)
+class Utility2Actions1VoidNoGoal {
+
+    var invokedThing2 = false
+
+    @Action
+    fun makeFrog(): Frog {
+        return Frog("Kermit")
+    }
+
+    @Action
+    fun thing2(frog: Frog) {
+        invokedThing2 = true
+    }
+
+}

@@ -154,4 +154,34 @@ class UtilityActionTest {
             "Should have a person: blackboard=${agentProcess.objects}",
         )
     }
+
+    @Test
+    fun `accept void return and invoke two actions`() {
+        val reader = AgentMetadataReader()
+        val instance = Utility2Actions1VoidNoGoal()
+        val metadata =
+            reader.createAgentMetadata(
+                instance
+            )
+        assertNotNull(metadata)
+        assertEquals(2, metadata!!.actions.size)
+
+        val ap = IntegrationTestUtils.dummyAgentPlatform()
+        val agent = metadata as CoreAgent
+        val agentProcess =
+            ap.runAgentFrom(
+                agent,
+                ProcessOptions(plannerType = PlannerType.UTILITY),
+                emptyMap(),
+            )
+        assertEquals(
+            AgentProcessStatusCode.STUCK, agentProcess.status,
+            "Should be stuck, not finished: status=${agentProcess.status}",
+        )
+        assertTrue(
+            instance.invokedThing2,
+            "Should have invoked second method",
+        )
+
+    }
 }
