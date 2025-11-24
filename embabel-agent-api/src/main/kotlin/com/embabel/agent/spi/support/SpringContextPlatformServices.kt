@@ -24,6 +24,7 @@ import com.embabel.agent.core.AgentPlatform
 import com.embabel.agent.spi.LlmOperations
 import com.embabel.agent.spi.OperationScheduler
 import com.embabel.agent.spi.expression.LogicalExpressionParser
+import com.embabel.agent.spi.expression.spel.SpelLogicalExpressionParser
 import com.embabel.common.ai.model.ModelProvider
 import com.embabel.common.textio.template.TemplateRenderer
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -35,6 +36,7 @@ import org.springframework.context.ApplicationContext
  * Uses Spring ApplicationContext to resolve some beans for platform services.
  * If a custom LogicalExpressionParser is provided, it will be used,
  * otherwise all LogicalExpressionParsers in the context will be combined.
+ * A SpelLogicalExpressionParser will be added if not already present.
  */
 data class SpringContextPlatformServices(
     override val agentPlatform: AgentPlatform,
@@ -50,7 +52,13 @@ data class SpringContextPlatformServices(
 ) : PlatformServices {
 
     override val logicalExpressionParser = customLogicalExpressionParser ?: run {
-        val parsers = applicationContext?.getBeansOfType<LogicalExpressionParser>()?.values ?: emptyList()
+        val parsers = buildList {
+            val contextParsers = applicationContext?.getBeansOfType<LogicalExpressionParser>()?.values ?: emptyList()
+            addAll(contextParsers)
+            if (!contextParsers.any { it is SpelLogicalExpressionParser }) {
+                add(SpelLogicalExpressionParser())
+            }
+        }
         LogicalExpressionParser.of(*parsers.toTypedArray())
     }
 

@@ -16,15 +16,13 @@
 package com.embabel.agent.e2e
 
 import com.embabel.agent.api.annotation.support.AgentMetadataReader
-import com.embabel.agent.api.common.AgentPlatformTypedOps
-import com.embabel.agent.api.common.NoSuchAgentException
-import com.embabel.agent.api.common.TypedOps
-import com.embabel.agent.api.common.asFunction
+import com.embabel.agent.api.common.*
 import com.embabel.agent.api.common.autonomy.Autonomy
 import com.embabel.agent.api.common.autonomy.GoalChoiceApprover
 import com.embabel.agent.api.dsl.EvilWizardAgent
 import com.embabel.agent.api.dsl.Frog
 import com.embabel.agent.api.dsl.evenMoreEvilWizard
+import com.embabel.agent.core.Agent
 import com.embabel.agent.core.AgentPlatform
 import com.embabel.agent.core.AgentProcessStatusCode
 import com.embabel.agent.core.ProcessOptions
@@ -33,6 +31,9 @@ import com.embabel.agent.domain.library.HasContent
 import com.embabel.agent.spi.LlmOperations
 import com.embabel.agent.spi.Ranking
 import com.embabel.agent.spi.Rankings
+import com.embabel.agent.spi.expression.spel.Elephant
+import com.embabel.agent.spi.expression.spel.Spel2ActionsNoGoal
+import com.embabel.agent.spi.expression.spel.Zoo
 import com.embabel.agent.test.integration.DummyObjectCreatingLlmOperations
 import com.embabel.agent.test.integration.FakeRanker
 import com.embabel.common.core.types.Described
@@ -248,6 +249,35 @@ class AgentPlatformIntegrationTest(
             assertTrue(
                 dynamicExecutionResult.output is HasContent,
                 "Expected HasContent, got ${dynamicExecutionResult.output.javaClass.name}"
+            )
+        }
+
+    }
+
+    @Nested
+    inner class UtilitySpel {
+
+        @Test
+        fun `run elephant zoo`() {
+            val agent = AgentMetadataReader().createAgentMetadata(Spel2ActionsNoGoal()) as Agent
+            val agentProcess =
+                agentPlatform.runAgentFrom(
+                    agent,
+                    ProcessOptions(plannerType = PlannerType.UTILITY),
+                    emptyMap(),
+                )
+
+            assertEquals(
+                AgentProcessStatusCode.STUCK, agentProcess.status,
+                "Should be stuck, not finished: status=${agentProcess.status}",
+            )
+            assertTrue(
+                agentProcess.objects.any { it == Elephant("Zaboya", 30) },
+                "Should have an elephant: blackboard=${agentProcess.objects}"
+            )
+            assertTrue(
+                agentProcess.objects.any { it is Zoo },
+                "Should have a zoo: blackboard=${agentProcess.objects}",
             )
         }
 
