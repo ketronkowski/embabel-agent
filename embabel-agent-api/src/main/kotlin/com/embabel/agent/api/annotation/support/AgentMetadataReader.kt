@@ -69,6 +69,8 @@ internal data class AgenticInfo(
     val embabelComponentAnnotation: EmbabelComponent? = targetType.getAnnotation(EmbabelComponent::class.java)
     val agentAnnotation: Agent? = targetType.getAnnotation(Agent::class.java)
 
+    fun isAgent(): Boolean = agentAnnotation != null
+
     /**
      * Is this type agentic at all?
      */
@@ -227,7 +229,8 @@ class AgentMetadataReader(
             )
         }
 
-        if (plannerType == PlannerType.GOAP) {
+        // Validate only if an agent, which should be self-contained
+        if (plannerType == PlannerType.GOAP && agenticInfo.isAgent()) {
             val validationResult = agentValidationManager.validate(agent)
             if (!validationResult.isValid) {
                 logger.warn("Agent validation failed:\n${validationResult.errors.joinToString("\n")}")
