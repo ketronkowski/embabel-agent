@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.embabel.agent.api.common.autonomy
+package com.embabel.agent.api.invocation
 
 import com.embabel.agent.core.Agent
 import com.embabel.agent.core.AgentPlatform
@@ -32,7 +32,7 @@ import java.util.concurrent.CompletableFuture
  *
  * @param T type of result returned by the invocation
  */
-interface AgentInvocation<T> {
+interface AgentInvocation<T> : UntypedInvocation {
 
     /**
      * Invokes the agent with one or more arguments.
@@ -73,46 +73,6 @@ interface AgentInvocation<T> {
      * @return the result of type [T] from the agent invocation
      */
     fun invokeAsync(map: Map<String, Any>): CompletableFuture<T>
-
-    /**
-     * Runs the agent with one or more arguments
-     *
-     * @param obj the first (and possibly only) input value to be added to the blackboard
-     * @param objs additional input values to add to the blackboard
-     * @return the agent process
-     */
-    fun run(
-        obj: Any,
-        vararg objs: Any,
-    ): AgentProcess = runAsync(obj, *objs).get()
-
-    /**
-     * Runs the agent with a map of named inputs.
-     *
-     * @param map A [Map] that initializes the blackboard
-     * @return the agent process
-     */
-    fun run(map: Map<String, Any>): AgentProcess = runAsync(map).get()
-
-    /**
-     * Runs the agent asynchronously with one or more arguments
-     *
-     * @param obj the first (and possibly only) input value to be added to the blackboard
-     * @param objs additional input values to add to the blackboard
-     * @return the future agent process
-     */
-    fun runAsync(
-        obj: Any,
-        vararg objs: Any,
-    ): CompletableFuture<AgentProcess>
-
-    /**
-     * Runs the agent asynchronously with a map of named inputs.
-     *
-     * @param map A [Map] that initializes the blackboard
-     * @return the future agent process
-     */
-    fun runAsync(map: Map<String, Any>): CompletableFuture<AgentProcess>
 
     companion object {
 
@@ -244,7 +204,6 @@ internal class DefaultAgentInvocation<T : Any>(
         )
         return agentPlatform.start(agentProcess)
     }
-
 
     private fun findAgentByResultType(): Agent? =
         agentPlatform.agents().find { agent ->

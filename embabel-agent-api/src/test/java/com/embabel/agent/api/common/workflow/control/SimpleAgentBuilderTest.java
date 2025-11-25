@@ -15,7 +15,7 @@
  */
 package com.embabel.agent.api.common.workflow.control;
 
-import com.embabel.agent.api.common.autonomy.AgentInvocation;
+import com.embabel.agent.api.invocation.AgentInvocation;
 import com.embabel.agent.core.AgentProcessStatusCode;
 import com.embabel.agent.core.ProcessOptions;
 import com.embabel.agent.domain.io.UserInput;
