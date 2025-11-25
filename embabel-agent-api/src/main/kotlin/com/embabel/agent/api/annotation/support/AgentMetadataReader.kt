@@ -53,7 +53,7 @@ import com.embabel.agent.core.Goal as AgentCoreGoal
 /**
  * Agentic info about a type
  */
-data class AgenticInfo(
+internal data class AgenticInfo(
     val type: Class<*>,
 ) {
 
@@ -66,17 +66,17 @@ data class AgenticInfo(
         type
     }
 
-    val agentCapabilitiesAnnotation: AgentCapabilities? = targetType.getAnnotation(AgentCapabilities::class.java)
+    val embabelComponentAnnotation: EmbabelComponent? = targetType.getAnnotation(EmbabelComponent::class.java)
     val agentAnnotation: Agent? = targetType.getAnnotation(Agent::class.java)
 
     /**
      * Is this type agentic at all?
      */
-    fun agentic() = agentCapabilitiesAnnotation != null || agentAnnotation != null
+    fun agentic() = embabelComponentAnnotation != null || agentAnnotation != null
 
     fun validationErrors(): Collection<String> {
         val errors = mutableListOf<String>()
-        if (agentCapabilitiesAnnotation != null && agentAnnotation != null) {
+        if (embabelComponentAnnotation != null && agentAnnotation != null) {
             errors += "Both @Agentic and @Agent annotations found on ${targetType.name}. Treating class as Agent, but both should not be used"
         }
         if (agentAnnotation != null && agentAnnotation.description.isBlank()) {
@@ -85,7 +85,7 @@ data class AgenticInfo(
         return errors
     }
 
-    fun noAutoScan() = agentCapabilitiesAnnotation?.scan == false || agentAnnotation?.scan == false
+    fun noAutoScan() = embabelComponentAnnotation?.scan == false || agentAnnotation?.scan == false
 
     /**
      * Name for this agent. Valid only if agentic() is true.
@@ -155,7 +155,7 @@ class AgentMetadataReader(
         if (!agenticInfo.agentic()) {
             logger.debug(
                 "No @{} or @{} annotation found on {}",
-                AgentCapabilities::class.simpleName,
+                EmbabelComponent::class.simpleName,
                 Agent::class.simpleName,
                 targetType.name,
             )
@@ -165,7 +165,7 @@ class AgentMetadataReader(
         if (agenticInfo.validationErrors().isNotEmpty()) {
             logger.warn(
                 agenticInfo.validationErrors().joinToString("\n"),
-                AgentCapabilities::class.simpleName,
+                EmbabelComponent::class.simpleName,
                 Agent::class.simpleName,
                 targetType.name,
             )

@@ -36,7 +36,7 @@ import org.springframework.stereotype.Component
     AnnotationTarget.CLASS,
 )
 @Component
-annotation class AgentCapabilities(
+annotation class EmbabelComponent(
     val scan: Boolean = true,
 )
 

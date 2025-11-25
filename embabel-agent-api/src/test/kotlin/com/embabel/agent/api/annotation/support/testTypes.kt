@@ -37,10 +37,10 @@ data class PersonWithReverseTool(val name: String) {
 
 }
 
-@AgentCapabilities
+@EmbabelComponent
 class NoMethods
 
-@AgentCapabilities
+@EmbabelComponent
 class OneGoalOnly {
 
     val thing1 = Goal.createInstance(
@@ -50,7 +50,7 @@ class OneGoalOnly {
     ).withFixedValue(30.0)
 }
 
-@AgentCapabilities
+@EmbabelComponent
 class OneGoalOnlyWithRichMetadata {
 
     val thing1 = Goal.createInstance(
@@ -62,7 +62,7 @@ class OneGoalOnlyWithRichMetadata {
     ).withFixedValue(30.0)
 }
 
-@AgentCapabilities
+@EmbabelComponent
 class TwoGoalsOnly {
 
     val thing1 = Goal.createInstance(
@@ -75,7 +75,7 @@ class TwoGoalsOnly {
     )
 }
 
-@AgentCapabilities
+@EmbabelComponent
 class ActionGoal {
 
     @Action
@@ -90,7 +90,7 @@ interface InterfaceWithNoDeser {
     val content: String
 }
 
-@AgentCapabilities
+@EmbabelComponent
 class InvalidActionNoDeserializationInInterfaceGoal {
 
     @Action
@@ -110,7 +110,7 @@ data class MyInterfaceWithDeser(
     override val content: String,
 ) : InterfaceWithDeser
 
-@AgentCapabilities
+@EmbabelComponent
 class ValidActionWithDeserializationInInterfaceGoal {
 
     @Action
@@ -121,7 +121,7 @@ class ValidActionWithDeserializationInInterfaceGoal {
 
 }
 
-@AgentCapabilities
+@EmbabelComponent
 class TwoActionGoals {
 
     @Action
@@ -138,7 +138,7 @@ class TwoActionGoals {
 
 }
 
-@AgentCapabilities
+@EmbabelComponent
 class TwoActuallyNonConflictingActionGoalsWithSameOutput {
 
     @Action
@@ -155,7 +155,7 @@ class TwoActuallyNonConflictingActionGoalsWithSameOutput {
 
 }
 
-@AgentCapabilities
+@EmbabelComponent
 class TwoConflictingActionGoals {
 
     @Action
@@ -172,7 +172,7 @@ class TwoConflictingActionGoals {
 
 }
 
-@AgentCapabilities
+@EmbabelComponent
 class NoConditions {
 
     // A goal makes it legal
@@ -184,7 +184,7 @@ class NoConditions {
 
 }
 
-@AgentCapabilities
+@EmbabelComponent
 class OneOperationContextConditionOnly {
 
     @Condition(cost = .5)
@@ -194,7 +194,7 @@ class OneOperationContextConditionOnly {
 
 }
 
-@AgentCapabilities
+@EmbabelComponent
 class OneOperationContextAiOnly {
 
     @Condition(cost = .5)
@@ -204,7 +204,7 @@ class OneOperationContextAiOnly {
 
 }
 
-@AgentCapabilities
+@EmbabelComponent
 class ConditionFromBlackboard {
 
     @Condition
@@ -214,7 +214,7 @@ class ConditionFromBlackboard {
 
 }
 
-@AgentCapabilities
+@EmbabelComponent
 class CustomNameConditionFromBlackboard {
 
     @Condition(name = "condition1")
@@ -224,7 +224,7 @@ class CustomNameConditionFromBlackboard {
 
 }
 
-@AgentCapabilities
+@EmbabelComponent
 class ConditionsFromBlackboard {
 
     @Condition
@@ -247,7 +247,7 @@ class OneTransformerActionOnly {
 
 }
 
-@AgentCapabilities
+@EmbabelComponent
 class OneTransformerActionWithNullableParameter {
 
     @Action(cost = 500.0)
@@ -277,7 +277,7 @@ class InternalDomainClasses {
 
 }
 
-@AgentCapabilities
+@EmbabelComponent
 class OneTransformerActionTakingPayloadOnly {
 
     @Action(cost = 500.0)
@@ -290,7 +290,7 @@ class OneTransformerActionTakingPayloadOnly {
 
 }
 
-@AgentCapabilities
+@EmbabelComponent
 class OneTransformerActionTakingOperationPayload {
 
     @Action(cost = 500.0)
@@ -303,7 +303,7 @@ class OneTransformerActionTakingOperationPayload {
 
 }
 
-@AgentCapabilities
+@EmbabelComponent
 class OneTransformerActionReferencingConditionByName {
 
     @Action(pre = ["condition1"])
@@ -313,7 +313,7 @@ class OneTransformerActionReferencingConditionByName {
 
 }
 
-@AgentCapabilities
+@EmbabelComponent
 class OneTransformerActionWithCustomToolGroupOnly {
 
     @Action(cost = 500.0, toolGroups = ["magic"])
@@ -454,7 +454,7 @@ class AgentWithOneTransformerActionWith2ArgsOnlyAndOperationContextParameter {
 
 }
 
-@AgentCapabilities
+@EmbabelComponent
 class OneTransformerActionWith2ArgsAndCustomInputBindings {
 
     @Action
@@ -467,7 +467,7 @@ class OneTransformerActionWith2ArgsAndCustomInputBindings {
 
 }
 
-@AgentCapabilities
+@EmbabelComponent
 class OneTransformerActionWith2ArgsAndCustomOutputBinding {
 
     @Action(outputBinding = "person")
@@ -480,7 +480,7 @@ class OneTransformerActionWith2ArgsAndCustomOutputBinding {
 
 }
 
-@AgentCapabilities
+@EmbabelComponent
 class OnePromptActionOnly(
 ) {
 
@@ -496,7 +496,7 @@ class OnePromptActionOnly(
 
 }
 
-@AgentCapabilities
+@EmbabelComponent
 class AwaitableOne(
 ) {
 
@@ -512,7 +512,7 @@ class AwaitableOne(
 
 }
 
-@AgentCapabilities
+@EmbabelComponent
 class Combined {
 
     val planner = Goal.createInstance(
@@ -548,7 +548,7 @@ class Combined {
 
 }
 
-@AgentCapabilities
+@EmbabelComponent
 class OnePromptActionWithToolOnly(
 ) {
 
@@ -569,7 +569,7 @@ class OnePromptActionWithToolOnly(
 
 }
 
-@AgentCapabilities
+@EmbabelComponent
 class FromPersonUsesDomainObjectTools {
 
     @Action
@@ -581,7 +581,7 @@ class FromPersonUsesDomainObjectTools {
     }
 }
 
-@AgentCapabilities
+@EmbabelComponent
 class FromPersonUsesDomainObjectToolsViaActionContext {
 
     @Action
@@ -593,7 +593,7 @@ class FromPersonUsesDomainObjectToolsViaActionContext {
     }
 }
 
-@AgentCapabilities
+@EmbabelComponent
 class FromPersonUsesDomainObjectToolsViaExecutingOperationContext {
 
     @Action
@@ -605,7 +605,7 @@ class FromPersonUsesDomainObjectToolsViaExecutingOperationContext {
     }
 }
 
-@AgentCapabilities
+@EmbabelComponent
 class FromPersonUsesObjectToolsViaUsing {
 
     @Action
@@ -617,7 +617,7 @@ class FromPersonUsesObjectToolsViaUsing {
     }
 }
 
-@AgentCapabilities
+@EmbabelComponent
 class FromPersonUsesObjectToolsViaUsingWithRenaming {
 
     @Action
@@ -635,7 +635,7 @@ class FromPersonUsesObjectToolsViaUsingWithRenaming {
     }
 }
 
-@AgentCapabilities
+@EmbabelComponent
 class FromPersonUsesObjectToolsViaUsingWithFilter {
 
     @Action
@@ -650,7 +650,7 @@ class FromPersonUsesObjectToolsViaUsingWithFilter {
     }
 }
 
-@AgentCapabilities
+@EmbabelComponent
 class FromPersonUsesObjectToolsViaContext {
 
     @Action
@@ -662,7 +662,7 @@ class FromPersonUsesObjectToolsViaContext {
     }
 }
 
-@AgentCapabilities
+@EmbabelComponent
 class FromPersonUsesObjectToolsViaAi {
 
     @Action
@@ -676,7 +676,7 @@ class FromPersonUsesObjectToolsViaAi {
     }
 }
 
-@AgentCapabilities
+@EmbabelComponent
 class FromPersonUsesObjectToolsViaContextWithRenaming {
 
     @Action
@@ -699,7 +699,7 @@ class FunnyTool {
     }
 }
 
-@AgentCapabilities
+@EmbabelComponent
 class OneTransformerActionWith2Tools {
 
     @Action
@@ -718,7 +718,7 @@ class OneTransformerActionWith2Tools {
 
 }
 
-@AgentCapabilities
+@EmbabelComponent
 class ToolMethodsOnDomainObject {
 
     @Action
@@ -746,7 +746,7 @@ class Wumpus(val name: String) {
     fun toolWithArg(location: String) = location
 }
 
-@AgentCapabilities
+@EmbabelComponent
 class ToolMethodsOnDomainObjects {
 
     @Action

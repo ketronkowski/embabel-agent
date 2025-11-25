@@ -16,12 +16,12 @@
 package com.embabel.agent.api.annotation.support;
 
 import com.embabel.agent.api.annotation.Action;
-import com.embabel.agent.api.annotation.AgentCapabilities;
+import com.embabel.agent.api.annotation.EmbabelComponent;
 import com.embabel.agent.api.dsl.SnakeMeal;
 import com.embabel.agent.domain.io.UserInput;
 import org.springframework.lang.Nullable;
 
-@AgentCapabilities
+@EmbabelComponent
 class OneTransformerActionWithNullableParameterJavaSpring {
 
     @Action(cost = 500.0)
@@ -38,7 +38,7 @@ class OneTransformerActionWithNullableParameterJavaSpring {
 
 }
 
-@AgentCapabilities
+@EmbabelComponent
 class OneTransformerActionWithNullableParameterJavaJakarta {
 
     @Action(cost = 500.0)
