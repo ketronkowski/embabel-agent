@@ -20,7 +20,6 @@ import com.embabel.agent.core.AgentPlatform
 import com.embabel.agent.core.AgentProcess
 import com.embabel.agent.core.ProcessOptions
 import java.util.concurrent.CompletableFuture
-import java.util.function.Consumer
 
 
 /**
@@ -177,17 +176,6 @@ interface AgentInvocation<T> {
          */
         fun options(processOptions: ProcessOptions): Builder {
             this.processOptions = processOptions
-            return this
-        }
-
-        /**
-         * Begin configuring process options via a builder.
-         * @return a [ProcessOptions.Builder] for fine-grained option setup
-         */
-        fun options(consumer: Consumer<ProcessOptions.Builder>): Builder {
-            val builder = ProcessOptions.builder()
-            consumer.accept(builder)
-            this.processOptions = builder.build()
             return this
         }
 

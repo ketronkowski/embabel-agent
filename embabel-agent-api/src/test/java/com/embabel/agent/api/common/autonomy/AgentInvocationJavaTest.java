@@ -89,18 +89,18 @@ public class AgentInvocationJavaTest {
     @Test
     public void customProcessingOptions() {
         Goal goal = Goal.createInstance("Test goal", Bar.class);
+        var processOptions = ProcessOptions.DEFAULT
+                .withVerbosity(new Verbosity(false, false, true, false));
         AgentInvocation<Bar> invocation =
                 AgentInvocation.builder(agentPlatform)
-                        .options(options -> options
-                                .verbosity(verbosity -> verbosity
-                                        .debug(true)))
+                        .options(processOptions)
                         .build(Bar.class);
 
         when(agentPlatform.agents()).thenReturn(List.of(agent));
         when(agent.getGoals()).thenReturn(Set.of(goal));
         when(agentPlatform.createAgentProcessFrom(
                 eq(agent),
-                assertArg(processOptions -> assertTrue(processOptions.getVerbosity().getDebug())),
+                assertArg(po -> assertTrue(po.getVerbosity().getDebug())),
                 any()
         )).thenReturn(agentProcess);
         when(agentPlatform.start(agentProcess))

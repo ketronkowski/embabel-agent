@@ -20,7 +20,6 @@ import com.embabel.agent.api.channel.OutputChannel
 import com.embabel.agent.api.common.PlannerType
 import com.embabel.agent.api.event.AgenticEventListener
 import com.embabel.agent.api.identity.User
-import java.util.function.Consumer
 
 interface LlmVerbosity {
     val showPrompts: Boolean
@@ -30,7 +29,7 @@ interface LlmVerbosity {
 /**
  * Controls log output.
  */
-data class Verbosity(
+data class Verbosity @JvmOverloads constructor(
     override val showPrompts: Boolean = false,
     override val showLlmResponses: Boolean = false,
     val debug: Boolean = false,
@@ -38,73 +37,35 @@ data class Verbosity(
 ) : LlmVerbosity {
     val showLongPlans: Boolean get() = showPlanning || debug || showLlmResponses || showPrompts
 
+    fun withShowPrompts(showPrompts: Boolean): Verbosity =
+        this.copy(showPrompts = showPrompts)
+
+    fun showPrompts(): Verbosity =
+        this.copy(showPrompts = true)
+
+    fun withShowLlmResponses(showLlmResponses: Boolean): Verbosity =
+        this.copy(showLlmResponses = showLlmResponses)
+
+    fun showLlmResponses(): Verbosity =
+        this.copy(showLlmResponses = true)
+
+    fun withDebug(debug: Boolean): Verbosity =
+        this.copy(debug = debug)
+
+    fun debug(): Verbosity =
+        this.copy(debug = true)
+
+    fun withShowPlanning(showPlanning: Boolean): Verbosity =
+        this.copy(showPlanning = showPlanning)
+
+    fun showPlanning(): Verbosity =
+        this.copy(showPlanning = true)
+
     companion object {
 
-        /**
-         * Obtain a new [Builder] to for [Verbosity].
-         *
-         * @return a builder through which you can set verbosity options
-         */
-        @JvmStatic
-        fun builder(): Builder {
-            return Builder()
-        }
-    }
+        @JvmField
+        val DEFAULT = Verbosity()
 
-    /**
-     * Nested builder for [Verbosity] objects.
-     */
-    class Builder internal constructor() {
-
-        private var verbosity = Verbosity()
-
-        /**
-         * Show or hide the prompts sent to the agent.
-         * @param showPrompts whether to display prompts
-         * @return this [Builder]
-         */
-        fun showPrompts(showPrompts: Boolean): Builder {
-            this.verbosity = this.verbosity.copy(showPrompts = showPrompts)
-            return this
-        }
-
-        /**
-         * Show or hide the responses received from the LLM.
-         * @param showLlmResponses whether to display LLM responses
-         * @return this [Builder]
-         */
-        fun showLlmResponses(showLlmResponses: Boolean): Builder {
-            this.verbosity = this.verbosity.copy(showLlmResponses = showLlmResponses)
-            return this
-        }
-
-        /**
-         * Enable or disable debugging output.
-         * @param debug true to enable debugging, false otherwise
-         * @return this [Builder]
-         */
-        fun debug(debug: Boolean): Builder {
-            this.verbosity = this.verbosity.copy(debug = debug)
-            return this
-        }
-
-        /**
-         * Show or hide planning steps taken by the agent.
-         * @param showPlanning whether to display planning details
-         * @return this [Builder]
-         */
-        fun showPlanning(showPlanning: Boolean): Builder {
-            this.verbosity = this.verbosity.copy(showPlanning = showPlanning)
-            return this
-        }
-
-        /**
-         * Build the [Verbosity].
-         * @return a newly built [Verbosity]
-         */
-        fun build(): Verbosity {
-            return this.verbosity
-        }
     }
 
 }
@@ -117,7 +78,7 @@ enum class Delay {
  *  Controls how an AgentProcess is run.
  *  Prevents infinite loops, enforces budget limits, and manages delays.
  */
-data class ProcessControl(
+data class ProcessControl @JvmOverloads constructor(
     val toolDelay: Delay = Delay.NONE,
     val operationDelay: Delay = Delay.NONE,
     val earlyTerminationPolicy: EarlyTerminationPolicy,
@@ -132,67 +93,6 @@ data class ProcessControl(
     fun withEarlyTerminationPolicy(earlyTerminationPolicy: EarlyTerminationPolicy): ProcessControl =
         this.copy(earlyTerminationPolicy = earlyTerminationPolicy)
 
-    companion object {
-
-        /**
-         * Obtain a new [Builder] to for [ProcessControl].
-         *
-         * @param earlyTerminationPolicy the early termination policy to use
-         * @return a builder through which you can set process control options
-         */
-        @JvmStatic
-        fun builder(earlyTerminationPolicy: EarlyTerminationPolicy): Builder {
-            return Builder(earlyTerminationPolicy)
-        }
-    }
-
-    /**
-     * Nested builder for [ProcessControl] objects.
-     */
-    class Builder internal constructor(earlyTerminationPolicy: EarlyTerminationPolicy) {
-
-        private var processControl = ProcessControl(earlyTerminationPolicy = earlyTerminationPolicy)
-
-        /**
-         * Sets the delay for tools.
-         * @param delay the new delay
-         * @return this [Builder]
-         */
-        fun toolDelay(delay: Delay): Builder {
-            this.processControl = processControl.copy(toolDelay = delay)
-            return this
-        }
-
-        /**
-         * Sets the delay for operations.
-         * @param delay the new delay
-         * @return this [Builder]
-         */
-        fun operationDelay(delay: Delay): Builder {
-            this.processControl = processControl.copy(operationDelay = delay)
-            return this
-        }
-
-        /**
-         * Sets the early termination policy.
-         * @param terminationPolicy the new termination policy
-         * @return this [Builder]
-         */
-        fun earlyTerminationPolicy(terminationPolicy: EarlyTerminationPolicy): Builder {
-            this.processControl = processControl.copy(earlyTerminationPolicy = terminationPolicy)
-            return this
-        }
-
-        /**
-         * Build the [ProcessControl].
-         * @return a newly built [ProcessControl]
-         */
-        fun build(): ProcessControl {
-            return this.processControl
-        }
-
-    }
-
 }
 
 /**
@@ -202,7 +102,7 @@ data class ProcessControl(
  * @param tokens the maximum number of tokens the agent can use before termination. This can be useful in the case of
  * local models where the cost is not directly measurable, but we don't want excessive work.
  */
-data class Budget(
+data class Budget @JvmOverloads constructor(
     val cost: Double = DEFAULT_COST_LIMIT,
     val actions: Int = DEFAULT_ACTION_LIMIT,
     val tokens: Int = DEFAULT_TOKEN_LIMIT,
@@ -216,6 +116,15 @@ data class Budget(
         )
     }
 
+    fun withCost(cost: Double): Budget =
+        this.copy(cost = cost)
+
+    fun withActions(actions: Int): Budget =
+        this.copy(actions = actions)
+
+    fun withTokens(tokens: Int): Budget =
+        this.copy(tokens = tokens)
+
     companion object {
 
         const val DEFAULT_COST_LIMIT = 2.0
@@ -227,64 +136,8 @@ data class Budget(
 
         const val DEFAULT_TOKEN_LIMIT = 1000000
 
-        /**
-         * Obtain a new [Builder] to for [Budget].
-         *
-         * @return a builder through which you can set budget options
-         */
-        @JvmStatic
-        fun builder(): Builder {
-            return Builder()
-        }
-
-    }
-
-    /**
-     * Nested builder for [Budget] objects.
-     */
-    class Builder internal constructor() {
-
-        private var budget = Budget()
-
-        /**
-         * Sets the cost of running the process, in USD.
-         * @param cost the cost limit
-         * @return this [Builder]
-         */
-        fun cost(cost: Double): Builder {
-            this.budget = this.budget.copy(cost = cost)
-            return this
-        }
-
-        /**
-         * Set the maximum number of actions the agent can perform before termination.
-         * @param actions the action count limit
-         * @return this [Builder]
-         */
-        fun actions(actions: Int): Builder {
-            this.budget = this.budget.copy(actions = actions)
-            return this
-        }
-
-        /**
-         * Set a maximum the maximum number of tokens the agent can use before termination.
-         * This can be useful in the case of local models where the cost is not directly measurable,
-         * but we don't want excessive work.
-         * @param tokens the token count limit
-         * @return this [Builder]
-         */
-        fun tokens(tokens: Int): Builder {
-            this.budget = this.budget.copy(tokens = tokens)
-            return this
-        }
-
-        /**
-         * Build the [Budget].
-         * @return a newly built [Budget]
-         */
-        fun build(): Budget {
-            return this.budget
-        }
+        @JvmField
+        val DEFAULT = Budget()
 
     }
 
@@ -295,13 +148,31 @@ data class Budget(
  * @param forUser the user for whom the process is running. Can be null.
  * @param runAs the user under which the process is running. Can be null.
  */
-data class Identities(
+data class Identities
+@JvmOverloads
+constructor(
     val forUser: User? = null,
     val runAs: User? = null,
-)
+) {
+
+    fun withForUser(forUser: User?): Identities =
+        this.copy(forUser = forUser)
+
+    fun withRunAs(runAs: User?): Identities =
+        this.copy(runAs = runAs)
+
+    companion object {
+
+        @JvmField
+        val DEFAULT = Identities()
+
+    }
+
+}
 
 /**
  * How to run an AgentProcess
+ * Create and customize using withers
  * @param contextId context id to use for this process. Can be null.
  * If set it can enable connection to external resources and persistence
  * from previous runs.
@@ -321,7 +192,7 @@ data class Identities(
  * @param outputChannel custom output channel to use for this process.
  * @param plannerType the type of planner to use for this process. Defaults to GOAP planner.
  */
-data class ProcessOptions(
+data class ProcessOptions @JvmOverloads constructor(
     val contextId: ContextId? = null,
     val identities: Identities = Identities(),
     val blackboard: Blackboard? = null,
@@ -346,6 +217,51 @@ data class ProcessOptions(
             )
         }
 
+    /**
+     * Get the context ID as a String for Java interop.
+     * @return the context ID string value, or null if not set
+     */
+    fun getContextIdString(): String? = contextId?.value
+
+    fun withContextId(contextId: ContextId?): ProcessOptions =
+        this.copy(contextId = contextId)
+
+    fun withContextId(contextId: String?): ProcessOptions =
+        this.copy(contextId = contextId?.let { ContextId(it) })
+
+    fun withIdentities(identities: Identities): ProcessOptions =
+        this.copy(identities = identities)
+
+    fun withBlackboard(blackboard: Blackboard?): ProcessOptions =
+        this.copy(blackboard = blackboard)
+
+    fun withVerbosity(verbosity: Verbosity): ProcessOptions =
+        this.copy(verbosity = verbosity)
+
+    fun withBudget(budget: Budget): ProcessOptions =
+        this.copy(budget = budget)
+
+    fun withProcessControl(processControl: ProcessControl?): ProcessOptions =
+        this.copy(processControl = processControl)
+
+    fun withPrune(prune: Boolean): ProcessOptions =
+        this.copy(prune = prune)
+
+    /**
+     * Add additional listeners to this process.
+     */
+    fun withListeners(listeners: List<AgenticEventListener>): ProcessOptions =
+        this.copy(listeners = listeners)
+
+    /**
+     * Add an additional listener to this process.
+     */
+    fun withListener(listener: AgenticEventListener): ProcessOptions =
+        this.copy(listeners = this.listeners + listener)
+
+    fun withOutputChannel(outputChannel: OutputChannel): ProcessOptions =
+        this.copy(outputChannel = outputChannel)
+
     fun withPlannerType(plannerType: PlannerType): ProcessOptions =
         this.copy(plannerType = plannerType)
 
@@ -353,169 +269,6 @@ data class ProcessOptions(
 
         @JvmField
         val DEFAULT = ProcessOptions()
-
-        /**
-         * Obtain a new [Builder] to for [ProcessOptions].
-         *
-         * @return a builder through which you can set processing options
-         */
-        @JvmStatic
-        fun builder(): Builder {
-            return Builder()
-        }
-
-    }
-
-    /**
-     * Nested builder for [ProcessOptions] objects.
-     */
-    class Builder internal constructor() {
-
-        private var processOptions = DEFAULT
-
-        /**
-         * Set the context identifier to use for the invocation. Can be null.
-         * If set it can enable connection to external resources and persistence
-         * from previous runs.
-         * @param contextId the context ID to associate with this invocation, or null
-         * @return this [Builder]
-         */
-        @JvmName("contextId")
-        fun contextId(contextId: ContextId?): Builder {
-            this.processOptions = processOptions.copy(contextId = contextId)
-            return this
-        }
-
-        /**
-         * Sets the identities associated with the process.
-         * @param identities the identities
-         * @return this [Builder]
-         */
-        fun identities(identities: Identities): Builder {
-            this.processOptions = processOptions.copy(identities = identities)
-            return this
-        }
-
-        /**
-         * An existing blackboard to use for this invocation.
-         * By default, it will be modified as the process runs.
-         * @param blackboard the existing blackboard to use
-         * @return this [Builder]
-         */
-        fun blackboard(blackboard: Blackboard): Builder {
-            this.processOptions = processOptions.copy(blackboard = blackboard)
-            return this
-        }
-
-        /**
-         * Set a specific verbosity directly.
-         * @param verbosity the desired verbosity
-         * @return this [Builder]
-         */
-        fun verbosity(verbosity: Verbosity): Builder {
-            this.processOptions = processOptions.copy(verbosity = verbosity)
-            return this
-        }
-
-        /**
-         * Configure verbosity settings via a nested builder.
-         * @param consumer a function that takes a [Verbosity.Builder]
-         * @return this [Builder]
-         */
-        fun verbosity(consumer: Consumer<Verbosity.Builder>): Builder {
-            val verbosityBuilder = Verbosity.builder()
-            consumer.accept(verbosityBuilder)
-            this.processOptions = processOptions.copy(verbosity = verbosityBuilder.build())
-            return this
-        }
-
-        /**
-         * Set budget constraints directly.
-         * @param budget the budget settings to apply
-         * @return this [Builder]
-         */
-        fun budget(budget: Budget): Builder {
-            this.processOptions = processOptions.copy(budget = budget)
-            return this
-        }
-
-        /**
-         * Configure budget constraints via a nested builder.
-         * @param consumer a function that takes a [Budget.Builder]
-         * @return this [Builder]
-         */
-        fun budget(consumer: Consumer<Budget.Builder>): Builder {
-            val budgetBuilder = Budget.builder()
-            consumer.accept(budgetBuilder)
-            this.processOptions = processOptions.copy(budget = budgetBuilder.build())
-            return this
-        }
-
-        /**
-         * Set process control settings directly.
-         * @param control the control policy settings
-         * @return this [Builder]
-         */
-        fun control(control: ProcessControl): Builder {
-            this.processOptions = processOptions.copy(processControl = control)
-            return this
-        }
-
-        /**
-         * Configure process control setting via a nested builder.
-         * @param consumer a function that takes a [ProcessControl.Builder]
-         * @return this [Builder]
-         */
-        fun control(consumer: Consumer<ProcessControl.Builder>): Builder {
-            val controlBuilder = ProcessControl.builder(
-                this.processOptions.budget.earlyTerminationPolicy()
-            )
-            consumer.accept(controlBuilder)
-            this.processOptions = processOptions.copy(processControl = controlBuilder.build())
-            return this
-        }
-
-        /**
-         * Whether to prune the agent to only relevant actions
-         * @param prune true to prune the agent to only relevant actions
-         * @return this [Builder]
-         */
-        fun prune(prune: Boolean): Builder {
-            this.processOptions = processOptions.copy(prune = prune)
-            return this
-        }
-
-        /**
-         * Add a listener to the list of [AgenticEventListener]s.
-         * @param listener the listener to add
-         * @return this [Builder]
-         */
-        fun listener(listener: AgenticEventListener): Builder {
-            val listeners = this.processOptions.listeners + listener
-            this.processOptions = processOptions.copy(listeners = listeners)
-            return this
-        }
-
-        /**
-         * Manipulate the listeners with the given consumer.
-         * The list provided to the consumer can be used to remove listeners, change ordering, etc.
-         * @param listener the listener to add
-         * @return this [Builder]
-         */
-        fun listeners(consumer: Consumer<List<AgenticEventListener>>): Builder {
-            val listeners = this.processOptions.listeners.toMutableList()
-            consumer.accept(listeners)
-            this.processOptions = processOptions.copy(listeners = listeners)
-            return this
-        }
-
-        /**
-         * Build the [ProcessOptions].
-         * @return a newly built [ProcessOptions]
-         */
-        fun build(): ProcessOptions {
-            return this.processOptions
-        }
 
     }
 

@@ -146,9 +146,8 @@ class RepeatUntilAcceptableBuilderTest {
         var ap = IntegrationTestUtils.dummyAgentPlatform();
         var result = ap.runAgentFrom(
                 agent,
-                ProcessOptions.builder()
-                        .verbosity(Verbosity.builder().showPlanning(true).build())
-                        .build(),
+                ProcessOptions.DEFAULT
+                        .withVerbosity(new Verbosity(false, false, false, true)),
                 Map.of("it", new UserInput("input"))
         );
         assertEquals(AgentProcessStatusCode.COMPLETED, result.getStatus());
