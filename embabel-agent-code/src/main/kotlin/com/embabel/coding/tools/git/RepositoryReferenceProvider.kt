@@ -92,7 +92,7 @@ data class RepositoryReferenceProvider(
         val tempDir = createTempDirectory()
 
         try {
-            logger.debug("Cloning a Git repository from $url into temp dir ${tempDir.absolutePathString()}")
+            logger.debug("Cloning a Git repository from {} into temp dir {}", url, tempDir.absolutePathString())
             val cloneCommand = Git.cloneRepository()
                 .setURI(url)
                 .setDirectory(tempDir.toFile())
@@ -108,7 +108,7 @@ data class RepositoryReferenceProvider(
                 }
             }
 
-            logger.info("✅ Cloned Git repository from $url into temp dir ${tempDir.absolutePathString()}")
+            logger.info("✅ Cloned Git repository from {} into temp dir {}", url, tempDir.absolutePathString())
             return ClonedRepositoryReference(
                 url = url,
                 description = description,
