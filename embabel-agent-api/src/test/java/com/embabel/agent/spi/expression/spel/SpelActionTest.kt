@@ -180,7 +180,7 @@ class SpelActionTest {
         val agent = metadata as CoreAgent
         agentPlatform.deploy(agent)
         val agentProcess = UtilityInvocation.on(agentPlatform)
-            .terminateOnStuck()
+            .terminateWhenStuck()
             .run(emptyMap())
 
         assertEquals(
