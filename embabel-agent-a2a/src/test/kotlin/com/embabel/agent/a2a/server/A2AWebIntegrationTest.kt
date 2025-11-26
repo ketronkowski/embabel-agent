@@ -34,6 +34,7 @@ import io.a2a.spec.PushNotificationAuthenticationInfo
 import io.a2a.spec.PushNotificationConfig
 import io.a2a.spec.SendMessageRequest
 import io.a2a.spec.SendMessageResponse
+import io.a2a.spec.SendStreamingMessageRequest
 import io.a2a.spec.SetTaskPushNotificationConfigResponse
 import io.a2a.spec.Task
 import io.a2a.spec.TaskIdParams
@@ -117,7 +118,7 @@ class A2AWebIntegrationTest(
             assertEquals("https://embabel.com", agentCard.provider?.url)
             assertEquals(DEFAULT_VERSION, agentCard.version)
             assertEquals("https://embabel.com/docs", agentCard.documentationUrl)
-            assertEquals(false, agentCard.capabilities.streaming)
+            assertEquals(true, agentCard.capabilities.streaming)
             assertEquals(false, agentCard.capabilities.pushNotifications)
             assertEquals(false, agentCard.capabilities.stateTransitionHistory)
             assertEquals(listOf("application/json", "text/plain"), agentCard.defaultInputModes)
@@ -184,14 +185,41 @@ class A2AWebIntegrationTest(
                 .contextId("ctx-123")
                 .build()
             val params = MessageSendParams.Builder().message(message).build()
+            val request = SendStreamingMessageRequest.Builder()
+                .jsonrpc(JSONRPCRequest.JSONRPC_VERSION)
+                .method(SendStreamingMessageRequest.METHOD)
+                .id("stream-123")
+                .params(params)
+                .build()
 
             // Note: We can't fully test SSE with MockMvc in a standard way
-            // This test just verifies the endpoint doesn't throw an error
-            mockMvc.post("/a2a/message/stream") {
+            // This test just verifies the endpoint accepts the streaming request without error
+            mockMvc.post("/a2a") {
                 contentType = MediaType.APPLICATION_JSON
-                content = objectMapper.writeValueAsString(params)
+                content = objectMapper.writeValueAsString(request)
             }
                 .andExpect {
+                    status().isOk()
+                }
+        }
+
+        @Test
+        fun `should handle tasks resubscribe request`() {
+            val resubscribeRequest = mapOf(
+                "jsonrpc" to "2.0",
+                "id" to "req-456",
+                "method" to "tasks/resubscribe",
+                "params" to mapOf("id" to "task-123")
+            )
+
+            // Note: This will fail if task doesn't exist, which is expected
+            // We're just testing that the endpoint is routed correctly
+            mockMvc.post("/a2a") {
+                contentType = MediaType.APPLICATION_JSON
+                content = objectMapper.writeValueAsString(resubscribeRequest)
+            }
+                .andExpect {
+                    // Should return 200 even if task not found (SSE stream will error)
                     status().isOk()
                 }
         }
