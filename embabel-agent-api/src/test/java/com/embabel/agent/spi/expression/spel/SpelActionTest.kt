@@ -197,4 +197,37 @@ class SpelActionTest {
         )
     }
 
+    @Test
+    fun `invoke two actions where second fires and isn't confused by additional parameter`() {
+        val reader = AgentMetadataReader()
+        val metadata =
+            reader.createAgentMetadata(
+                Spel2ActionsMultiParameterNoGoal()
+            )
+        assertNotNull(metadata)
+        assertEquals(3, metadata!!.actions.size)
+
+        val spelLogicalExpressionParser = SpelLogicalExpressionParser()
+
+        val agentPlatform = IntegrationTestUtils.dummyAgentPlatform(
+            logicalExpressionParser = spelLogicalExpressionParser,
+        )
+        val agent = metadata as CoreAgent
+        agentPlatform.deploy(agent)
+        val agentProcess = UtilityInvocation.on(agentPlatform).run(emptyMap())
+
+        assertEquals(
+            AgentProcessStatusCode.STUCK, agentProcess.status,
+            "Should be stuck, not finished: status=${agentProcess.status}",
+        )
+        assertTrue(
+            agentProcess.objects.any { it == Elephant("Zaboya", 30) },
+            "Should have an elephant: blackboard=${agentProcess.objects}"
+        )
+        assertTrue(
+            agentProcess.objects.any { it is Zoo },
+            "Should have a zoo: blackboard=${agentProcess.objects}",
+        )
+    }
+
 }

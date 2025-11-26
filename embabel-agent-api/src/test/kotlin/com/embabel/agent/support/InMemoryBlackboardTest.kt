@@ -21,7 +21,7 @@ import com.embabel.agent.core.support.InMemoryBlackboard
 /**
  * Tests for InMemoryBlackboard implementation.
  */
-class BlackboardTest : AbstractBlackboardTest() {
+class InMemoryBlackboardTest : AbstractBlackboardTest() {
 
     override fun createBlackboard(): Blackboard {
         return InMemoryBlackboard()

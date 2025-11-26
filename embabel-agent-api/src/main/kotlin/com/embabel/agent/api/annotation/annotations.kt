@@ -111,7 +111,7 @@ annotation class ToolGroup(
  * that it can appear in logs. Description defaults to name
  * @param pre Preconditions for the action
  * @param outputBinding Output binding for the action.
- * Only required for a custom binding.
+ * Only required for a custom binding: a specific variable name for the returned value.
  * @param cost Cost of executing the action
  * @param value Value of performing the action
  * @param toolGroups Tool groups that this action requires. These are well known tools from the server.

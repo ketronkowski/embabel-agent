@@ -109,9 +109,12 @@ val verified = blackboard.getCondition("userVerified") // <2>
 blackboard.hide(somethingWeDontWantToPlanOnLater) // <3>
 ----
 
-<1> **Adding Objects**: Objects are added to the blackboard automatically when returned from action methods, so you don't typically need to call this API. They can also be added manually using the `+=` operator (Kotlin only) or `set` method with an optional key.
+<1> **Adding Objects**: Objects are added to the blackboard automatically when returned from action methods, so you don't typically need to call this API.
+They can also be added manually using the `+=` operator (Kotlin only) or `set` method with an optional key.
 <2> **Conditions**: Conditions are normally calculated in `@Condition` methods, so you don't usually need to check or set them via the API.
-<3> **Hiding Objects**: Prevents an object from being considered in future planning cycles. For example, the object might be a command that we have handled. It will remain in the blackboard history but will not be available to planning or via the Blackboard API.
+<3> **Hiding Objects**: Prevents an object from being considered in future planning cycles.
+For example, the object might be a command that we have handled.
+It will remain in the blackboard history but will not be available to planning or via the Blackboard API.
 
 **Data Flow:**
 
@@ -131,10 +134,11 @@ The blackboard enables:
 [[reference.flow__binding]]
 ==== Binding
 
-By default items in the blackboard are matched by type.
-When there are multiple candidates the most recent one is provided.
-It is also possible to assign a keyed name to blackboard items.
-Example:
+By default, items in the blackboard are matched by type.
+When there are multiple candidates of the same type, the most recently added one is provided.
+It is also possible to assign a specific name to blackboard items.
+
+An example of explicit binding in an action method:
 
 [source,java]
 ----
@@ -147,10 +151,33 @@ public Person extractPerson(UserInput userInput, OperationContext context) {
             PersonImpl.class
     );
     if (maybeAPerson != null) {
-        context.bind("user", maybeAPerson);
+        context.bind("user", maybeAPerson); // <1>
     }
     return maybeAPerson;
 }
+----
+
+<1> Explicit binding to the blackboard.
+Not usually necessary as action method return values are automatically bound.
+
+The following example requires a `Thing` named `thingOne` to be present in the blackboard:
+
+[source,java]
+----
+@Action
+public Whatever doWithThing(
+        @RequireNameMatch Thing thingOne) { // <1>
+----
+
+<1> The `@RequireNameMatch` annotation on the parameter specifies that the parameter should be matched by both type and name.
+Multiple parameters can be so annotated.
+
+The following example uses `@Action.outputBinding` to cause a `thingOne` to be bound in the blackboard, satisfying the previous example:
+
+[source,java]
+----
+@Action(outputBinding="thingOne")
+public Thing bindThing1() { ...
 ----
 
 TIP: When routing flows by type, the name is not important, but for reference the default name is 'it'.

@@ -19,13 +19,18 @@ import com.embabel.agent.core.Blackboard
 import com.embabel.agent.spi.expression.LogicalExpression
 import com.embabel.common.util.loggerFor
 import com.embabel.plan.common.condition.ConditionDetermination
+import org.slf4j.event.Level
 import org.springframework.expression.ExpressionParser
+import org.springframework.expression.spel.SpelEvaluationException
+import org.springframework.expression.spel.SpelMessage
 import org.springframework.expression.spel.standard.SpelExpressionParser
 import org.springframework.expression.spel.support.StandardEvaluationContext
 
 internal class SpelLogicalExpression(
     private val expression: String,
 ) : LogicalExpression {
+
+    private val logger = loggerFor<SpelLogicalExpression>()
 
     override fun evaluate(blackboard: Blackboard): ConditionDetermination {
         return try {
@@ -69,13 +74,29 @@ internal class SpelLogicalExpression(
                 null -> ConditionDetermination.UNKNOWN
                 else -> ConditionDetermination.UNKNOWN
             }
-        } catch (e: Exception) {
+        } catch (e: SpelEvaluationException) {
             // If evaluation fails, return UNKNOWN
-            loggerFor<SpelLogicalExpression>().warn(
+            val level = when (e.messageCode) {
+                SpelMessage.PROPERTY_OR_FIELD_NOT_READABLE_ON_NULL -> {
+                    // This is not an error, just means something was null
+                    Level.DEBUG
+                }
+
+                else -> Level.WARN
+            }
+            logger.atLevel(level).log(
                 "Failed to evaluate SpEL expression '{}': {}",
                 expression,
                 e.message,
-                e
+                e,
+            )
+            ConditionDetermination.UNKNOWN
+        } catch (e: Exception) {
+            logger.warn(
+                "Failed to evaluate SpEL expression '{}': {}",
+                expression,
+                e.message,
+                e,
             )
             ConditionDetermination.UNKNOWN
         }

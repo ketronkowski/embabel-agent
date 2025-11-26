@@ -2,6 +2,7 @@ package com.embabel.agent.spi.expression.spel
 
 import com.embabel.agent.api.annotation.Action
 import com.embabel.agent.api.annotation.Agent
+import com.embabel.agent.api.annotation.support.PersonWithReverseTool
 import com.embabel.agent.api.common.PlannerType
 
 
@@ -49,6 +50,34 @@ class Spel2ActionsYoungElephant {
         pre = ["spel:elephant.age > 20"]
     )
     fun makeZoo(elephant: Elephant): Zoo {
+        return Zoo(elephant)
+    }
+
+}
+
+@Agent(
+    description = "thing",
+    planner = PlannerType.UTILITY
+)
+class Spel2ActionsMultiParameterNoGoal {
+
+    @Action
+    fun makeElephant(): Elephant {
+        return Elephant("Zaboya", 30)
+    }
+
+    @Action
+    fun canRun(): PersonWithReverseTool {
+        return PersonWithReverseTool("Runner")
+    }
+
+    @Action(
+        pre = ["spel:elephant.age > 20 && personWithReverseTool.name == 'Runner'"]
+    )
+    fun makeZoo(
+        elephant: Elephant,
+        person: PersonWithReverseTool,
+    ): Zoo {
         return Zoo(elephant)
     }
 

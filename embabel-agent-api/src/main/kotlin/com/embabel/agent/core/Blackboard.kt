@@ -182,15 +182,17 @@ interface Blackboard : Bindable, MayHaveLastResult, HasInfoString {
             return bound
         }
 
-        val aggregationClass = dataDictionary.jvmTypes.map { it.clazz }.filter {
-            Aggregation::class.java.isAssignableFrom(it)
-        }.find { it.simpleName == type }
+        val aggregationClass = dataDictionary.jvmTypes
+            .map { it.clazz }
+            .filter {
+                Aggregation::class.java.isAssignableFrom(it)
+            }.find { it.simpleName == type }
         if (aggregationClass != null) {
             val aggregationInstance =
                 if (KotlinDetector.isKotlinReflectPresent()) aggregationFromBlackboardKotlinReflect(
-                this,
-                aggregationClass.kotlin as KClass<Aggregation>,
-            )
+                    this,
+                    aggregationClass.kotlin as KClass<Aggregation>,
+                )
                 else aggregationFromBlackboardJavaReflect(
                     this,
                     aggregationClass as Class<Aggregation>,
