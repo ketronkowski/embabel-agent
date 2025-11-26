@@ -81,7 +81,7 @@ enum class Delay {
 data class ProcessControl @JvmOverloads constructor(
     val toolDelay: Delay = Delay.NONE,
     val operationDelay: Delay = Delay.NONE,
-    val earlyTerminationPolicy: EarlyTerminationPolicy,
+    val earlyTerminationPolicy: EarlyTerminationPolicy = EarlyTerminationPolicy.maxActions(100),
 ) {
 
     fun withToolDelay(toolDelay: Delay): ProcessControl =
@@ -92,6 +92,14 @@ data class ProcessControl @JvmOverloads constructor(
 
     fun withEarlyTerminationPolicy(earlyTerminationPolicy: EarlyTerminationPolicy): ProcessControl =
         this.copy(earlyTerminationPolicy = earlyTerminationPolicy)
+
+    fun withAdditionalEarlyTerminationPolicy(policy: EarlyTerminationPolicy): ProcessControl =
+        this.copy(
+            earlyTerminationPolicy = EarlyTerminationPolicy.firstOf(
+                this.earlyTerminationPolicy,
+                policy,
+            )
+        )
 
 }
 
@@ -198,24 +206,16 @@ data class ProcessOptions @JvmOverloads constructor(
     val blackboard: Blackboard? = null,
     val verbosity: Verbosity = Verbosity(),
     val budget: Budget = Budget(),
-    private val processControl: ProcessControl? = null,
+    val processControl: ProcessControl = ProcessControl(
+        toolDelay = Delay.NONE,
+        operationDelay = Delay.NONE,
+        earlyTerminationPolicy = budget.earlyTerminationPolicy(),
+    ),
     val prune: Boolean = false,
     val listeners: List<AgenticEventListener> = emptyList(),
     val outputChannel: OutputChannel = DevNullOutputChannel,
     val plannerType: PlannerType = PlannerType.GOAP,
 ) {
-
-    /**
-     * ProcessControl in effect for this process
-     */
-    val control: ProcessControl
-        get() {
-            return processControl ?: ProcessControl(
-                toolDelay = Delay.NONE,
-                operationDelay = Delay.NONE,
-                earlyTerminationPolicy = budget.earlyTerminationPolicy(),
-            )
-        }
 
     /**
      * Get the context ID as a String for Java interop.
@@ -241,8 +241,17 @@ data class ProcessOptions @JvmOverloads constructor(
     fun withBudget(budget: Budget): ProcessOptions =
         this.copy(budget = budget)
 
-    fun withProcessControl(processControl: ProcessControl?): ProcessOptions =
+    fun withProcessControl(processControl: ProcessControl): ProcessOptions =
         this.copy(processControl = processControl)
+
+    /**
+     * Add an additional early termination policy to this process.
+     * This is normally what you want rather than replacing the existing policy,
+     */
+    fun withAdditionalEarlyTerminationPolicy(policy: EarlyTerminationPolicy): ProcessOptions =
+        this.copy(
+            processControl = this.processControl.withEarlyTerminationPolicy(policy)
+        )
 
     fun withPrune(prune: Boolean): ProcessOptions =
         this.copy(prune = prune)

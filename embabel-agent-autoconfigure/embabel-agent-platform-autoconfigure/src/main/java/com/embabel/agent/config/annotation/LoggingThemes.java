@@ -39,4 +39,9 @@ public class LoggingThemes {
      */
     public static final String COLOSSUS = "colossus";
 
+    /**
+     * loggingTheme value for Hitchhiker's Guide to the Galaxy themed logging messages.
+     */
+    private static final String HITCHHIKERS_GUIDE = "hh";
+
 }

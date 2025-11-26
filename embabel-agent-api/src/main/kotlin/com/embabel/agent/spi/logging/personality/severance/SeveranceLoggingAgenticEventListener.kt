@@ -148,7 +148,7 @@ class SeveranceLoggingAgenticEventListener : LoggingAgenticEventListener(
 
     override fun getEarlyTerminationMessage(e: EarlyTermination): String =
         """
-        [${e.processId}] early termination by ${e.policy} for ${e.reason}
+        [${e.processId}] early termination by ${e.policy} for ${e.reason} - error=${e.error}"
         Please refrain from any further speech, as you are no longer authorized to consort with any severed employee, nor they with you.
         """
             .trimIndent()

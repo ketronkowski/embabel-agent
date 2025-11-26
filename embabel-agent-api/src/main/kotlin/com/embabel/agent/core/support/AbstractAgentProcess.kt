@@ -171,18 +171,10 @@ abstract class AbstractAgentProcess(
         }
 
         tick()
+
         while (status == AgentProcessStatusCode.RUNNING) {
-            val earlyTermination = processOptions.control.earlyTerminationPolicy.shouldTerminate(this)
+            val earlyTermination = identifyEarlyTermination()
             if (earlyTermination != null) {
-                logger.debug(
-                    "Process {} terminated by {} because {}",
-                    this.id,
-                    earlyTermination.policy,
-                    earlyTermination.reason,
-                )
-                platformServices.eventListener.onProcessEvent(earlyTermination)
-                _failureInfo = earlyTermination
-                setStatus(AgentProcessStatusCode.TERMINATED)
                 return this
             }
             tick()
@@ -223,6 +215,26 @@ abstract class AbstractAgentProcess(
             }
         }
         return this
+    }
+
+    /**
+     * Should this process be terminated early?
+     */
+    protected fun identifyEarlyTermination(): EarlyTermination? {
+        val earlyTermination = processOptions.processControl.earlyTerminationPolicy.shouldTerminate(this)
+        if (earlyTermination != null) {
+            logger.debug(
+                "Process {} terminated by {} because {}",
+                this.id,
+                earlyTermination.policy,
+                earlyTermination.reason,
+            )
+            platformServices.eventListener.onProcessEvent(earlyTermination)
+            _failureInfo = earlyTermination
+            setStatus(AgentProcessStatusCode.TERMINATED)
+            return earlyTermination
+        }
+        return null
     }
 
     /**

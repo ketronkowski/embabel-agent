@@ -73,6 +73,7 @@ interface LoggingPersonality {
 /**
  * Default implementation of the AgenticEventListener
  * with vanilla messages.
+ * Convenient superclass for all logging event listeners.
  * Subclasses can pass in format Strings for messages they wish to override
  * Messages must respect format variables
  * @param url url explaining this particular logger if appropriate
@@ -172,7 +173,7 @@ open class LoggingAgenticEventListener(
             .indentLines(level = 1, skipIndentFirstLine = true)
 
     protected open fun getEarlyTerminationMessage(e: EarlyTermination): String =
-        "[${e.processId}] early termination by ${e.policy} for ${e.reason}"
+        "[${e.processId}] early termination by ${e.policy} for ${e.reason} - error=${e.error}"
 
     protected open fun getGoalAchievedEventMessage(e: GoalAchievedEvent): String =
         "[${e.processId}] goal ${e.goal.name} achieved in ${e.agentProcess.runningTime}"

@@ -41,7 +41,10 @@ enum class AgentProcessStatusCode {
     /** The process has been killed by the user or platform, from outside */
     KILLED,
 
-    /** The process cannot formulate a plan to progress. This does not necessarily mean failure. Something might change */
+    /**
+     * The process cannot formulate a plan to progress.
+     * This does not necessarily mean failure. Something might change
+     **/
     STUCK,
 
     /** The process is waiting for user input or another external event */
@@ -54,6 +57,9 @@ enum class AgentProcessStatusCode {
     PAUSED,
 }
 
+/**
+ * Status code for execution of an action
+ */
 enum class ActionStatusCode {
     /** The action succeeded */
     SUCCEEDED,

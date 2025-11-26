@@ -41,6 +41,14 @@ data class UtilityInvocation @JvmOverloads constructor(
     fun withProcessOptions(options: ProcessOptions): UtilityInvocation =
         copy(processOptions = options)
 
+    /**
+     * Do we terminate the agent process without error if it gets stuck?
+     */
+    fun terminateOnStuck(): UtilityInvocation =
+        withProcessOptions(
+            processOptions.withAdditionalEarlyTerminationPolicy(EarlyTerminationPolicy.ON_STUCK)
+        )
+
     fun withScope(scope: AgentScope): UtilityInvocation =
         copy(scope = scope)
 

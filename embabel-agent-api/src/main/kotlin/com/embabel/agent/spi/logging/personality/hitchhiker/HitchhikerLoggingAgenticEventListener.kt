@@ -50,8 +50,6 @@ val CompletionMessages = listOf(
 
 fun highlight(text: String) = "<$text>".color(HitchhikerColorPalette.BABEL_GREEN)
 
-const val BANNER_CHAR = "*"
-
 /**
  * Don't Panic! This is just a Hitchhiker's Guide themed logging implementation.
  */
@@ -133,7 +131,7 @@ The standard repository for all knowledge and wisdom in the universe
 
     override fun getEarlyTerminationMessage(e: EarlyTermination): String =
         """
-        [${e.processId}] early termination by ${e.policy} for ${e.reason}
+        [${e.processId}] early termination by ${e.policy} for ${e.reason} - error=${e.error}"
         This must be Thursday. I never could get the hang of Thursdays.
         """.trimIndent()
 

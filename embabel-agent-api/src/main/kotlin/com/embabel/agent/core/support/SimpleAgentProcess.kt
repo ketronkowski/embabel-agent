@@ -76,6 +76,10 @@ open class SimpleAgentProcess(
                         .indentLines(1)
         )
         setStatus(AgentProcessStatusCode.STUCK)
+        val earlyTermination = identifyEarlyTermination()
+        if (earlyTermination != null) {
+            return this
+        }
         return this
     }
 

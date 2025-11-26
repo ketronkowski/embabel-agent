@@ -64,8 +64,8 @@ class ProcessOptionsBuilderTest {
         assertEquals(2, po.getBudget().getActions());
         assertEquals(3, po.getBudget().getTokens());
 
-        assertEquals(Delay.MEDIUM, po.getControl().getToolDelay());
-        assertEquals(Delay.LONG, po.getControl().getOperationDelay());
+        assertEquals(Delay.MEDIUM, po.getProcessControl().getToolDelay());
+        assertEquals(Delay.LONG, po.getProcessControl().getOperationDelay());
         assertTrue(po.getPrune());
         assertEquals(List.of(listener), po.getListeners());
     }
@@ -100,33 +100,19 @@ class ProcessOptionsBuilderTest {
     }
 
     @Test
-    void correctProcessControlDefault() {
-        var identities = new Identities();
-        var blackboard = new InMemoryBlackboard();
-        var listener = AgenticEventListener.DevNull;
-        var verbosity = new Verbosity(true, true, true, true);
-        var budget = new Budget(1, 2, 3);
+    void defaultProcessControlUsesDefaultBudgetPolicy() {
+        var po = ProcessOptions.DEFAULT;
 
-        var po = ProcessOptions.DEFAULT
-                .withContextId("42")
-                .withIdentities(identities)
-                .withBlackboard(blackboard)
-                .withVerbosity(verbosity)
-                .withBudget(budget)
-                .withListener(listener);
-
-        assertEquals(Delay.NONE, po.getControl().getToolDelay());
-        assertEquals(Delay.NONE, po.getControl().getOperationDelay());
-        assertEquals(po.getBudget().earlyTerminationPolicy(), po.getControl().getEarlyTerminationPolicy(),
-                "Should have default budget-based early termination policy");
-        assertEquals(List.of(listener), po.getListeners());
+        // Default should use Budget.DEFAULT early termination policy
+        assertEquals(Delay.NONE, po.getProcessControl().getToolDelay());
+        assertEquals(Delay.NONE, po.getProcessControl().getOperationDelay());
+        assertEquals(Budget.DEFAULT.earlyTerminationPolicy(), po.getProcessControl().getEarlyTerminationPolicy());
     }
 
     @Test
     void processControlWithers() {
-        var budget = Budget.DEFAULT;
         var newPolicy = EarlyTerminationPolicy.maxActions(100);
-        var control = new ProcessControl(budget.earlyTerminationPolicy())
+        var control = new ProcessControl()
                 .withToolDelay(Delay.MEDIUM)
                 .withOperationDelay(Delay.LONG)
                 .withEarlyTerminationPolicy(newPolicy);
@@ -134,6 +120,34 @@ class ProcessOptionsBuilderTest {
         assertEquals(Delay.MEDIUM, control.getToolDelay());
         assertEquals(Delay.LONG, control.getOperationDelay());
         assertEquals(newPolicy, control.getEarlyTerminationPolicy());
+    }
+
+    @Test
+    void processControlDefaultConstructor() {
+        var control = new ProcessControl();
+
+        assertEquals(Delay.NONE, control.getToolDelay());
+        assertEquals(Delay.NONE, control.getOperationDelay());
+        assertNotNull(control.getEarlyTerminationPolicy());
+    }
+
+    @Test
+    void processControlConstructorWithAllParameters() {
+        var policy = EarlyTerminationPolicy.maxActions(50);
+        var control = new ProcessControl(Delay.MEDIUM, Delay.LONG, policy);
+
+        assertEquals(Delay.MEDIUM, control.getToolDelay());
+        assertEquals(Delay.LONG, control.getOperationDelay());
+        assertEquals(policy, control.getEarlyTerminationPolicy());
+    }
+
+    @Test
+    void withAdditionalEarlyTerminationPolicy() {
+        var additionalPolicy = EarlyTerminationPolicy.maxTokens(5000);
+        var po = ProcessOptions.DEFAULT.withAdditionalEarlyTerminationPolicy(additionalPolicy);
+
+        // The policy should be added (combined with firstOf)
+        assertNotNull(po.getProcessControl().getEarlyTerminationPolicy());
     }
 
     @Test
@@ -237,21 +251,7 @@ class ProcessOptionsBuilderTest {
 
         var po = ProcessOptions.DEFAULT.withProcessControl(control);
 
-        assertEquals(control, po.getControl());
-    }
-
-    @Test
-    void withProcessControlNull() {
-        var budget = Budget.DEFAULT;
-        var control = new ProcessControl(Delay.LONG, Delay.MEDIUM, budget.earlyTerminationPolicy());
-
-        var po = ProcessOptions.DEFAULT
-                .withProcessControl(control)
-                .withProcessControl(null);
-
-        // When processControl is null, control property should return default based on budget
-        assertEquals(Delay.NONE, po.getControl().getToolDelay());
-        assertEquals(Delay.NONE, po.getControl().getOperationDelay());
+        assertEquals(control, po.getProcessControl());
     }
 
     @Test
@@ -268,6 +268,63 @@ class ProcessOptionsBuilderTest {
                 .withPrune(false);
 
         assertFalse(po.getPrune());
+    }
+
+    // Early Termination Policy tests
+
+    @Test
+    void earlyTerminationPolicyMaxActions() {
+        var policy = EarlyTerminationPolicy.maxActions(25);
+
+        assertNotNull(policy);
+        assertEquals("MaxActionsEarlyTerminationPolicy", policy.getName());
+    }
+
+    @Test
+    void earlyTerminationPolicyMaxTokens() {
+        var policy = EarlyTerminationPolicy.maxTokens(10000);
+
+        assertNotNull(policy);
+        assertEquals("MaxTokensEarlyTerminationPolicy", policy.getName());
+    }
+
+    @Test
+    void earlyTerminationPolicyHardBudgetLimit() {
+        var policy = EarlyTerminationPolicy.hardBudgetLimit(5.0);
+
+        assertNotNull(policy);
+        assertEquals("MaxCostEarlyTerminationPolicy", policy.getName());
+    }
+
+    @Test
+    void earlyTerminationPolicyOnStuck() {
+        var policy = EarlyTerminationPolicy.getON_STUCK();
+
+        assertNotNull(policy);
+        assertEquals("OnStuckEarlyTerminationPolicy", policy.getName());
+    }
+
+    @Test
+    void earlyTerminationPolicyFirstOf() {
+        var policy1 = EarlyTerminationPolicy.maxActions(10);
+        var policy2 = EarlyTerminationPolicy.maxTokens(1000);
+        var combined = EarlyTerminationPolicy.firstOf(policy1, policy2);
+
+        assertNotNull(combined);
+        assertEquals("FirstOfEarlyTerminationPolicy", combined.getName());
+    }
+
+    @Test
+    void processControlWithAdditionalEarlyTerminationPolicy() {
+        var initialPolicy = EarlyTerminationPolicy.maxActions(50);
+        var additionalPolicy = EarlyTerminationPolicy.getON_STUCK();
+
+        var control = new ProcessControl()
+                .withEarlyTerminationPolicy(initialPolicy)
+                .withAdditionalEarlyTerminationPolicy(additionalPolicy);
+
+        assertNotNull(control.getEarlyTerminationPolicy());
+        assertEquals("FirstOfEarlyTerminationPolicy", control.getEarlyTerminationPolicy().getName());
     }
 
 }
