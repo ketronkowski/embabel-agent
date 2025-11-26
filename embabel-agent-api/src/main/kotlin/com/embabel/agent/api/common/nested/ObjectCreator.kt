@@ -15,11 +15,8 @@
  */
 package com.embabel.agent.api.common.nested
 
-import com.embabel.agent.api.common.PromptRunner
 import com.embabel.chat.Message
 import com.embabel.chat.UserMessage
-import com.embabel.common.ai.prompt.PromptContributor
-import com.fasterxml.jackson.databind.ObjectMapper
 
 /**
  * Interface to create objects of the given type from a prompt or messages.
@@ -52,45 +49,18 @@ interface ObjectCreator<T> {
     )
 
     /**
+     * Create an object of this type from the given template
+     */
+    fun fromTemplate(
+        templateName: String,
+        model: Map<String, Any>,
+    ): T
+
+    /**
      * Create an object of the desired typed from messages
      */
     fun fromMessages(
         messages: List<Message>,
     ): T
-
-}
-
-internal data class PromptRunnerObjectCreator<T>(
-    internal val promptRunner: PromptRunner,
-    internal val outputClass: Class<T>,
-    private val objectMapper: ObjectMapper,
-) : ObjectCreator<T> {
-
-    override fun withExample(
-        description: String,
-        value: T,
-    ): ObjectCreator<T> {
-        return copy(
-            promptRunner = promptRunner
-                .withGenerateExamples(false)
-                .withPromptContributor(
-                    PromptContributor.Companion.fixed(
-                        """
-                        Example: $description
-                        ${objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(value)}
-                        """.trimIndent()
-                    )
-                )
-        )
-    }
-
-    override fun fromMessages(
-        messages: List<Message>,
-    ): T {
-        return promptRunner.createObject(
-            messages = messages,
-            outputClass = outputClass,
-        )
-    }
 
 }

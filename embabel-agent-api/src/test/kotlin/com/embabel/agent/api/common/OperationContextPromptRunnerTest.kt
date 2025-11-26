@@ -16,7 +16,7 @@
 package com.embabel.agent.api.common
 
 import com.embabel.agent.api.annotation.support.Wumpus
-import com.embabel.agent.api.common.nested.PromptRunnerObjectCreator
+import com.embabel.agent.api.common.nested.support.PromptRunnerObjectCreator
 import com.embabel.agent.api.common.support.OperationContextPromptRunner
 import com.embabel.agent.core.Operation
 import com.embabel.agent.experimental.primitive.Determination
