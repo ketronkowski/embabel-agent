@@ -131,7 +131,7 @@ The standard repository for all knowledge and wisdom in the universe
 
     override fun getEarlyTerminationMessage(e: EarlyTermination): String =
         """
-        [${e.processId}] early termination by ${e.policy} for ${e.reason} - error=${e.error}"
+        [${e.processId}] early termination by ${e.policy} for ${e.reason} - error=${e.error}
         This must be Thursday. I never could get the hang of Thursdays.
         """.trimIndent()
 
