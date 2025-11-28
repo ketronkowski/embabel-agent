@@ -91,7 +91,7 @@ data class UtilityInvocation @JvmOverloads constructor(
         return if (processOptions.plannerType == PlannerType.UTILITY) {
             processOptions
         } else {
-            logger.warn("Incorrect usage: Overriding plannerType to {} for UtilityInvoker", PlannerType.UTILITY)
+            logger.info("Correcting plannerType to {} for UtilityInvoker", PlannerType.UTILITY)
             processOptions.copy(
                 plannerType = PlannerType.UTILITY
             )
