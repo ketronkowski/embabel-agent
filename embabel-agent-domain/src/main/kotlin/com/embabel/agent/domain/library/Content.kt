@@ -15,10 +15,6 @@
  */
 package com.embabel.agent.domain.library
 
-import com.embabel.common.ai.prompt.PromptContributor
-import com.embabel.common.core.types.Timestamped
-
-
 /**
  * Interface when an object has a single important text component.
  */
