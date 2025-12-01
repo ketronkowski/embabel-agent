@@ -484,9 +484,9 @@ private fun hasRequiredJsonDeserializeAnnotationOnInterfaceReturnType(method: Me
             method.returnType.isAnnotationPresent(JsonTypeInfo::class.java)
     if (!hasRequiredAnnotation) {
         loggerFor<AgentMetadataReader>().warn(
-            "❓Interface {} used as return type of {}.{} must have @JsonDeserialize or @JsoonTypeInfo annotation",
+            "❓Interface {} used as return type of {}.{} must have @JsonDeserialize or @JsonTypeInfo annotation",
             method.returnType.name,
-            method.declaringClass,
+            method.declaringClass.name,
             method.name,
         )
     }
