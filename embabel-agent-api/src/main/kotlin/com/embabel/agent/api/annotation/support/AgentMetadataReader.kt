@@ -111,16 +111,10 @@ internal data class AgenticInfo(
 class AgentMetadataReader(
     private val actionMethodManager: ActionMethodManager = DefaultActionMethodManager(),
     private val nameGenerator: MethodDefinedOperationNameGenerator = MethodDefinedOperationNameGenerator(),
-    agentStructureValidator: AgentStructureValidator,
-    goapPathToCompletionValidator: GoapPathToCompletionValidator,
+    agentStructureValidator: AgentStructureValidator = AgentStructureValidator(StaticApplicationContext()),
+    goapPathToCompletionValidator: GoapPathToCompletionValidator = GoapPathToCompletionValidator(),
+    private val requireInterfaceDeserializationAnnotations: Boolean = false,
 ) {
-    // test-friendly constructor
-    constructor() : this(
-        DefaultActionMethodManager(),
-        MethodDefinedOperationNameGenerator(),
-        AgentStructureValidator(StaticApplicationContext()),
-        GoapPathToCompletionValidator()
-    )
 
     private val logger = LoggerFactory.getLogger(AgentMetadataReader::class.java)
 
@@ -272,7 +266,7 @@ class AgentMetadataReader(
     ): Boolean {
         return method.isAnnotationPresent(Action::class.java) &&
                 (type.declaredMethods.contains(method) || isMethodFromSupertype(method, type)) &&
-                (!method.returnType.isInterface || hasRequiredJsonDeserializeAnnotationOnInterfaceReturnType(
+                (!method.returnType.isInterface || !requireInterfaceDeserializationAnnotations || hasRequiredJsonDeserializeAnnotationOnInterfaceReturnType(
                     method
                 ))
     }
