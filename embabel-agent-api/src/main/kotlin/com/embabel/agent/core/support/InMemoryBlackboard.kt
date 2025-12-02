@@ -20,6 +20,7 @@ package com.embabel.agent.core.support
  * backed by a map.
  */
 import com.embabel.agent.core.Blackboard
+import com.embabel.agent.spi.BlackboardProvider
 import com.embabel.common.util.indent
 import com.embabel.common.util.indentLines
 import java.util.*
@@ -132,4 +133,9 @@ class InMemoryBlackboard(
             .trimMargin()
             .indentLines(indent)
     }
+}
+
+object InMemoryBlackboardProvider : BlackboardProvider {
+
+    override fun createBlackboard(): Blackboard = InMemoryBlackboard()
 }

@@ -53,6 +53,7 @@ open class DefaultAgentPlatform(
     private val contextRepository: ContextRepository = InMemoryContextRepository(),
     private val agentProcessRepository: AgentProcessRepository = InMemoryAgentProcessRepository(),
     private val operationScheduler: OperationScheduler = OperationScheduler.PRONTO,
+    private val blackboardProvider: BlackboardProvider = InMemoryBlackboardProvider,
     private val asyncer: Asyncer,
     @param:Qualifier("embabelJacksonObjectMapper")
     private val objectMapper: ObjectMapper,
@@ -132,7 +133,7 @@ open class DefaultAgentPlatform(
             )
             processOptions.blackboard
         } else {
-            InMemoryBlackboard()
+            blackboardProvider.createBlackboard()
         }
         if (processOptions.contextId != null) {
             val context = contextRepository.findById(processOptions.contextId.value)
