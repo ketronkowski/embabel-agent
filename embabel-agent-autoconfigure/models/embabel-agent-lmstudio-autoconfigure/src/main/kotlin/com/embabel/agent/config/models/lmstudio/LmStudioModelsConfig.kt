@@ -17,6 +17,8 @@ package com.embabel.agent.config.models.lmstudio
 
 import com.embabel.agent.api.models.LmStudioModels
 import com.embabel.agent.openai.OpenAiCompatibleModelFactory
+import com.embabel.common.ai.autoconfig.ProviderInitialization
+import com.embabel.common.ai.autoconfig.RegisteredModel
 import com.embabel.common.ai.model.PricingModel
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
@@ -67,7 +69,7 @@ class LmStudioModelsConfig(
     )
 
     @Bean
-    fun lmStudioModelsInitializer(): String {
+    fun lmStudioModelsInitializer(): ProviderInitialization {
         val models = loadModelsFromUrl()
 
         if (models.isEmpty()) {
@@ -75,30 +77,35 @@ class LmStudioModelsConfig(
                 "No LM Studio models discovered at {}. Ensure LM Studio is running and the server is started.",
                 baseUrl
             )
-            return "lmStudioModelsInitializer"
         }
 
         log.info("Discovered {} LM Studio models: {}", models.size, models)
 
-        models.forEach { modelId ->
-            try {
-                val llm = openAiCompatibleLlm(
-                    model = modelId,
-                    pricingModel = PricingModel.ALL_YOU_CAN_EAT,
-                    provider = LmStudioModels.PROVIDER,
-                    knowledgeCutoffDate = null
-                )
+        val registeredLlms = buildList {
+            models.forEach { modelId ->
+                try {
+                    val llm = openAiCompatibleLlm(
+                        model = modelId,
+                        pricingModel = PricingModel.ALL_YOU_CAN_EAT,
+                        provider = LmStudioModels.PROVIDER,
+                        knowledgeCutoffDate = null
+                    )
 
-                val beanName = "lmStudioModel-${normalizeModelName(modelId)}"
-                configurableBeanFactory.registerSingleton(beanName, llm)
-                log.debug("Successfully registered LM Studio LLM {} as bean {}", modelId, beanName)
+                    val beanName = "lmStudioModel-${normalizeModelName(modelId)}"
+                    configurableBeanFactory.registerSingleton(beanName, llm)
+                    add(RegisteredModel(beanName = beanName, modelId = modelId))
+                    log.debug("Successfully registered LM Studio LLM {} as bean {}", modelId, beanName)
 
-            } catch (e: Exception) {
-                log.error("Failed to register LM Studio model {}: {}", modelId, e.message)
+                } catch (e: Exception) {
+                    log.error("Failed to register LM Studio model {}: {}", modelId, e.message)
+                }
             }
         }
 
-        return "lmStudioModelsInitializer"
+        return ProviderInitialization(
+            provider = LmStudioModels.PROVIDER,
+            registeredLlms = registeredLlms,
+        ).also { logger.info(it.summary()) }
     }
 
     private fun loadModelsFromUrl(): List<String> {
