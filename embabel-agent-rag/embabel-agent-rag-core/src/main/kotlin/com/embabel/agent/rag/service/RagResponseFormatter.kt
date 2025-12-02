@@ -18,6 +18,7 @@ package com.embabel.agent.rag.service
 import com.embabel.agent.rag.model.Chunk
 import com.embabel.agent.rag.model.EntityData
 import com.embabel.agent.rag.model.Fact
+import com.embabel.agent.rag.model.Retrievable
 
 /**
  * Implemented by classes that can format RagResponse objects into a string
@@ -30,7 +31,10 @@ fun interface RagResponseFormatter {
      * @param ragResponse The RagResponse to format.
      * @return A string representation of the RagResponse.
      */
-    fun format(ragResponse: RagResponse): String
+    fun format(ragResponse: RagResponse): String =
+        formatResults(ragResponse)
+
+    fun formatResults(similarityResults: SimilarityResults<out Retrievable>): String
 }
 
 /**
@@ -40,8 +44,8 @@ object SimpleRagResponseFormatter : RagResponseFormatter {
 
     const val NO_RESULTS_FOUND = "No results found"
 
-    override fun format(ragResponse: RagResponse): String {
-        val results = ragResponse.results
+    override fun formatResults(similarityResults: SimilarityResults<out Retrievable>): String {
+        val results = similarityResults.results
         return if (results.isEmpty()) {
             NO_RESULTS_FOUND
         } else {

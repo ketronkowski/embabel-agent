@@ -20,6 +20,23 @@ import com.embabel.common.core.types.SimilarityResult
 import com.embabel.common.core.types.ZeroToOne
 import java.time.Instant
 
+interface SimilarityResults<R : Retrievable> {
+
+    val results: List<SimilarityResult<out R>>
+
+    companion object {
+
+        @JvmStatic
+        fun <R : Retrievable> fromList(
+            results: List<SimilarityResult<R>>,
+        ): SimilarityResults<Retrievable> {
+            return object : SimilarityResults<Retrievable> {
+                override val results = results
+            }
+        }
+    }
+}
+
 /**
  * Rag response
  * RagResponses can contain results from multiple RAG services.
@@ -31,12 +48,11 @@ import java.time.Instant
 data class RagResponse(
     val request: RagRequest,
     val service: String,
-    val results: List<SimilarityResult<out Retrievable>>,
+    override val results: List<SimilarityResult<out Retrievable>>,
     val enhancement: RagResponseEnhancement? = null,
     val qualityMetrics: QualityMetrics? = null,
-
     val timestamp: Instant = Instant.now(),
-) {
+) : SimilarityResults<Retrievable> {
 
     /**
      * Return only the final response, without the history of enhancements

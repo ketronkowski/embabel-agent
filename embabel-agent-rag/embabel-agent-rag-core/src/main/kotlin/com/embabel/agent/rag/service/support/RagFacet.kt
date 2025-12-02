@@ -19,14 +19,15 @@ import com.embabel.agent.rag.model.Chunk
 import com.embabel.agent.rag.model.EntityData
 import com.embabel.agent.rag.model.Retrievable
 import com.embabel.agent.rag.service.RagRequest
+import com.embabel.agent.rag.service.SimilarityResults
 import com.embabel.common.core.types.Described
 import com.embabel.common.core.types.Named
 import com.embabel.common.core.types.SimilarityResult
 
-data class RagFacetResults<out R : Retrievable>(
+data class RagFacetResults<R : Retrievable>(
     val facetName: String,
-    val results: List<SimilarityResult<out R>>,
-)
+    override val results: List<SimilarityResult<out R>>,
+) : SimilarityResults<R>
 
 /**
  * A facet of a RAG service. A facet can be searched independently,
