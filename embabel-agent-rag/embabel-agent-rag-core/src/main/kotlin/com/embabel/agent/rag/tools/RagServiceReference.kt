@@ -18,11 +18,13 @@ package com.embabel.agent.rag.tools
 import com.embabel.agent.api.common.LlmReference
 import com.embabel.agent.api.common.PromptRunner
 import com.embabel.agent.rag.service.PromptRunnerRagResponseSummarizer
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Expose a RagService as an LlmReference with tools.
  */
-class RagReference(
+@ApiStatus.Experimental
+class RagServiceReference(
     override val name: String,
     override val description: String,
     val options: RagOptions,
