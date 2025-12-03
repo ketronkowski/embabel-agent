@@ -40,14 +40,14 @@ val DEFAULT_ACCEPTANCE = """
  * control primitives RAG operations directly.
  */
 @ApiStatus.Experimental
-class RagToolsReference @JvmOverloads constructor(
+class ToolishRag @JvmOverloads constructor(
     override val name: String,
     override val description: String,
     private val primitives: SearchPrimitives,
     val goal: String = DEFAULT_ACCEPTANCE,
 ) : LlmReference {
 
-    private val logger: Logger = LoggerFactory.getLogger(RagToolsReference::class.java)
+    private val logger: Logger = LoggerFactory.getLogger(ToolishRag::class.java)
 
     override fun notes() = "Search acceptance criteria:\n$goal"
 
@@ -65,14 +65,27 @@ class RagToolsReference @JvmOverloads constructor(
         return SimpleRagResponseFormatter.formatResults(SimilarityResults.Companion.fromList(results))
     }
 
-    @Tool(description = "Perform BMI25 search. Specify topK and similarity threshold from 0-1")
-    fun bmi25Search(
+    @Tool(
+        description = """
+        Perform BMI25 search. Specify topK and similarity threshold from 0-1
+        Query follows Lucene syntax, e.g. +term for required terms, -term for negative terms,
+        "quoted phrases", wildcards (*), fuzzy (~).
+    """
+    )
+    fun textSearch(
+        @ToolParam(
+            description = """"
+            Query in Lucene syntax,
+            e.g. +term for required terms, -term for negative terms,
+            quoted phrases", wildcards (*), fuzzy (~).
+        """
+        )
         query: String,
         topK: Int,
         @ToolParam(description = "similarity threshold from 0-1") threshold: ZeroToOne,
     ): String {
-        logger.info("Performing BMI25 search with query='{}', topK={}, threshold={}", query, topK, threshold)
-        val results = primitives.bmi25Search(
+        logger.info("Performing text search with query='{}', topK={}, threshold={}", query, topK, threshold)
+        val results = primitives.textSearch(
             RagRequest.query(query).withTopK(topK).withSimilarityThreshold(threshold),
             Chunk::class.java
         )
