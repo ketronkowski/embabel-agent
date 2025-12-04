@@ -20,17 +20,25 @@ import com.embabel.common.core.types.SimilarityResult
 import com.embabel.common.core.types.TextSimilaritySearchRequest
 
 /**
+ * Tag interface for earch operations
+ */
+sealed interface SearchOperations
+
+/**
  * RAG building blocks
  * Implemented by types that can search for chunks or other retrievables
  * Typically backed by tools
  */
-interface SearchPrimitives {
+interface VectorSearch : SearchOperations {
 
     fun <T : Retrievable> vectorSearch(
         request: TextSimilaritySearchRequest,
         clazz: Class<T>,
     ): List<SimilarityResult<T>>
 
+}
+
+interface TextSearch : SearchOperations {
     /**
      * Performs full-text search using Lucene query syntax.
      * Not all implementations will support all capabilities (such as fuzzy matching).
@@ -80,3 +88,8 @@ interface SearchPrimitives {
         clazz: Class<T>,
     ): List<SimilarityResult<T>>
 }
+
+/**
+ * Commonly implemented set of search functionality
+ */
+interface CoreSearchOperations : VectorSearch, TextSearch

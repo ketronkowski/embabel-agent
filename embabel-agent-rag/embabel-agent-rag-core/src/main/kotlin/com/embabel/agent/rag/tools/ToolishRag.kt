@@ -17,39 +17,51 @@ package com.embabel.agent.rag.tools
 
 import com.embabel.agent.api.common.LlmReference
 import com.embabel.agent.rag.model.Chunk
-import com.embabel.agent.rag.service.RagRequest
-import com.embabel.agent.rag.service.SearchPrimitives
-import com.embabel.agent.rag.service.SimilarityResults
-import com.embabel.agent.rag.service.SimpleRagResponseFormatter
+import com.embabel.agent.rag.service.*
 import com.embabel.common.core.types.ZeroToOne
-import org.jetbrains.annotations.ApiStatus
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.ai.tool.annotation.Tool
 import org.springframework.ai.tool.annotation.ToolParam
 
-val DEFAULT_ACCEPTANCE = """
-    Continue search until the question is answered, or you have to give up.
-    Be creative, try different types of queries. Generate HyDE queries if needed.
-    You must be thorough and try different approaches.
-    In this case report that you could not find the answer.
-""".trimIndent()
-
 /**
  * Reference for fine-grained RAG tools, allowing the LLM to
  * control primitives RAG operations directly.
  */
-@ApiStatus.Experimental
 class ToolishRag @JvmOverloads constructor(
     override val name: String,
     override val description: String,
-    private val primitives: SearchPrimitives,
-    val goal: String = DEFAULT_ACCEPTANCE,
+    private val searchOperations: SearchOperations,
+    val goal: String = DEFAULT_GOAL,
 ) : LlmReference {
 
-    private val logger: Logger = LoggerFactory.getLogger(ToolishRag::class.java)
+    override fun toolInstances(): List<Any> =
+        buildList {
+            if (searchOperations is VectorSearch) {
+                add(VectorSearchTools(searchOperations))
+            }
+            if (searchOperations is TextSearch) {
+                add(TextSearchTools(searchOperations))
+            }
+        }
 
     override fun notes() = "Search acceptance criteria:\n$goal"
+
+    companion object {
+        val DEFAULT_GOAL = """
+            Continue search until the question is answered, or you have to give up.
+            Be creative, try different types of queries. Generate HyDE queries if needed.
+            You must be thorough and try different approaches.
+            If nothing works, report that you could not find the answer.
+        """.trimIndent()
+    }
+}
+
+class VectorSearchTools(
+    private val vectorSearch: VectorSearch,
+) {
+
+    private val logger: Logger = LoggerFactory.getLogger(javaClass)
 
     @Tool(description = "Perform vector search. Specify topK and similarity threshold from 0-1")
     fun vectorSearch(
@@ -58,12 +70,18 @@ class ToolishRag @JvmOverloads constructor(
         @ToolParam(description = "similarity threshold from 0-1") threshold: ZeroToOne,
     ): String {
         logger.info("Performing vector search with query='{}', topK={}, threshold={}", query, topK, threshold)
-        val results = primitives.vectorSearch(
+        val results = vectorSearch.vectorSearch(
             RagRequest.query(query).withTopK(topK).withSimilarityThreshold(threshold),
             Chunk::class.java
         )
         return SimpleRagResponseFormatter.formatResults(SimilarityResults.Companion.fromList(results))
     }
+}
+
+class TextSearchTools(
+    private val textSearch: TextSearch,
+) {
+    private val logger: Logger = LoggerFactory.getLogger(javaClass)
 
     @Tool(
         description = """
@@ -85,7 +103,7 @@ class ToolishRag @JvmOverloads constructor(
         @ToolParam(description = "similarity threshold from 0-1") threshold: ZeroToOne,
     ): String {
         logger.info("Performing text search with query='{}', topK={}, threshold={}", query, topK, threshold)
-        val results = primitives.textSearch(
+        val results = textSearch.textSearch(
             RagRequest.query(query).withTopK(topK).withSimilarityThreshold(threshold),
             Chunk::class.java
         )
@@ -98,7 +116,7 @@ class ToolishRag @JvmOverloads constructor(
         topK: Int,
     ): String {
         logger.info("Performing regex search with regex='{}', topK={}", regex, topK)
-        val results = primitives.regexSearch(Regex(regex), topK, Chunk::class.java)
+        val results = textSearch.regexSearch(Regex(regex), topK, Chunk::class.java)
         return SimpleRagResponseFormatter.formatResults(SimilarityResults.Companion.fromList(results))
     }
 
