@@ -64,7 +64,7 @@ open class TransformationAction<I, O>(
     override fun execute(
         processContext: ProcessContext,
     ): ActionStatus = ActionRunner.execute(processContext) {
-        val input = processContext.getValue(inputVarName, inputClass.name) as I
+        val input = processContext.agentProcess.getValue(inputVarName, inputClass.name) as I
         val output = block.transform(
             TransformationActionContext(
                 input = input,

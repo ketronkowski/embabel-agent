@@ -40,7 +40,7 @@ abstract class AbstractAgentProcess(
     override val id: String,
     override val parentId: String?,
     override val agent: Agent,
-    protected val processOptions: ProcessOptions,
+    override val processOptions: ProcessOptions,
     override val blackboard: Blackboard,
     @get:JsonIgnore
     protected val platformServices: PlatformServices,

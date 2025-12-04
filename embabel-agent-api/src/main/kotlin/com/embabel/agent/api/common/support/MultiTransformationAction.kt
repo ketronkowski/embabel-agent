@@ -63,7 +63,7 @@ class MultiTransformationAction<O : Any>(
         processContext: ProcessContext,
     ): ActionStatus = ActionRunner.execute(processContext) {
         val inputValues: List<Any> = inputs.map {
-            processContext.getValue(variable = it.name, type = it.type)
+            processContext.agentProcess.getValue(variable = it.name, type = it.type)
                 ?: throw IllegalArgumentException("Input ${it.name} of type ${it.type} not found in process context")
         }
         logger.debug("Resolved action {} inputs {}", name, inputValues)

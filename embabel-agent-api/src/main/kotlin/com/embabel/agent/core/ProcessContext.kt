@@ -36,18 +36,4 @@ data class ProcessContext(
 
     val blackboard: Blackboard
         get() = agentProcess
-
-    /**
-     * Get a variable value. Handles "it" default type specially,
-     * because it could be an "it" of different variables, defined
-     * as the most recently added entry.
-     */
-    fun getValue(
-        variable: String,
-        type: String,
-    ): Any? =
-        blackboard.getValue(
-            variable = variable, type = type,
-            dataDictionary = agentProcess.agent,
-        )
 }

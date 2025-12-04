@@ -78,6 +78,11 @@ interface AgentProcess : Blackboard, Timestamped, Timed, OperationStatus<AgentPr
     val parentId: String?
 
     /**
+     * Options this process was started with
+     */
+    val processOptions: ProcessOptions
+
+    /**
      * Get the planner for this process
      */
     val planner: Planner<*, *, *>
@@ -171,9 +176,23 @@ interface AgentProcess : Blackboard, Timestamped, Timed, OperationStatus<AgentPr
         require(status == AgentProcessStatusCode.COMPLETED) {
             "Cannot get result of process that is not completed: Status=$status"
         }
-        return processContext.getValue(IoBinding.DEFAULT_BINDING, outputClass.simpleName) as O?
+        return getValue(IoBinding.DEFAULT_BINDING, outputClass.simpleName) as O?
             ?: error("No result of type ${outputClass.name} found in process status")
     }
+
+    /**
+     * Get a variable value. Handles "it" default type specially,
+     * because it could be an "it" of different variables, defined
+     * as the most recently added entry.
+     */
+    fun getValue(
+        variable: String,
+        type: String,
+    ): Any? =
+        blackboard.getValue(
+            variable = variable, type = type,
+            dataDictionary = agent,
+        )
 
     companion object {
         private val threadLocalAgentProcess = ThreadLocal<AgentProcess>()

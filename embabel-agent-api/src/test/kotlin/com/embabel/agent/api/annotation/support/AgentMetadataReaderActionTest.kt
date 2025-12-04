@@ -271,6 +271,13 @@ class AgentMetadataReaderActionTest {
                     thirdArg(),
                 )
             }
+            every { mockAgentProcess.getValue(any(), any()) } answers {
+                blackboard.getValue(
+                    firstArg(),
+                    secondArg(),
+                    agent,
+                )
+            }
             every { mockAgentProcess[any()] = any() } answers {
                 blackboard[firstArg()] = secondArg()
             }
@@ -394,6 +401,13 @@ class AgentMetadataReaderActionTest {
                     thirdArg(),
                 )
             }
+            every { mockAgentProcess.getValue(any(), any()) } answers {
+                blackboard.getValue(
+                    firstArg(),
+                    secondArg(),
+                    agent,
+                )
+            }
             every { mockAgentProcess.set(any(), any()) } answers {
                 blackboard.set(
                     firstArg(),
@@ -491,6 +505,13 @@ class AgentMetadataReaderActionTest {
                     thirdArg(),
                 )
             }
+            every { mockAgentProcess.getValue(any(), any()) } answers {
+                blackboard.getValue(
+                    firstArg(),
+                    secondArg(),
+                    agent,
+                )
+            }
             every { mockAgentProcess.set(any(), any()) } answers {
                 blackboard.set(
                     firstArg(),
@@ -543,6 +564,13 @@ class AgentMetadataReaderActionTest {
                     thirdArg(),
                 )
             }
+            every { mockAgentProcess.getValue(any(), any()) } answers {
+                blackboard.getValue(
+                    firstArg(),
+                    secondArg(),
+                    agent,
+                )
+            }
             every { mockAgentProcess.set(any(), any()) } answers {
                 blackboard.set(
                     firstArg(),
@@ -593,6 +621,13 @@ class AgentMetadataReaderActionTest {
                     firstArg(),
                     secondArg(),
                     thirdArg(),
+                )
+            }
+            every { mockAgentProcess.getValue(any(), any()) } answers {
+                blackboard.getValue(
+                    firstArg(),
+                    secondArg(),
+                    agent,
                 )
             }
             every { mockAgentProcess.set(any(), any()) } answers {
@@ -719,6 +754,13 @@ class AgentMetadataReaderActionTest {
                     thirdArg(),
                 )
             }
+            every { mockAgentProcess.getValue(any(), any()) } answers {
+                blackboard.getValue(
+                    firstArg(),
+                    secondArg(),
+                    agent,
+                )
+            }
             every { mockAgentProcess.set(any(), any()) } answers {
                 blackboard.set(
                     firstArg(),
@@ -779,6 +821,13 @@ class AgentMetadataReaderActionTest {
                     firstArg(),
                     secondArg(),
                     thirdArg(),
+                )
+            }
+            every { mockAgentProcess.getValue(any(), any()) } answers {
+                blackboard.getValue(
+                    firstArg(),
+                    secondArg(),
+                    agent,
                 )
             }
             every { mockAgentProcess.set(any(), any()) } answers {
@@ -906,6 +955,13 @@ class AgentMetadataReaderActionTest {
                     firstArg(),
                     secondArg(),
                     thirdArg(),
+                )
+            }
+            every { mockAgentProcess.getValue(any(), any()) } answers {
+                blackboard.getValue(
+                    firstArg(),
+                    secondArg(),
+                    agent,
                 )
             }
             every { mockAgentProcess.set(any(), any()) } answers {
@@ -1099,6 +1155,13 @@ class AgentMetadataReaderActionTest {
                     firstArg(),
                     secondArg(),
                     thirdArg(),
+                )
+            }
+            every { mockAgentProcess.getValue(any(), any()) } answers {
+                blackboard.getValue(
+                    firstArg(),
+                    secondArg(),
+                    agent,
                 )
             }
             every { mockAgentProcess.addObject(any()) } answers {

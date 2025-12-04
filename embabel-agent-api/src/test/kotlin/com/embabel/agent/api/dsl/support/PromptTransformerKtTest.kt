@@ -61,7 +61,7 @@ class PromptTransformerKtTest {
             every { processContext.blackboard } returns blackboard
             every { processContext.agentProcess } returns mockAgentProcess
             every {
-                processContext.getValue(
+                mockAgentProcess.getValue(
                     IoBinding.DEFAULT_BINDING,
                     MagicVictim::class.java.name
                 )
@@ -102,7 +102,7 @@ class PromptTransformerKtTest {
             every { mockAgentProcess.processContext } returns processContext
             every { processContext.blackboard } returns InMemoryBlackboard()
             every { processContext.agentProcess } returns mockAgentProcess
-            every { processContext.getValue("person", PromptPerson::class.java.name) } returns person
+            every { mockAgentProcess.getValue("person", PromptPerson::class.java.name) } returns person
             every {
                 processContext.createObject(
                     any(),
@@ -115,7 +115,7 @@ class PromptTransformerKtTest {
 
             transformer.execute(processContext = processContext)
 
-            verify { processContext.getValue("person", PromptPerson::class.java.name) }
+            verify { mockAgentProcess.getValue("person", PromptPerson::class.java.name) }
         }
 
         @Test
@@ -161,7 +161,7 @@ class PromptTransformerKtTest {
             every { processContext.blackboard } returns InMemoryBlackboard()
             every { processContext.agentProcess } returns mockAgentProcess
             every {
-                processContext.getValue(
+                mockAgentProcess.getValue(
                     IoBinding.DEFAULT_BINDING,
                     MagicVictim::class.java.name
                 )
@@ -205,7 +205,7 @@ class PromptTransformerKtTest {
             every { processContext.blackboard } returns InMemoryBlackboard()
             every { processContext.agentProcess } returns mockAgentProcess
             every {
-                processContext.getValue(
+                mockAgentProcess.getValue(
                     IoBinding.DEFAULT_BINDING,
                     MagicVictim::class.java.name
                 )

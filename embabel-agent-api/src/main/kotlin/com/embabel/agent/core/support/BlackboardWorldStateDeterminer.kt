@@ -70,7 +70,7 @@ class BlackboardWorldStateDeterminer(
                     return ConditionDetermination(true)
                 }
 
-                val value = processContext.getValue(variable, type)
+                val value = processContext.agentProcess.getValue(variable, type)
 
                 val determination = when {
                     type == "List" ->

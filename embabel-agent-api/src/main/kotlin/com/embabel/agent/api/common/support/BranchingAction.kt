@@ -87,7 +87,7 @@ internal open class BranchingAction<I, O1, O2>(
     override fun execute(
         processContext: ProcessContext,
     ): ActionStatus = ActionRunner.execute(processContext) {
-        val input = processContext.getValue(inputVarName, inputClass.name) as I
+        val input = processContext.agentProcess.getValue(inputVarName, inputClass.name) as I
         val branch = block.transform(
             context = TransformationActionContext(
                 input = input,
