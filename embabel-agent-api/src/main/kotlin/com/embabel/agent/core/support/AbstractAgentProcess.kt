@@ -47,7 +47,7 @@ abstract class AbstractAgentProcess(
     override val timestamp: Instant = Instant.now(),
 ) : AgentProcess, Blackboard by blackboard {
 
-    protected val logger: Logger = LoggerFactory.getLogger(this::class.java)
+    protected val logger: Logger = LoggerFactory.getLogger(javaClass)
 
     private var _lastWorldState: WorldState? = null
 
@@ -82,6 +82,15 @@ abstract class AbstractAgentProcess(
      * Get the WorldStateDeterminer for this process
      */
     protected abstract val worldStateDeterminer: WorldStateDeterminer
+
+    private val _llmInvocations = mutableListOf<LlmInvocation>()
+
+    override val llmInvocations: List<LlmInvocation>
+        get() = _llmInvocations.toList()
+
+    override fun recordLlmInvocation(llmInvocation: LlmInvocation) {
+        _llmInvocations.add(llmInvocation)
+    }
 
     override val status: AgentProcessStatusCode
         get() = _status.get()

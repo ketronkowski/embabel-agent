@@ -46,21 +46,12 @@ open class SimpleAgentProcess(
     timestamp = timestamp,
 ) {
 
-    private val _llmInvocations = mutableListOf<LlmInvocation>()
-
-    override val llmInvocations: List<LlmInvocation>
-        get() = _llmInvocations.toList()
-
     override val worldStateDeterminer: WorldStateDeterminer = BlackboardWorldStateDeterminer(
         processContext = processContext,
         logicalExpressionParser = platformServices.logicalExpressionParser,
     )
 
     override val planner: Planner<*, *, *> = plannerFactory.createPlanner(processOptions, worldStateDeterminer)
-
-    override fun recordLlmInvocation(llmInvocation: LlmInvocation) {
-        _llmInvocations.add(llmInvocation)
-    }
 
     protected fun handlePlanNotFound(worldState: WorldState): AgentProcess {
         logger.debug(
