@@ -21,6 +21,7 @@ import com.embabel.agent.rag.ingestion.ContentChunker.Companion.CONTAINER_SECTIO
 import com.embabel.agent.rag.ingestion.ContentChunker.Companion.SEQUENCE_NUMBER
 import com.embabel.agent.rag.ingestion.RetrievableEnhancer
 import com.embabel.agent.rag.model.*
+import com.embabel.agent.rag.service.CoreSearchOperations
 import com.embabel.agent.rag.service.RagRequest
 import com.embabel.agent.rag.service.support.FunctionRagFacet
 import com.embabel.agent.rag.service.support.RagFacet
@@ -29,7 +30,9 @@ import com.embabel.agent.rag.service.support.RagFacetResults
 import com.embabel.agent.rag.store.AbstractChunkingContentElementRepository
 import com.embabel.agent.rag.store.DocumentDeletionResult
 import com.embabel.common.core.types.HasInfoString
+import com.embabel.common.core.types.SimilarityResult
 import com.embabel.common.core.types.SimpleSimilaritySearchResult
+import com.embabel.common.core.types.TextSimilaritySearchRequest
 import com.embabel.common.util.indent
 import com.embabel.common.util.trim
 import org.apache.lucene.analysis.standard.StandardAnalyzer
@@ -74,7 +77,7 @@ class LuceneRagFacetProvider @JvmOverloads constructor(
     private val vectorWeight: Double = 0.5,
     chunkerConfig: ContentChunker.Config = ContentChunker.DefaultConfig(),
     private val indexPath: Path? = null,
-) : RagFacetProvider, AbstractChunkingContentElementRepository(chunkerConfig), HasInfoString, Closeable {
+) : RagFacetProvider, AbstractChunkingContentElementRepository(chunkerConfig), HasInfoString, Closeable, CoreSearchOperations {
 
     private val logger = LoggerFactory.getLogger(LuceneRagFacetProvider::class.java)
 
@@ -377,6 +380,94 @@ class LuceneRagFacetProvider @JvmOverloads constructor(
             facetName = name,
             results = similarityResults
         )
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : Retrievable> vectorSearch(
+        request: TextSimilaritySearchRequest,
+        clazz: Class<T>,
+    ): List<SimilarityResult<T>> {
+        if (embeddingModel == null) {
+            logger.warn("Vector search requested but no embedding model configured")
+            return emptyList()
+        }
+        ensureChunksLoaded()
+        refreshReaderIfNeeded()
+
+        val reader = directoryReader ?: return emptyList()
+        val searcher = IndexSearcher(reader)
+
+        val ragRequest = RagRequest(
+            query = request.query,
+            similarityThreshold = request.similarityThreshold,
+            topK = request.topK,
+        )
+        val results = performHybridSearch(searcher, ragRequest)
+            .filter { clazz.isInstance(it.match) }
+            .map { SimpleSimilaritySearchResult(match = it.match as T, score = it.score) }
+
+        logger.info(
+            "Vector search for query '{}' found {} results",
+            request.query,
+            results.size,
+        )
+        return results
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : Retrievable> textSearch(
+        request: TextSimilaritySearchRequest,
+        clazz: Class<T>,
+    ): List<SimilarityResult<T>> {
+        ensureChunksLoaded()
+        refreshReaderIfNeeded()
+
+        val reader = directoryReader ?: return emptyList()
+        val searcher = IndexSearcher(reader)
+
+        val ragRequest = RagRequest(
+            query = request.query,
+            similarityThreshold = request.similarityThreshold,
+            topK = request.topK,
+        )
+        val results = performTextSearch(searcher, ragRequest)
+            .filter { clazz.isInstance(it.match) }
+            .map { SimpleSimilaritySearchResult(match = it.match as T, score = it.score) }
+
+        logger.info(
+            "Text search for query '{}' found {} results",
+            request.query,
+            results.size,
+        )
+        return results
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : Retrievable> regexSearch(
+        regex: Regex,
+        topK: Int,
+        clazz: Class<T>,
+    ): List<SimilarityResult<T>> {
+        ensureChunksLoaded()
+
+        val results = contentElementStorage.values
+            .filterIsInstance(clazz)
+            .filter { retrievable ->
+                val text = when (retrievable) {
+                    is Chunk -> retrievable.text
+                    else -> retrievable.embeddableValue()
+                }
+                regex.containsMatchIn(text)
+            }
+            .take(topK)
+            .map { SimpleSimilaritySearchResult(match = it as T, score = 1.0) }
+
+        logger.info(
+            "Regex search for pattern '{}' found {} results",
+            regex.pattern,
+            results.size,
+        )
+        return results
     }
 
     private fun performTextSearch(

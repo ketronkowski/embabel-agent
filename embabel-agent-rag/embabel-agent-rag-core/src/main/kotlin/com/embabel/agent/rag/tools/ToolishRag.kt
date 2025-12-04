@@ -51,7 +51,7 @@ class ToolishRag @JvmOverloads constructor(
         val DEFAULT_GOAL = """
             Continue search until the question is answered, or you have to give up.
             Be creative, try different types of queries. Generate HyDE queries if needed.
-            You must be thorough and try different approaches.
+            Be thorough and try different approaches.
             If nothing works, report that you could not find the answer.
         """.trimIndent()
     }

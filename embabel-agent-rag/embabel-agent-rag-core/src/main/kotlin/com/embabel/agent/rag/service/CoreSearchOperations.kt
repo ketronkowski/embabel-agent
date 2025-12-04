@@ -27,10 +27,13 @@ sealed interface SearchOperations
 /**
  * RAG building blocks
  * Implemented by types that can search for chunks or other retrievables
- * Typically backed by tools
+ * Ease to expose to LLMs via tools
  */
 interface VectorSearch : SearchOperations {
 
+    /**
+     * Perform classic vector search
+     */
     fun <T : Retrievable> vectorSearch(
         request: TextSimilaritySearchRequest,
         clazz: Class<T>,
