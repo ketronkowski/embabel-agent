@@ -61,10 +61,20 @@ interface AgentProcess : Blackboard, Timestamped, Timed, OperationStatus<AgentPr
     LlmInvocationHistory {
 
     /**
-     * Unique id of this process
+     * Unique id of this process. Set on creation.
      */
     val id: String
 
+    /**
+     * The blackboard for this process.
+     * Implementations should delegate to it to implement the Blackboard interface for convenience,
+     * but explicitly separating it simplifies persistence.
+     */
+    val blackboard: Blackboard
+
+    /**
+     * ID of the parent AgentProcess, if any.
+     */
     val parentId: String?
 
     /**
@@ -72,13 +82,19 @@ interface AgentProcess : Blackboard, Timestamped, Timed, OperationStatus<AgentPr
      */
     val planner: Planner<*, *, *>
 
+    /**
+     * History of actions taken by this process
+     */
     val history: List<ActionInvocation>
 
     /**
-     * Goal of this process.
+     * Goal of this process. Utility processes may not have a goal.
      */
     val goal: com.embabel.plan.Goal?
 
+    /**
+     * Is the process finished, whether successfully or not?
+     */
     val finished: Boolean
         get() = status in setOf(
             AgentProcessStatusCode.COMPLETED,

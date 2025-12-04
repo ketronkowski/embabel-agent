@@ -41,7 +41,7 @@ abstract class AbstractAgentProcess(
     override val parentId: String?,
     override val agent: Agent,
     protected val processOptions: ProcessOptions,
-    protected val blackboard: Blackboard,
+    override val blackboard: Blackboard,
     @get:JsonIgnore
     protected val platformServices: PlatformServices,
     override val timestamp: Instant = Instant.now(),

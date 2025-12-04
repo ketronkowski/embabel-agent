@@ -18,10 +18,7 @@ package com.embabel.agent.spi
 import com.embabel.agent.core.AgentProcess
 
 /**
- * Spring-style repository for agent processes.
- * We don't extend Repository because it confuses
- * Spring's component scanning if JPA/Neo or another Spring Data
- * solution is used on the classpath downstream.
+ * Repository for agent processes.
  */
 interface AgentProcessRepository {
 
