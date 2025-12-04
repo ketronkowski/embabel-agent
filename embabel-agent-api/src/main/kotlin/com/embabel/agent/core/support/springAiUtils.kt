@@ -34,16 +34,18 @@ fun safelyGetToolCallbacks(instances: Collection<ToolObject>): List<ToolCallback
 
 fun safelyGetToolCallbacksFrom(toolObject: ToolObject): List<ToolCallback> {
     val callbacks = mutableListOf<ToolCallback>()
-    try {
-        when (toolObject.obj) {
-            is ToolCallback -> callbacks.add(toolObject.obj)
-            else ->
-                callbacks.addAll(ToolCallbacks.from(toolObject.obj).toList())
+    toolObject.objects.forEach { obj ->
+        try {
+            when (obj) {
+                is ToolCallback -> callbacks.add(obj)
+                else ->
+                    callbacks.addAll(ToolCallbacks.from(obj).toList())
+            }
+        } catch (_: IllegalStateException) {
+            // Ignore this exception from Spring AI.
+            // Passing in object without @Tool annotations is not a problem:
+            // it should simply be ignored
         }
-    } catch (_: IllegalStateException) {
-        // Ignore this exception from Spring AI.
-        // Passing in object without @Tool annotations is not a problem:
-        // it should simply be ignored
     }
     return callbacks
         .filter { toolObject.filter(it.toolDefinition.name()) }

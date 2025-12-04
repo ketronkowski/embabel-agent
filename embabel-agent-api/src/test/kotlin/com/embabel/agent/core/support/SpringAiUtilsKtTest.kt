@@ -15,6 +15,7 @@
  */
 package com.embabel.agent.core.support
 
+import com.embabel.agent.api.annotation.support.FunnyTool
 import com.embabel.agent.api.annotation.support.PersonWithReverseTool
 import com.embabel.agent.api.common.ToolObject
 import io.mockk.every
@@ -55,6 +56,114 @@ class SpringAiUtilsKtTest {
         val result = safelyGetToolCallbacks(setOf(tc, PersonWithReverseTool("John Doe")).map { ToolObject.from(it) })
         assertEquals(2, result.size)
         assertEquals("test", result[1].toolDefinition.name())
+    }
+
+    @Test
+    fun `safelyGetTools from ToolObject with multiple instances`() {
+        val result = safelyGetToolCallbacks(
+            listOf(
+                ToolObject(
+                    objects = listOf(
+                        PersonWithReverseTool("John"),
+                        FunnyTool(),
+                    )
+                )
+            )
+        )
+        assertEquals(2, result.size)
+        assertTrue(result.any { it.toolDefinition.name() == "reverse" })
+        assertTrue(result.any { it.toolDefinition.name() == "thing" })
+    }
+
+    @Test
+    fun `safelyGetTools from ToolObject with multiple instances deduplicates by tool name`() {
+        val result = safelyGetToolCallbacks(
+            listOf(
+                ToolObject(
+                    objects = listOf(
+                        PersonWithReverseTool("John"),
+                        PersonWithReverseTool("Jane"),
+                    )
+                )
+            )
+        )
+        assertEquals(1, result.size)
+        assertEquals("reverse", result[0].toolDefinition.name())
+    }
+
+    @Test
+    fun `safelyGetTools from ToolObject with multiple instances applies naming strategy`() {
+        val result = safelyGetToolCallbacks(
+            listOf(
+                ToolObject(
+                    objects = listOf(
+                        PersonWithReverseTool("John"),
+                        FunnyTool(),
+                    ),
+                    namingStrategy = { "prefixed_$it" },
+                )
+            )
+        )
+        assertEquals(2, result.size)
+        assertTrue(result.any { it.toolDefinition.name() == "prefixed_reverse" })
+        assertTrue(result.any { it.toolDefinition.name() == "prefixed_thing" })
+    }
+
+    @Test
+    fun `safelyGetTools from ToolObject with multiple instances applies filter`() {
+        val result = safelyGetToolCallbacks(
+            listOf(
+                ToolObject(
+                    objects = listOf(
+                        PersonWithReverseTool("John"),
+                        FunnyTool(),
+                    ),
+                    filter = { it == "reverse" },
+                )
+            )
+        )
+        assertEquals(1, result.size)
+        assertEquals("reverse", result[0].toolDefinition.name())
+    }
+
+    @Test
+    fun `safelyGetTools from multiple ToolObjects each with multiple instances`() {
+        val result = safelyGetToolCallbacks(
+            listOf(
+                ToolObject(
+                    objects = listOf(
+                        PersonWithReverseTool("John"),
+                    )
+                ),
+                ToolObject(
+                    objects = listOf(
+                        FunnyTool(),
+                    )
+                ),
+            )
+        )
+        assertEquals(2, result.size)
+        assertTrue(result.any { it.toolDefinition.name() == "reverse" })
+        assertTrue(result.any { it.toolDefinition.name() == "thing" })
+    }
+
+    @Test
+    fun `safelyGetTools from ToolObject with ToolCallback and regular object`() {
+        val tc = mockk<ToolCallback>()
+        every { tc.toolDefinition.name() } returns "mockTool"
+        val result = safelyGetToolCallbacks(
+            listOf(
+                ToolObject(
+                    objects = listOf(
+                        tc,
+                        PersonWithReverseTool("John"),
+                    )
+                )
+            )
+        )
+        assertEquals(2, result.size)
+        assertTrue(result.any { it.toolDefinition.name() == "mockTool" })
+        assertTrue(result.any { it.toolDefinition.name() == "reverse" })
     }
 
 }

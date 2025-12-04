@@ -18,28 +18,34 @@ package com.embabel.agent.api.common
 import com.embabel.common.util.StringTransformer
 
 /**
- * Holds an annotated tool object.
- * Adds a naming strategy and a filter to the object.
- * @param obj the object the tool annotations are on
+ * Holds one or more annotated tool objects.
+ * Adds a naming strategy and a filter to the overall object.
+ * @param objects the objects the tool annotations are on
  * @param namingStrategy the naming strategy to use for the tool object's methods
  * @param filter a filter to apply to the tool object's methods
  */
 data class ToolObject(
-    val obj: Any,
+    val objects: List<Any>,
     val namingStrategy: StringTransformer = StringTransformer.IDENTITY,
     val filter: (String) -> Boolean = { true },
 ) {
 
     init {
-        if (obj is Iterable<*>) {
-            throw IllegalArgumentException("Internal error: ToolObject cannot be an Iterable. Offending object: $obj")
+        if (objects.any { it is Iterable<*> }) {
+            throw IllegalArgumentException("Internal error: ToolObject cannot be an Iterable. Offending objects: $objects")
         }
     }
 
     constructor (
         obj: Any,
+        namingStrategy: StringTransformer = StringTransformer.IDENTITY,
+        filter: (String) -> Boolean = { true },
+    ) : this(listOf(obj), namingStrategy, filter)
+
+    constructor (
+        obj: Any,
     ) : this(
-        obj = obj,
+        objects = listOf(obj),
         namingStrategy = StringTransformer.IDENTITY,
         filter = { true },
     )

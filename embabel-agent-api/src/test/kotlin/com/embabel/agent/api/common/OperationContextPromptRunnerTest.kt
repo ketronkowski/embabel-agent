@@ -72,7 +72,7 @@ class OperationContextPromptRunnerTest {
                 .withLlm(llm)
                 .withToolObject(wumpus)
             assertEquals(1, ocpr.toolObjects.size, "Must have one tool object")
-            assertEquals(wumpus, ocpr.toolObjects[0].obj, "Tool object instance not set correctly")
+            assertEquals(wumpus, ocpr.toolObjects[0].objects[0], "Tool object instance not set correctly")
             assertEquals(
                 StringTransformer.IDENTITY,
                 ocpr.toolObjects[0].namingStrategy,
@@ -89,7 +89,7 @@ class OperationContextPromptRunnerTest {
                 .withLlm(llm)
                 .withToolObject(ToolObject(wumpus).withNamingStrategy(namingStrategy))
             assertEquals(1, ocpr.toolObjects.size, "Must have one tool object")
-            assertEquals(wumpus, ocpr.toolObjects[0].obj, "Tool object instance not set correctly")
+            assertEquals(wumpus, ocpr.toolObjects[0].objects[0], "Tool object instance not set correctly")
             assertEquals(
                 namingStrategy,
                 ocpr.toolObjects[0].namingStrategy,
@@ -346,7 +346,7 @@ class OperationContextPromptRunnerTest {
                 .withReference(mockReference)
 
             assertEquals(1, ocpr.toolObjects.size, "Must have one tool object for reference")
-            assertEquals(mockReference, ocpr.toolObjects[0].obj, "Reference not set correctly as tool object")
+            assertEquals(mockReference, ocpr.toolObjects[0].objects[0], "Reference not set correctly as tool object")
             assertEquals(1, ocpr.promptContributors.size, "Must have one prompt contributor for reference")
             assertEquals(
                 mockReference,
@@ -405,8 +405,14 @@ class OperationContextPromptRunnerTest {
             assertEquals(2, ocpr.toolObjects.size, "Must have two tool objects for references")
             assertEquals(2, ocpr.promptContributors.size, "Must have two prompt contributors for references")
 
-            assertTrue(ocpr.toolObjects.any { it.obj == mockReference1 }, "Reference 1 not found in tool objects")
-            assertTrue(ocpr.toolObjects.any { it.obj == mockReference2 }, "Reference 2 not found in tool objects")
+            assertTrue(
+                ocpr.toolObjects.any { it.objects[0] == mockReference1 },
+                "Reference 1 not found in tool objects"
+            )
+            assertTrue(
+                ocpr.toolObjects.any { it.objects[0] == mockReference2 },
+                "Reference 2 not found in tool objects"
+            )
             assertTrue(
                 ocpr.promptContributors.contains(mockReference1),
                 "Reference 1 not found in prompt contributors"
