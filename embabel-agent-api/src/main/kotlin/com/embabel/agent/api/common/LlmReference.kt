@@ -17,6 +17,7 @@ package com.embabel.agent.api.common
 
 import com.embabel.common.ai.prompt.PromptContributor
 import com.embabel.common.core.types.NamedAndDescribed
+import com.embabel.common.util.StringTransformer
 
 /**
  * An LLmReference exposes tools and is a prompt contributor.
@@ -39,18 +40,20 @@ interface LlmReference : NamedAndDescribed, PromptContributor {
      */
     fun toolPrefix(): String = name.replace(Regex("[^a-zA-Z0-9 ]"), "_").lowercase()
 
+    val namingStrategy: StringTransformer get() = StringTransformer { toolName -> "${toolPrefix()}_$toolName" }
+
     /**
      * Create a tool object for this reference.
      */
     fun toolObject(): ToolObject = ToolObject(
-        obj = toolInstance(),
-        namingStrategy = { toolName -> "${toolPrefix()}_$toolName" },
+        objects = toolInstances(),
+        namingStrategy = namingStrategy,
     )
 
     /**
-     * Return the instance of the tool object. Defaults to this
+     * Return the instances of tool object. Defaults to this
      */
-    fun toolInstance(): Any = this
+    fun toolInstances(): List<Any> = listOf(this)
 
     override fun contribution(): String {
         return """|
