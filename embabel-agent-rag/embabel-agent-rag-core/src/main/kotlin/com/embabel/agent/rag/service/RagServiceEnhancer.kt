@@ -17,10 +17,12 @@ package com.embabel.agent.rag.service
 
 import com.embabel.agent.api.common.OperationContext
 import com.embabel.agent.event.RagEventListener
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Given a RAG service, create an enhanced RAG service for use in a particular operation.
  */
+@ApiStatus.Experimental
 interface RagServiceEnhancer {
 
     /**

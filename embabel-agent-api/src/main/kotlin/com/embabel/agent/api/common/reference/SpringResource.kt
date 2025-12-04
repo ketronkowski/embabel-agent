@@ -23,6 +23,10 @@ import org.springframework.core.io.Resource
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 
+/**
+ * Contents of a Spring resource as an LlmReference.
+ * Read and held in memory.
+ */
 data class SpringResource @JsonCreator constructor(
     @field:JsonProperty("resourcePath") val resourcePath: String,
     override val name: String = resourcePath,

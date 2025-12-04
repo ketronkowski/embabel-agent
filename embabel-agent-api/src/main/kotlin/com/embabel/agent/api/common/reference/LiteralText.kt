@@ -17,6 +17,10 @@ package com.embabel.agent.api.common.reference
 
 import com.embabel.agent.api.common.LlmReference
 
+/**
+ * Reference for literal text, in notes field.
+ * Held in memory.
+ */
 data class LiteralText(
     override val name: String,
     override val description: String,

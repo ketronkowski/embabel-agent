@@ -13,65 +13,47 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.embabel.agent.rag.service.support
+package com.embabel.agent.rag.service.spring
 
 import com.embabel.agent.rag.model.Chunk
-import com.embabel.agent.rag.service.RagRequest
-import com.embabel.agent.rag.service.RagResponse
-import com.embabel.agent.rag.service.RagService
+import com.embabel.agent.rag.model.Retrievable
+import com.embabel.agent.rag.service.VectorSearch
 import com.embabel.common.core.types.SimilarityResult
+import com.embabel.common.core.types.TextSimilaritySearchRequest
 import com.embabel.common.core.types.ZeroToOne
-import com.embabel.common.util.indent
 import com.embabel.common.util.trim
-import org.jetbrains.annotations.ApiStatus
-import org.slf4j.LoggerFactory
 import org.springframework.ai.document.Document
 import org.springframework.ai.vectorstore.SearchRequest
 import org.springframework.ai.vectorstore.VectorStore
 
 /**
- * RagService wrapping a Spring AI VectorStore.
+ * Embabel VectorSearch wrapping a Spring AI VectorStore.
  */
-@ApiStatus.Experimental
-class SpringVectorStoreRagService(
+class SpringVectorStoreVectorSearch(
     private val vectorStore: VectorStore,
-    override val description: String,
-) : RagService {
+) : VectorSearch {
 
-    private val logger = LoggerFactory.getLogger(javaClass)
-
-    override val name: String
-        get() = vectorStore.name
-
-    override fun search(ragRequest: RagRequest): RagResponse {
+    override fun <T : Retrievable> vectorSearch(
+        request: TextSimilaritySearchRequest,
+        clazz: Class<T>,
+    ): List<SimilarityResult<T>> {
         val searchRequest = SearchRequest
             .builder()
-            .query(ragRequest.query)
-            .similarityThreshold(ragRequest.similarityThreshold)
-            .topK(ragRequest.topK)
+            .query(request.query)
+            .similarityThreshold(request.similarityThreshold)
+            .topK(request.topK)
             .build()
         val results: List<Document> = vectorStore.similaritySearch(searchRequest)!!
-        return RagResponse(
-            request = ragRequest,
-            service = name,
-            results = results.map {
-                DocumentSimilarityResult(
-                    document = it,
-                    score = it.score!!,
-                )
-            }
-        )
-    }
-
-    override fun infoString(
-        verbose: Boolean?,
-        indent: Int,
-    ): String {
-        return "${vectorStore.name}: ${vectorStore.javaClass.name}".indent(indent)
+        return results.map {
+            DocumentSimilarityResult(
+                document = it,
+                score = it.score!!,
+            )
+        } as List<SimilarityResult<T>>
     }
 }
 
-class DocumentSimilarityResult(
+internal class DocumentSimilarityResult(
     private val document: Document,
     override val score: ZeroToOne,
 ) : SimilarityResult<Chunk> {

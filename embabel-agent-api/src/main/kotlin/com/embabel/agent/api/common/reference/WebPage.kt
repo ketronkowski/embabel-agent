@@ -17,6 +17,11 @@ package com.embabel.agent.api.common.reference
 
 import com.embabel.agent.api.common.LlmReference
 
+/**
+ * Reference for the contents of a web page.
+ * Works only if fetch tool is available.
+ * See CoreToolGroups.WEB
+ */
 data class WebPage(
     val url: String,
     override val name: String = url,

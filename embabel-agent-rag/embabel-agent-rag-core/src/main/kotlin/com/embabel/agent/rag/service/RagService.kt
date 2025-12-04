@@ -18,12 +18,14 @@ package com.embabel.agent.rag.service
 import com.embabel.common.core.types.Described
 import com.embabel.common.core.types.HasInfoString
 import com.embabel.common.util.indent
+import org.jetbrains.annotations.ApiStatus
 
 
 /**
  * Central interface for Retrieval-Augmented Generation (RAG) services.
  * Returns entities as well as text chunks.
  */
+@ApiStatus.Experimental
 interface RagService : Described, HasInfoString {
 
     /**

@@ -6,7 +6,7 @@ import com.embabel.agent.rag.service.RagRequest
 import com.embabel.agent.rag.service.RagResponse
 import com.embabel.agent.rag.service.RagService
 import com.embabel.agent.rag.service.SimpleRagResponseFormatter
-import com.embabel.agent.rag.service.support.DocumentSimilarityResult
+import com.embabel.agent.rag.service.spring.DocumentSimilarityResult
 import com.embabel.common.core.types.SimpleSimilaritySearchResult
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
