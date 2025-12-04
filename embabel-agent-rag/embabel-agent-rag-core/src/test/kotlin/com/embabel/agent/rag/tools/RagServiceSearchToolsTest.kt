@@ -58,6 +58,7 @@ class RagServiceSearchToolsTest {
 
         val result = ragTools.search("test query")
 
+        assertTrue(result.startsWith("1 results:"))
         assertTrue(result.contains("0.9"))
         assertTrue(result.contains("Test chunk content"))
         verify { mockRagService.search(any()) }
@@ -74,7 +75,7 @@ class RagServiceSearchToolsTest {
 
         val result = ragTools.search("test query")
 
-        assertEquals(SimpleRagResponseFormatter.NO_RESULTS_FOUND, result)
+        assertEquals("0 results:", result)
         verify { mockRagService.search(any()) }
     }
 

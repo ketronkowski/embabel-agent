@@ -21,7 +21,7 @@ class SimpleRagRagResponseFormatterTest {
         val rr = RagService.empty()
         val results = rr.search(RagRequest("any query at all"))
         val output = SimpleRagResponseFormatter.format(results)
-        assertEquals(SimpleRagResponseFormatter.NO_RESULTS_FOUND, output)
+        assertEquals("0 results:", output)
     }
 
     @Test
@@ -37,6 +37,7 @@ class SimpleRagRagResponseFormatterTest {
             )
         )
         val output = SimpleRagResponseFormatter.format(results)
+        assertTrue(output.startsWith("1 results:"))
         assertTrue(output.contains("foo"))
     }
 

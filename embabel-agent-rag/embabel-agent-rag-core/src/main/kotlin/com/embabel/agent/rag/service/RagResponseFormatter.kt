@@ -42,34 +42,32 @@ fun interface RagResponseFormatter {
  */
 object SimpleRagResponseFormatter : RagResponseFormatter {
 
-    const val NO_RESULTS_FOUND = "No results found"
-
     override fun formatResults(similarityResults: SimilarityResults<out Retrievable>): String {
         val results = similarityResults.results
-        return if (results.isEmpty()) {
-            NO_RESULTS_FOUND
-        } else {
-            results.joinToString(separator = "\n\n") { result ->
-                val formattedScore = "%.2f".format(result.score)
+        val header = "${results.size} results:"
 
-                when (val match = result.match) {
-                    is EntityData -> {
-                        "$formattedScore: ${match.embeddableValue()}"
-                    }
+        val formattedResults = results.joinToString(separator = "\n\n") { result ->
+            val formattedScore = "%.2f".format(result.score)
 
-                    is Chunk -> {
-                        "$formattedScore: ${match.text}"
-                    }
+            when (val match = result.match) {
+                is EntityData -> {
+                    "$formattedScore: ${match.embeddableValue()}"
+                }
 
-                    is Fact -> {
-                        "$formattedScore: fact - ${match.assertion}"
-                    }
+                is Chunk -> {
+                    "$formattedScore: ${match.text}"
+                }
 
-                    else -> {
-                        "$formattedScore: ${result.match.javaClass.simpleName} - ${match.infoString(verbose = true)}"
-                    }
+                is Fact -> {
+                    "$formattedScore: fact - ${match.assertion}"
+                }
+
+                else -> {
+                    "$formattedScore: ${result.match.javaClass.simpleName} - ${match.infoString(verbose = true)}"
                 }
             }
         }
+
+        return if (results.isEmpty()) header else "$header\n\n$formattedResults"
     }
 }

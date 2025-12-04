@@ -26,13 +26,14 @@ import org.springframework.ai.tool.annotation.ToolParam
 
 /**
  * Reference for fine-grained RAG tools, allowing the LLM to
- * control primitives RAG operations directly.
+ * control individual search operations directly.
  */
 class ToolishRag @JvmOverloads constructor(
     override val name: String,
     override val description: String,
     private val searchOperations: SearchOperations,
     val goal: String = DEFAULT_GOAL,
+    val formatter: RagResponseFormatter = SimpleRagResponseFormatter,
 ) : LlmReference {
 
     override fun toolInstances(): List<Any> =
