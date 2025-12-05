@@ -82,6 +82,7 @@ open class DefaultAgentPlatform(
         applicationContext = applicationContext,
         outputChannel = outputChannel,
         templateRenderer = templateRenderer,
+        agentProcessRepository = agentProcessRepository,
         customLogicalExpressionParser = customLogicalExpressionParser,
     )
 

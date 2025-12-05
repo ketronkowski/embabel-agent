@@ -24,7 +24,15 @@ interface AgentProcessRepository {
 
     fun findById(id: String): AgentProcess?
 
+    /**
+     * Save a new agent process.
+     */
     fun save(agentProcess: AgentProcess): AgentProcess
+
+    /**
+     * Update an existing agent process.
+     */
+    fun update(agentProcess: AgentProcess)
 
     fun delete(agentProcess: AgentProcess)
 }

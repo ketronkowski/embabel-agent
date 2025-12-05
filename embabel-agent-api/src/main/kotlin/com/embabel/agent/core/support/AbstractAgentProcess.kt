@@ -298,6 +298,9 @@ abstract class AbstractAgentProcess(
 
         // Let subclasses handle the planning and execution
         return formulateAndExecutePlan(worldState)
+            .apply {
+                platformServices.agentProcessRepository.update(this)
+            }
     }
 
 

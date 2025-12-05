@@ -21,6 +21,7 @@ import com.embabel.agent.api.common.PlatformServices
 import com.embabel.agent.api.common.autonomy.Autonomy
 import com.embabel.agent.api.event.AgenticEventListener
 import com.embabel.agent.core.AgentPlatform
+import com.embabel.agent.spi.AgentProcessRepository
 import com.embabel.agent.spi.LlmOperations
 import com.embabel.agent.spi.OperationScheduler
 import com.embabel.agent.spi.expression.LogicalExpressionParser
@@ -43,6 +44,7 @@ data class SpringContextPlatformServices(
     override val llmOperations: LlmOperations,
     override val eventListener: AgenticEventListener,
     override val operationScheduler: OperationScheduler,
+    override val agentProcessRepository: AgentProcessRepository,
     override val asyncer: Asyncer,
     override val objectMapper: ObjectMapper,
     override val outputChannel: OutputChannel,

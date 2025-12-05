@@ -15,9 +15,9 @@
  */
 package com.embabel.agent.spi.support
 
-import com.embabel.agent.spi.config.spring.ProcessRepositoryProperties
 import com.embabel.agent.core.AgentProcess
 import com.embabel.agent.spi.AgentProcessRepository
+import com.embabel.agent.spi.config.spring.ProcessRepositoryProperties
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -59,6 +59,10 @@ class InMemoryAgentProcessRepository(
         }
 
         agentProcess
+    }
+
+    override fun update(agentProcess: AgentProcess) {
+        // Nothing to do here as the reference is already updated in memory
     }
 
     override fun delete(agentProcess: AgentProcess) {
