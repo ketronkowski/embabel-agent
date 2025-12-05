@@ -47,6 +47,7 @@ class RagServiceSearchToolsTest {
 
         val mockChunk = mockk<Chunk>()
         every { mockChunk.text } returns "Test chunk content"
+        every { mockChunk.uri } returns null
         every { mockChunk.infoString(any(), any()) } returns "Test chunk info"
 
         val searchResults = listOf(
@@ -203,10 +204,12 @@ class RagServiceSearchToolsTest {
 
         val mockChunk1 = mockk<Chunk>()
         every { mockChunk1.text } returns "First chunk"
+        every { mockChunk1.uri } returns null
         every { mockChunk1.infoString(any(), any()) } returns "First chunk info"
 
         val mockChunk2 = mockk<Chunk>()
         every { mockChunk2.text } returns "Second chunk"
+        every { mockChunk2.uri } returns null
         every { mockChunk2.infoString(any(), any()) } returns "Second chunk info"
 
         val searchResults = listOf(
@@ -223,7 +226,7 @@ class RagServiceSearchToolsTest {
         assertTrue(result.contains("First chunk"))
         assertTrue(result.contains("0.85"))
         assertTrue(result.contains("Second chunk"))
-        assertTrue(result.contains("\n\n")) // Results should be separated by double newlines
+        assertTrue(result.contains("\n---\n")) // Results should be separated by ---
     }
 
     @Test

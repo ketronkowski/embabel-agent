@@ -46,7 +46,7 @@ object SimpleRagResponseFormatter : RagResponseFormatter {
         val results = similarityResults.results
         val header = "${results.size} results:"
 
-        val formattedResults = results.joinToString(separator = "\n\n") { result ->
+        val formattedResults = results.joinToString(separator = "\n---\n") { result ->
             val formattedScore = "%.2f".format(result.score)
 
             when (val match = result.match) {
@@ -55,7 +55,8 @@ object SimpleRagResponseFormatter : RagResponseFormatter {
                 }
 
                 is Chunk -> {
-                    "$formattedScore: ${match.text}"
+                    val urlHeader = match.uri?.let { "url: $it\n" } ?: ""
+                    "$urlHeader$formattedScore - ${match.text}"
                 }
 
                 is Fact -> {
