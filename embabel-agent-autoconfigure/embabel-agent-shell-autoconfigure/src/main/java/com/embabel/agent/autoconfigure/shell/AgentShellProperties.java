@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.embabel.agent.starter.shell;
+package com.embabel.agent.autoconfigure.shell;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
@@ -40,7 +40,7 @@ import javax.validation.constraints.Pattern;
  */
 @Validated
 @ConfigurationProperties(prefix = "embabel.agent.shell")
-public class AgentShellStarterProperties {
+public class AgentShellProperties {
 
     /**
      * Spring Boot web application type for shell mode.
