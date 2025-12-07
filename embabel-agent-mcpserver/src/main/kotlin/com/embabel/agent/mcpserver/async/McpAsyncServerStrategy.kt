@@ -20,6 +20,7 @@ import com.embabel.agent.mcpserver.ToolRegistry
 import com.embabel.agent.mcpserver.domain.McpExecutionMode
 import io.modelcontextprotocol.server.McpAsyncServer
 import io.modelcontextprotocol.server.McpServerFeatures
+import io.modelcontextprotocol.spec.McpSchema
 import org.slf4j.LoggerFactory
 import reactor.core.publisher.Mono
 
@@ -32,7 +33,7 @@ import reactor.core.publisher.Mono
  * @property server the asynchronous MCP server instance
  */
 class AsyncServerStrategy(
-    private val server: McpAsyncServer
+    private val server: McpAsyncServer,
 ) : McpServerStrategy {
 
     private val logger = LoggerFactory.getLogger(AsyncServerStrategy::class.java)
@@ -62,7 +63,17 @@ class AsyncServerStrategy(
      * @return a `Mono<Void>` indicating completion
      */
     override fun removeTool(toolName: String): Mono<Void> {
-        return server.removeTool(toolName)
+        val tools: List<McpSchema.Tool>? = server.listTools()
+            .collectList()
+            .block()
+
+        val targetTool = tools?.find { it.name == toolName }
+        return if (targetTool?.annotations != null) {
+            logger.debug("Tool '$toolName' has annotations; not removing it from the sync server.")
+            Mono.empty()
+        } else {
+            server.removeTool(toolName)  // return it directly if it's already a Mono
+        }
     }
 
     /**

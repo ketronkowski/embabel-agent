@@ -79,6 +79,7 @@ class AsyncServerStrategyTest {
     @Test
     fun `removeTool should call server removeTool`() {
         val toolName = "testTool"
+        every { mockAsyncServer.listTools() } returns reactor.core.publisher.Flux.empty()
         every { mockAsyncServer.removeTool(toolName) } returns Mono.empty()
 
         StepVerifier.create(strategy.removeTool(toolName))
@@ -170,6 +171,7 @@ class AsyncServerStrategyTest {
         every { mockAsyncServer.addTool(any()) } returns Mono.empty()
         every { mockAsyncServer.addResource(any()) } returns Mono.empty()
         every { mockAsyncServer.addPrompt(any()) } returns Mono.empty()
+        every { mockAsyncServer.listTools() } returns reactor.core.publisher.Flux.empty()
         every { mockAsyncServer.removeTool(any()) } returns Mono.empty()
 
         // Test that all operations complete without error
@@ -203,6 +205,7 @@ class AsyncServerStrategyTest {
         val toolName = "failingTool"
         val serverError = RuntimeException("Remove failed")
 
+        every { mockAsyncServer.listTools() } returns reactor.core.publisher.Flux.empty()
         every { mockAsyncServer.removeTool(toolName) } returns Mono.error(serverError)
 
         StepVerifier.create(strategy.removeTool(toolName))

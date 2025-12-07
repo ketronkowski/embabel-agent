@@ -98,6 +98,37 @@ public class WeatherAgent {
 }
 ----
 
+====== Exposing Tools on Spring Components in Spring AI style
+
+It is also possible to expose tools on Spring components as with regular Spring AI.
+
+For example:
+
+[source,java]
+----
+@Component
+public class CalculatorTools {
+
+    @McpTool(name = "add", description = "Add two numbers together")
+    public int add(
+            @McpToolParam(description = "First number", required = true) int a,
+            @McpToolParam(description = "Second number", required = true) int b) {
+        return a + b;
+    }
+
+    @McpTool(name = "multiply", description = "Multiply two numbers")
+    public double multiply(
+            @McpToolParam(description = "First number", required = true) double x,
+            @McpToolParam(description = "Second number", required = true) double y) {
+        return x * y;
+    }
+}
+----
+
+Of course, you can inject the Embabel `Ai` interface to help do the work of the tools if you wish, or invoke other agents from within the tool methods.
+
+For further information, see the https://docs.spring.io/spring-ai/reference/api/mcp/mcp-annotations-overview.html[Spring AI MCP Annotations Reference].
+
 ====== Server Architecture
 
 The MCP server implementation uses several design patterns:

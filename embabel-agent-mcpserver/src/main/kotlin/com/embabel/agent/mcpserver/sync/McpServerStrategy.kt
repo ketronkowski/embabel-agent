@@ -32,7 +32,7 @@ import reactor.core.publisher.Mono
  * @property server the underlying MCP sync server instance
  */
 class SyncServerStrategy(
-    private val server: McpSyncServer
+    private val server: McpSyncServer,
 ) : McpServerStrategy {
 
     private val logger = LoggerFactory.getLogger(SyncServerStrategy::class.java)
@@ -65,8 +65,16 @@ class SyncServerStrategy(
      * @return a [Mono] signaling completion
      */
     override fun removeTool(toolName: String): Mono<Void> {
-        return Mono.fromRunnable {
-            server.removeTool(toolName)
+        val targetTool = server.listTools().find { it.name == toolName }
+        return if (targetTool?.annotations != null) {
+            // If it's one of our annotated tools, don't remove it
+            // It was probably authored by a user
+            logger.debug("Tool '$toolName' has annotations; not removing it from the sync server.")
+            Mono.empty()
+        } else {
+            Mono.fromRunnable {
+                server.removeTool(toolName)
+            }
         }
     }
 
