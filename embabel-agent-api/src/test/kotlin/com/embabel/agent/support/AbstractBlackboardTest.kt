@@ -17,9 +17,8 @@ package com.embabel.agent.support
 
 import com.embabel.agent.api.annotation.support.PersonWithReverseTool
 import com.embabel.agent.core.Blackboard
-import com.embabel.agent.core.DataDictionaryImpl
+import com.embabel.agent.core.DataDictionary
 import com.embabel.agent.core.IoBinding
-import com.embabel.agent.core.JvmType
 import com.embabel.agent.domain.io.UserInput
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
@@ -49,12 +48,10 @@ abstract class AbstractBlackboardTest {
                 bb.getValue(
                     IoBinding.DEFAULT_BINDING,
                     "AllOfTheAbove",
-                    DataDictionaryImpl(
-                        listOf(
-                            AllOfTheAbove::class.java,
-                            UserInput::class.java,
-                            PersonWithReverseTool::class.java
-                        ).map { JvmType(it) },
+                    DataDictionary.fromClasses(
+                        AllOfTheAbove::class.java,
+                        UserInput::class.java,
+                        PersonWithReverseTool::class.java
                     )
                 )
             )
@@ -69,7 +66,7 @@ abstract class AbstractBlackboardTest {
                     IoBinding.DEFAULT_BINDING,
                     "AllOfTheAbove",
 
-                    DataDictionaryImpl(
+                    DataDictionary.fromClasses(
                         AllOfTheAbove::class.java,
                         UserInput::class.java,
                         PersonWithReverseTool::class.java
@@ -86,7 +83,11 @@ abstract class AbstractBlackboardTest {
             val aota = bb.getValue(
                 IoBinding.DEFAULT_BINDING,
                 "AllOfTheAbove",
-                DataDictionaryImpl(AllOfTheAbove::class.java, UserInput::class.java, PersonWithReverseTool::class.java),
+                DataDictionary.fromClasses(
+                    AllOfTheAbove::class.java,
+                    UserInput::class.java,
+                    PersonWithReverseTool::class.java
+                ),
             )
             assertNotNull(aota)
             aota as AllOfTheAbove
@@ -103,7 +104,13 @@ abstract class AbstractBlackboardTest {
         @Test
         fun `empty blackboard, no domain objects`() {
             val bb = createBlackboard()
-            assertNull(bb.getValue(IoBinding.DEFAULT_BINDING, "Person", DataDictionaryImpl()))
+            assertNull(
+                bb.getValue(
+                    IoBinding.DEFAULT_BINDING,
+                    "Person",
+                    DataDictionary.fromClasses()
+                )
+            )
         }
 
         @Test
@@ -113,7 +120,7 @@ abstract class AbstractBlackboardTest {
                 bb.getValue(
                     IoBinding.DEFAULT_BINDING,
                     "Person",
-                    DataDictionaryImpl(PersonWithReverseTool::class.java)
+                    DataDictionary.fromClasses(PersonWithReverseTool::class.java)
                 )
             )
         }
@@ -128,7 +135,7 @@ abstract class AbstractBlackboardTest {
                 bb.getValue(
                     IoBinding.DEFAULT_BINDING,
                     PersonWithReverseTool::class.java.simpleName,
-                    DataDictionaryImpl(PersonWithReverseTool::class.java)
+                    DataDictionary.fromClasses(PersonWithReverseTool::class.java)
                 )
             )
         }
@@ -138,7 +145,14 @@ abstract class AbstractBlackboardTest {
             val bb = createBlackboard()
             val duke = Dog("Duke")
             bb += duke
-            assertEquals(duke, bb.getValue(IoBinding.DEFAULT_BINDING, "Dog", DataDictionaryImpl(Dog::class.java)))
+            assertEquals(
+                duke,
+                bb.getValue(
+                    IoBinding.DEFAULT_BINDING,
+                    "Dog",
+                    DataDictionary.fromClasses(Dog::class.java),
+                )
+            )
         }
 
 
@@ -147,7 +161,13 @@ abstract class AbstractBlackboardTest {
             val bb = createBlackboard()
             val duke = Dog("Duke")
             bb += duke
-            assertEquals(duke, bb.getValue(IoBinding.DEFAULT_BINDING, "Organism", DataDictionaryImpl(Dog::class.java)))
+            assertEquals(
+                duke, bb.getValue(
+                    IoBinding.DEFAULT_BINDING,
+                    "Organism",
+                    DataDictionary.fromClasses(Dog::class.java)
+                )
+            )
         }
 
         @Test
@@ -155,7 +175,13 @@ abstract class AbstractBlackboardTest {
             val bb = createBlackboard()
             val duke = Dog("Duke")
             bb += duke
-            assertEquals(duke, bb.getValue(IoBinding.DEFAULT_BINDING, "Animal", DataDictionaryImpl(Dog::class.java)))
+            assertEquals(
+                duke, bb.getValue(
+                    IoBinding.DEFAULT_BINDING,
+                    "Animal",
+                    DataDictionary.fromClasses(Dog::class.java)
+                )
+            )
         }
 
         @Test
@@ -167,7 +193,7 @@ abstract class AbstractBlackboardTest {
                 bb.getValue(
                     "person",
                     "Point",
-                    DataDictionaryImpl(PersonWithReverseTool::class.java, Point::class.java)
+                    DataDictionary.fromClasses(PersonWithReverseTool::class.java, Point::class.java)
                 )
             )
         }
@@ -189,7 +215,7 @@ abstract class AbstractBlackboardTest {
                 bb.getValue(
                     IoBinding.DEFAULT_BINDING,
                     PersonWithReverseTool::class.java.simpleName,
-                    DataDictionaryImpl(PersonWithReverseTool::class.java)
+                    DataDictionary.fromClasses(PersonWithReverseTool::class.java)
                 )
             )
 
@@ -201,7 +227,7 @@ abstract class AbstractBlackboardTest {
                 bb.getValue(
                     IoBinding.DEFAULT_BINDING,
                     PersonWithReverseTool::class.java.simpleName,
-                    DataDictionaryImpl(PersonWithReverseTool::class.java)
+                    DataDictionary.fromClasses(PersonWithReverseTool::class.java)
                 )
             )
         }
@@ -213,13 +239,25 @@ abstract class AbstractBlackboardTest {
             bb += duke
 
             // Verify retrieval works before hiding
-            assertEquals(duke, bb.getValue(IoBinding.DEFAULT_BINDING, "Dog", DataDictionaryImpl(Dog::class.java)))
+            assertEquals(
+                duke, bb.getValue(
+                    IoBinding.DEFAULT_BINDING,
+                    "Dog",
+                    DataDictionary.fromClasses(Dog::class.java)
+                )
+            )
 
             // Hide the object
             bb.hide(duke)
 
             // Verify retrieval fails after hiding
-            assertNull(bb.getValue(IoBinding.DEFAULT_BINDING, "Dog", DataDictionaryImpl(Dog::class.java)))
+            assertNull(
+                bb.getValue(
+                    IoBinding.DEFAULT_BINDING,
+                    "Dog",
+                    DataDictionary.fromClasses(Dog::class.java)
+                )
+            )
         }
 
         @Test
@@ -237,7 +275,7 @@ abstract class AbstractBlackboardTest {
             val retrieved = bb.getValue(
                 IoBinding.DEFAULT_BINDING,
                 PersonWithReverseTool::class.java.simpleName,
-                DataDictionaryImpl(PersonWithReverseTool::class.java)
+                DataDictionary.fromClasses(PersonWithReverseTool::class.java)
             )
             assertNotNull(retrieved)
             assertEquals(jane, retrieved)
@@ -258,7 +296,13 @@ abstract class AbstractBlackboardTest {
             bb.hide(rex)
 
             // Dogs should not be retrievable
-            assertNull(bb.getValue(IoBinding.DEFAULT_BINDING, "Dog", DataDictionaryImpl(Dog::class.java)))
+            assertNull(
+                bb.getValue(
+                    IoBinding.DEFAULT_BINDING,
+                    "Dog",
+                    DataDictionary.fromClasses(Dog::class.java)
+                )
+            )
 
             // Person should still be retrievable
             assertEquals(
@@ -266,7 +310,7 @@ abstract class AbstractBlackboardTest {
                 bb.getValue(
                     IoBinding.DEFAULT_BINDING,
                     PersonWithReverseTool::class.java.simpleName,
-                    DataDictionaryImpl(PersonWithReverseTool::class.java)
+                    DataDictionary.fromClasses(PersonWithReverseTool::class.java)
                 )
             )
         }
@@ -283,7 +327,11 @@ abstract class AbstractBlackboardTest {
             val aotaBefore = bb.getValue(
                 IoBinding.DEFAULT_BINDING,
                 "AllOfTheAbove",
-                DataDictionaryImpl(AllOfTheAbove::class.java, UserInput::class.java, PersonWithReverseTool::class.java),
+                DataDictionary.fromClasses(
+                    AllOfTheAbove::class.java,
+                    UserInput::class.java,
+                    PersonWithReverseTool::class.java
+                ),
             )
             assertNotNull(aotaBefore)
 
@@ -295,7 +343,11 @@ abstract class AbstractBlackboardTest {
             val aotaAfter = bb.getValue(
                 IoBinding.DEFAULT_BINDING,
                 "AllOfTheAbove",
-                DataDictionaryImpl(AllOfTheAbove::class.java, UserInput::class.java, PersonWithReverseTool::class.java),
+                DataDictionary.fromClasses(
+                    AllOfTheAbove::class.java,
+                    UserInput::class.java,
+                    PersonWithReverseTool::class.java
+                ),
             )
             assertNotNull(aotaAfter)
         }
@@ -313,7 +365,7 @@ abstract class AbstractBlackboardTest {
                 bb.getValue(
                     IoBinding.DEFAULT_BINDING,
                     PersonWithReverseTool::class.java.simpleName,
-                    DataDictionaryImpl(PersonWithReverseTool::class.java)
+                    DataDictionary.fromClasses(PersonWithReverseTool::class.java)
                 )
             )
         }
@@ -334,7 +386,7 @@ abstract class AbstractBlackboardTest {
                 bb.getValue(
                     IoBinding.DEFAULT_BINDING,
                     PersonWithReverseTool::class.java.simpleName,
-                    DataDictionaryImpl(PersonWithReverseTool::class.java)
+                    DataDictionary.fromClasses(PersonWithReverseTool::class.java)
                 )
             )
         }

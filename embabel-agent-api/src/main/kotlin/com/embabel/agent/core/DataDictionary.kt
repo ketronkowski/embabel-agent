@@ -82,13 +82,25 @@ interface DataDictionary {
         }
     }
 
+    companion object {
+
+        @JvmStatic
+        fun fromDomainTypes(
+            domainTypes: Collection<DomainType>,
+        ): DataDictionary {
+            return DataDictionaryImpl(domainTypes)
+        }
+
+        @JvmStatic
+        fun fromClasses(
+            vararg embabelTypes: Class<*>,
+        ): DataDictionary {
+            return fromDomainTypes(embabelTypes.map { JvmType(it) })
+        }
+    }
+
 }
 
-class DataDictionaryImpl(
+private class DataDictionaryImpl(
     override val domainTypes: Collection<DomainType>,
-) : DataDictionary {
-
-    constructor (
-        vararg embabelTypes: Class<*>,
-    ) : this(embabelTypes.map { JvmType(it) })
-}
+) : DataDictionary

@@ -155,7 +155,7 @@ class BlackboardWorldStateDeterminerTest {
             blackboard.getValue(
                 firstArg(),
                 secondArg(),
-                DataDictionaryImpl(
+                DataDictionary.fromClasses(
                     *blackboard.objects.map { it.javaClass }.toTypedArray()
                 ),
             )
@@ -327,7 +327,9 @@ class BlackboardWorldStateDeterminerTest {
             every { mockAgentProcess.infoString(any()) } returns ""
             every { mockAgentProcess.getValue(any(), any()) } answers {
                 blackboard.getValue(
-                    firstArg(), secondArg(), DataDictionaryImpl(
+                    firstArg(),
+                    secondArg(),
+                    DataDictionary.fromClasses(
                         *blackboard.objects.map { it.javaClass }.toTypedArray()
                     )
                 )
