@@ -98,6 +98,36 @@ public class WeatherAgent {
 }
 ----
 
+====== Exposing Embabel `ToolObject` and `LlmReference` types as tools
+
+A common requirement is to expose existing Embabel functionality via MCP.
+For example, an `LlmReference` might be added to a `PromptRunner` but might also be used as an external tool via MCP.
+
+To do this, use `McpToolExport` to create a bean of type `McpToolExportCallbackPublisher`.
+
+For example, to expose a `ToolishRag` LLM reference as an MCP tool, define a Spring configuration class as follows:
+
+[source,java]
+----
+@Configuration
+public class RagMcpTools {
+
+    @Bean
+    McpToolExportCallbackPublisher ragTools( // <1>
+            SearchOperations searchOperations) {
+        var toolishRag = new ToolishRag(
+                "docs",
+                "Embabel docs",
+                searchOperations
+        );
+        return McpToolExport.fromLlmReference(toolishRag); // <2>
+    }
+}
+----
+
+<1> Your bean should be of type `McpToolExportCallbackPublisher`
+<2> Use `McpToolExport.fromLlmReference` to return the instance
+
 ====== Exposing Tools on Spring Components in Spring AI style
 
 It is also possible to expose tools on Spring components as with regular Spring AI.

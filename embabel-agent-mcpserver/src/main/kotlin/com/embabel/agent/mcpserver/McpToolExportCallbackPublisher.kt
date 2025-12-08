@@ -21,6 +21,5 @@ import com.embabel.common.core.types.HasInfoString
 /**
  * Tag interface extending Spring AI ToolCallbackProvider
  * that identifies tool callbacks that our MCP server exposes.
- * Will only export tools with Export(remote = true) defined.
  */
 interface McpToolExportCallbackPublisher : ToolCallbackPublisher, HasInfoString
