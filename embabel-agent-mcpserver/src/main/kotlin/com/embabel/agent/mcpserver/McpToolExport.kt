@@ -17,6 +17,7 @@ package com.embabel.agent.mcpserver
 
 import com.embabel.agent.api.common.LlmReference
 import com.embabel.agent.api.common.ToolObject
+import com.embabel.agent.core.support.safelyGetToolCallbacks
 import com.embabel.agent.core.support.safelyGetToolCallbacksFrom
 import org.springframework.ai.tool.ToolCallback
 
@@ -37,6 +38,13 @@ interface McpToolExport : McpExportToolCallbackPublisher {
             )
         }
 
+        @JvmStatic
+        fun fromToolObjects(toolObjects: List<ToolObject>): McpToolExport {
+            return McpToolExportImpl(
+                toolCallbacks = safelyGetToolCallbacks(toolObjects),
+            )
+        }
+
         /**
          * Export the tools on this LlmReference.
          * Note that the LlmReference prompt elements won't be exported,
@@ -46,6 +54,14 @@ interface McpToolExport : McpExportToolCallbackPublisher {
         @JvmStatic
         fun fromLlmReference(llmReference: LlmReference): McpToolExport {
             return fromToolObject(llmReference.toolObject())
+        }
+
+        /**
+         * Convenience method to export tools from multiple LlmReferences.
+         */
+        @JvmStatic
+        fun fromLlmReferences(llmReferences: List<LlmReference>): McpToolExport {
+            return fromToolObjects(llmReferences.map { it.toolObject() })
         }
     }
 }
