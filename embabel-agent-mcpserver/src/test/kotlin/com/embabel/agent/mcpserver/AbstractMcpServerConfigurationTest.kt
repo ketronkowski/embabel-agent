@@ -216,8 +216,8 @@ class AbstractMcpServerConfigurationTest {
 
         override fun createBannerTool(): ToolCallbackProvider = mockk()
 
-        override fun getToolPublishers(): List<McpToolExportCallbackPublisher> {
-            val mockPublisher = mockk<McpToolExportCallbackPublisher>()
+        override fun getToolPublishers(): List<McpExportToolCallbackPublisher> {
+            val mockPublisher = mockk<McpExportToolCallbackPublisher>()
             // Convert Any callbacks to ToolCallback with proper casting
             @Suppress("UNCHECKED_CAST")
             val toolCallbacks = mockToolCallbacks as List<org.springframework.ai.tool.ToolCallback>

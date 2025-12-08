@@ -20,7 +20,7 @@ import com.embabel.agent.api.event.AgentProcessEvent
 import com.embabel.agent.api.event.AgenticEventListener
 import com.embabel.agent.api.event.ObjectAddedEvent
 import com.embabel.agent.api.event.ObjectBoundEvent
-import com.embabel.agent.mcpserver.McpToolExportCallbackPublisher
+import com.embabel.agent.mcpserver.McpExportToolCallbackPublisher
 import com.embabel.agent.tools.agent.GoalToolCallback
 import com.embabel.agent.tools.agent.PerGoalToolCallbackFactory
 import com.embabel.agent.tools.agent.PromptedTextCommunicator
@@ -36,7 +36,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Service
 
 /**
- * Implementation of [McpToolExportCallbackPublisher] that delegates to
+ * Implementation of [McpExportToolCallbackPublisher] that delegates to
  * a [PerGoalToolCallbackFactory].
  */
 @Service
@@ -45,11 +45,11 @@ import org.springframework.stereotype.Service
     havingValue = "SYNC",
     matchIfMissing = true,
 )
-class PerGoalMcpToolExportCallbackPublisher(
+class PerGoalMcpExportToolCallbackPublisher(
     autonomy: Autonomy,
     private val mcpSyncServer: McpSyncServer,
     @Value("\${spring.application.name:agent-api}") applicationName: String,
-) : McpToolExportCallbackPublisher {
+) : McpExportToolCallbackPublisher {
 
     private val perGoalToolCallbackFactory = PerGoalToolCallbackFactory(
         autonomy = autonomy,

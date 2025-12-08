@@ -24,33 +24,35 @@ import org.springframework.ai.tool.ToolCallback
  * Convenient way to programmatically export MCP tools
  * from Embabel ToolObject or LlmReference.
  */
-object McpToolExport {
+interface McpToolExport : McpExportToolCallbackPublisher {
 
-    /**
-     * Export the tools on this ToolObject.
-     */
-    @JvmStatic
-    fun fromToolObject(toolObject: ToolObject): McpToolExportCallbackPublisher {
-        return McpToolExportCallbackPublisherImpl(
-            toolCallbacks = safelyGetToolCallbacksFrom(toolObject),
-        )
-    }
+    companion object {
+        /**
+         * Export the tools on this ToolObject.
+         */
+        @JvmStatic
+        fun fromToolObject(toolObject: ToolObject): McpToolExport {
+            return McpToolExportImpl(
+                toolCallbacks = safelyGetToolCallbacksFrom(toolObject),
+            )
+        }
 
-    /**
-     * Export the tools on this LlmReference.
-     * Note that the LlmReference prompt elements won't be exported,
-     * so you will need to consider that when prompting downstream
-     * LLMs to use the exported tools.
-     */
-    @JvmStatic
-    fun fromLlmReference(llmReference: LlmReference): McpToolExportCallbackPublisher {
-        return fromToolObject(llmReference.toolObject())
+        /**
+         * Export the tools on this LlmReference.
+         * Note that the LlmReference prompt elements won't be exported,
+         * so you will need to consider that when prompting downstream
+         * LLMs to use the exported tools.
+         */
+        @JvmStatic
+        fun fromLlmReference(llmReference: LlmReference): McpToolExport {
+            return fromToolObject(llmReference.toolObject())
+        }
     }
 }
 
-private class McpToolExportCallbackPublisherImpl(
+private class McpToolExportImpl(
     override val toolCallbacks: List<ToolCallback>,
-) : McpToolExportCallbackPublisher {
+) : McpToolExport {
     override fun infoString(
         verbose: Boolean?,
         indent: Int,

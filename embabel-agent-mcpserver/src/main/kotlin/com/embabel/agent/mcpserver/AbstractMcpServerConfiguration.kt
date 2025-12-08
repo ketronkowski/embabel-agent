@@ -218,9 +218,9 @@ abstract class AbstractMcpServerConfiguration(
     /**
      * Retrieves all tool publishers registered in the application context.
      *
-     * @return a list of [McpToolExportCallbackPublisher] beans
+     * @return a list of [McpExportToolCallbackPublisher] beans
      */
-    abstract fun getToolPublishers(): List<McpToolExportCallbackPublisher>
+    abstract fun getToolPublishers(): List<McpExportToolCallbackPublisher>
 
     /**
      * Retrieves all resource publishers registered in the application context.

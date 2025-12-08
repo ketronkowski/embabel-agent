@@ -36,7 +36,7 @@ import org.springframework.core.type.AnnotatedTypeMetadata
 class McpAsyncServerCondition : Condition {
     override fun matches(
         context: ConditionContext,
-        metadata: AnnotatedTypeMetadata
+        metadata: AnnotatedTypeMetadata,
     ): Boolean {
         val environment = context.environment
         val type = environment.getProperty("spring.ai.mcp.server.type", "SYNC")
@@ -97,8 +97,8 @@ class McpAsyncServerConfiguration(
      *
      * @return a list of `McpToolExportCallbackPublisher` instances
      */
-    override fun getToolPublishers(): List<McpToolExportCallbackPublisher> {
-        return applicationContext.getBeansOfType(McpToolExportCallbackPublisher::class.java).values.toList()
+    override fun getToolPublishers(): List<McpExportToolCallbackPublisher> {
+        return applicationContext.getBeansOfType(McpExportToolCallbackPublisher::class.java).values.toList()
     }
 
     /**

@@ -113,7 +113,7 @@ For example, to expose a `ToolishRag` LLM reference as an MCP tool, define a Spr
 public class RagMcpTools {
 
     @Bean
-    McpToolExportCallbackPublisher ragTools( // <1>
+    McpToolExport ragTools( // <1>
             SearchOperations searchOperations) {
         var toolishRag = new ToolishRag(
                 "docs",
@@ -125,7 +125,7 @@ public class RagMcpTools {
 }
 ----
 
-<1> Your bean should be of type `McpToolExportCallbackPublisher`
+<1> Your bean should be of type `McpToolExport`
 <2> Use `McpToolExport.fromLlmReference` to return the instance
 
 ====== Exposing Tools on Spring Components in Spring AI style
