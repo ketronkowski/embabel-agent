@@ -29,7 +29,7 @@ import org.springframework.lang.NonNull;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.Random;
+import java.util.concurrent.atomic.AtomicInteger;
 
 abstract class Personas {
     static final RoleGoalBackstory WRITER = RoleGoalBackstory
@@ -87,6 +87,12 @@ public class WriteAndReviewAgent {
 
     private final int storyWordCount;
     private final int reviewWordCount;
+    // Counter for deterministic assessment: first call rejects, second accepts
+    private static final AtomicInteger assessmentCount = new AtomicInteger(0);
+
+    static void resetAssessmentCount() {
+        assessmentCount.set(0);
+    }
 
     WriteAndReviewAgent(
             @Value("${storyWordCount:100}") int storyWordCount,
@@ -103,11 +109,7 @@ public class WriteAndReviewAgent {
     @Action
     AssessStory craftStory(UserInput userInput, Ai ai) {
         var draft = ai
-                // Higher temperature for more creative output
-                .withLlm(LlmOptions
-                        .withAutoLlm() // You can also choose a specific model or role here
-                        .withTemperature(.7)
-                )
+                .withDefaultLlm()
                 .withPromptContributor(Personas.WRITER)
                 .createObject(String.format("""
                                 Craft a short story in %d words or less.
@@ -139,9 +141,10 @@ public class WriteAndReviewAgent {
 
         @Action
         Stage assess(HumanFeedback feedback, Ai ai) {
-            var assessment = new Assessment(new Random().nextDouble() < .7);
+            // First assessment rejects (count=0), subsequent assessments accept
+            var assessment = new Assessment(assessmentCount.getAndIncrement() > 0);
             if (assessment.acceptable) {
-                return new Done(story);
+                return new Done(userInput, story);
             } else {
                 return new ReviseStory(userInput, story, feedback);
             }
@@ -185,13 +188,13 @@ public class WriteAndReviewAgent {
     }
 
     @State
-    record Done(Story story) implements Stage {
+    record Done(UserInput userInput, Story story) implements Stage {
 
         @AchievesGoal(
                 description = "The story has been crafted and reviewed by a book reviewer",
                 export = @Export(remote = true, name = "writeAndReviewStory"))
         @Action
-        ReviewedStory reviewStory(UserInput userInput, Ai ai) {
+        ReviewedStory reviewStory(Ai ai) {
             var review = ai
                     .withAutoLlm()
                     .withPromptContributor(Personas.REVIEWER)

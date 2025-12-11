@@ -19,6 +19,7 @@ import com.embabel.agent.api.common.Aggregation
 import com.embabel.common.core.types.HasInfoString
 import com.embabel.common.util.findAllSupertypes
 import com.embabel.common.util.loggerFor
+import org.jetbrains.annotations.ApiStatus
 import org.springframework.core.KotlinDetector
 import java.lang.reflect.Constructor
 import java.lang.reflect.ParameterizedType
@@ -260,6 +261,12 @@ interface Blackboard : Bindable, MayHaveLastResult, HasInfoString {
      * Prefer more strongly typed usage patterns
      */
     fun expressionEvaluationModel(): Map<String, Any>
+
+    /**
+     * Clear all entries from the blackboard.
+     */
+    @ApiStatus.Internal
+    fun clear()
 
 }
 

@@ -16,13 +16,9 @@
 package com.embabel.agent.api.annotation.support.state;
 
 import com.embabel.agent.api.annotation.support.AgentMetadataReader;
-import com.embabel.agent.core.Agent;
-import com.embabel.agent.core.AgentProcess;
-import com.embabel.agent.core.AgentProcessStatusCode;
-import com.embabel.agent.core.ProcessOptions;
+import com.embabel.agent.core.*;
 import com.embabel.agent.domain.io.UserInput;
 import com.embabel.agent.test.integration.IntegrationTestUtils;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -77,11 +73,13 @@ class WriteAndReviewAgentTest {
     }
 
     @Nested
-    @Disabled
     class Execution {
 
         @Test
-        void executesWriteAndReviewFlow() {
+        void executesWriteAndReviewFlowWithLoop() {
+            // Reset counter so first assessment rejects, second accepts
+            WriteAndReviewAgent.resetAssessmentCount();
+
             var reader = new AgentMetadataReader();
             var metadata = reader.createAgentMetadata(new WriteAndReviewAgent(100, 100));
             assertNotNull(metadata);
@@ -89,12 +87,15 @@ class WriteAndReviewAgentTest {
             var ap = IntegrationTestUtils.dummyAgentPlatform();
             AgentProcess agentProcess = ap.runAgentFrom(
                     (Agent) metadata,
-                    new ProcessOptions(),
+                    new ProcessOptions().withVerbosity(
+                            Verbosity.DEFAULT.showPlanning()
+                    ),
                     Map.of("it", new UserInput("Write a story about a dragon"))
             );
             System.out.println("Status: " + agentProcess.getStatus());
-            System.out.println("History: " + agentProcess.getHistory().stream()
-                    .map(h -> h.getActionName()).toList());
+            var history = agentProcess.getHistory().stream()
+                    .map(ActionInvocation::getActionName).toList();
+            System.out.println("History: " + history);
             System.out.println("Last world state: " + agentProcess.getLastWorldState());
             System.out.println("Blackboard: " + agentProcess.infoString(true, 0));
             assertEquals(
@@ -102,6 +103,12 @@ class WriteAndReviewAgentTest {
                     agentProcess.getStatus(),
                     "Agent should complete successfully"
             );
+            // Verify the flow went through revision loop:
+            // craftStory -> getFeedback -> assess (rejects) -> reviseStory -> getFeedback -> assess (accepts) -> reviewStory
+            assertTrue(history.contains("ReviseStory.reviseStory"),
+                    "Should have gone through revision loop: " + history);
+            assertEquals("Done.reviewStory", history.get(history.size() - 1),
+                    "Should end with reviewStory: " + history);
         }
     }
 }

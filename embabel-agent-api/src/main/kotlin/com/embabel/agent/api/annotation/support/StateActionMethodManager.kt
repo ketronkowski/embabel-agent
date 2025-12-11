@@ -16,7 +16,6 @@
 package com.embabel.agent.api.annotation.support
 
 import com.embabel.agent.api.annotation.Action
-import com.embabel.agent.api.annotation.RequireNameMatch
 import com.embabel.agent.api.common.TransformationActionContext
 import com.embabel.agent.api.common.support.MultiTransformationAction
 import com.embabel.agent.core.IoBinding
@@ -25,7 +24,6 @@ import org.slf4j.LoggerFactory
 import org.springframework.ai.tool.ToolCallback
 import org.springframework.core.KotlinDetector
 import org.springframework.util.ReflectionUtils
-import java.lang.reflect.Constructor
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import kotlin.reflect.KClass
@@ -75,7 +73,10 @@ internal class StateActionMethodManager(
             description = actionAnnotation.description.ifBlank { method.name },
             cost = { actionAnnotation.cost },
             inputs = allInputs.toSet(),
-            canRerun = actionAnnotation.canRerun,
+            // State actions use canRerun=true because state transitions clear the blackboard,
+            // which resets type-based preconditions. This avoids hasRun blocking re-entry
+            // into states during loops. Type preconditions prevent inappropriate re-runs.
+            canRerun = true,
             pre = actionAnnotation.pre.toList(),
             post = actionAnnotation.post.toList(),
             inputClasses = inputClasses + stateClass,
@@ -124,6 +125,7 @@ internal class StateActionMethodManager(
         ) ?: throw IllegalStateException(
             "State instance of type ${stateClass.name} not found in blackboard"
         )
+        // TODO Arjen to review
         val result = if (KotlinDetector.isKotlinReflectPresent()) {
             val kFunction = method.kotlinFunction
             if (kFunction != null) invokeStateActionMethodKotlinReflect(method, kFunction, stateInstance, actionContext)

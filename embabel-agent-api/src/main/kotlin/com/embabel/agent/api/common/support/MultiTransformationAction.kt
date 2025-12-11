@@ -15,6 +15,7 @@
  */
 package com.embabel.agent.api.common.support
 
+import com.embabel.agent.api.annotation.State
 import com.embabel.agent.api.common.SomeOf
 import com.embabel.agent.api.common.Transformation
 import com.embabel.agent.api.common.TransformationActionContext
@@ -76,6 +77,11 @@ class MultiTransformationAction<O : Any>(
                 action = this,
             )
         )
+        if (output?.javaClass?.isAnnotationPresent(State::class.java) == true) {
+            // Clear blackboard as we want only the state class itself in it
+            // This facilitates looping and also increases efficiency
+            processContext.blackboard.clear()
+        }
         if (output != null && !(output is Unit || output::class.java == Void::class.java)) {
             bindOutput(processContext, output)
         }
