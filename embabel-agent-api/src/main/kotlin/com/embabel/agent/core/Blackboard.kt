@@ -264,6 +264,7 @@ interface Blackboard : Bindable, MayHaveLastResult, HasInfoString {
 
     /**
      * Clear all entries from the blackboard.
+     * Not intended for use in user code.
      */
     @ApiStatus.Internal
     fun clear()
