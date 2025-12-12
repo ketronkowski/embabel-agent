@@ -73,8 +73,20 @@ abstract class AbstractAction(
                 conditions[input.value] = ConditionDetermination(true)
             }
             if (!canRerun) {
-                outputs.filter {
-                    !inputs.contains(it)
+                outputs.filter { output ->
+                    // Skip if output is already in inputs
+                    if (inputs.contains(output)) return@filter false
+                    // Skip if any input is a subtype of this output
+                    // (e.g., input AssessStory implements output Stage)
+                    val outputType = output.resolveJvmType()
+                    if (outputType != null) {
+                        val hasSubtypeInput = inputs.any { input ->
+                            val inputType = input.resolveJvmType()
+                            inputType != null && outputType.isAssignableFrom(inputType)
+                        }
+                        if (hasSubtypeInput) return@filter false
+                    }
+                    true
                 }.forEach { output ->
                     conditions[output.value] = ConditionDetermination(false)
                 }
@@ -93,8 +105,10 @@ abstract class AbstractAction(
                     conditions[output.value] = ConditionDetermination(true)
                 } else {
                     // We have a JVM type. We need to look for subclasses
-                    // because these are also possible outputs and hence postconditions
-                    val possibleOutputTypes = jvmType.children() + jvmType
+                    // because these are also possible outputs and hence postconditions.
+                    // We also include parent types (supertypes) because if we produce AssessStory,
+                    // we also effectively produce Stage (its parent interface).
+                    val possibleOutputTypes = jvmType.children() + jvmType + jvmType.parents
                     possibleOutputTypes.forEach { pot ->
                         conditions["${output.name}:${pot.name}"] = ConditionDetermination(true)
                     }

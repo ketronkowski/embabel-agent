@@ -15,6 +15,7 @@
  */
 package com.embabel.agent.api.common.support
 
+import com.embabel.agent.api.annotation.State
 import com.embabel.agent.api.common.SomeOf
 import com.embabel.agent.api.common.Transformation
 import com.embabel.agent.api.common.TransformationActionContext
@@ -25,6 +26,8 @@ import com.embabel.plan.CostComputation
 /**
  * Transformer that can take multiple inputs.
  * The block takes a List<Any>.
+ * Used from within ActionMethodManager to support methods with multiple parameters.
+ * Handles @State returns
  */
 class MultiTransformationAction<O : Any>(
     name: String,
@@ -76,6 +79,16 @@ class MultiTransformationAction<O : Any>(
                 action = this,
             )
         )
+        if (output?.javaClass?.isAnnotationPresent(State::class.java) == true) {
+            // Clear blackboard as we want only the state class itself in it
+            // This facilitates looping and also increases efficiency
+            logger.info(
+                "Action {} returned @State class {}: clearing blackboard and binding only the state instance",
+                name,
+                output::class.java.name,
+            )
+            processContext.blackboard.clear()
+        }
         if (output != null && !(output is Unit || output::class.java == Void::class.java)) {
             bindOutput(processContext, output)
         }

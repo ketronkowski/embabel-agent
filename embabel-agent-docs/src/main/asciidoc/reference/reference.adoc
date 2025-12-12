@@ -19,6 +19,10 @@ include::agent-platform/page.adoc[]
 
 include::invoking/page.adoc[]
 
+include::states/page.adoc[]
+
+include::planners/page.adoc[]
+
 include::api-spi/page.adoc[]
 
 include::spring/page.adoc[]

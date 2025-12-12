@@ -43,6 +43,14 @@ class InMemoryBlackboard(
         }
     }
 
+    override fun clear() {
+        _map.clear()
+        synchronized(_entries) {
+            _entries.clear()
+        }
+        hiddens.clear()
+    }
+
     override fun hide(what: Any) {
         hiddens += what
     }

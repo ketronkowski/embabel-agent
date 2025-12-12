@@ -15,16 +15,15 @@
  */
 package com.embabel.agent.api.annotation.support
 
-import com.embabel.agent.api.annotation.AwaitableResponseException
+import com.embabel.agent.api.annotation.AchievesGoal
+import com.embabel.agent.api.annotation.Action
 import com.embabel.agent.api.common.TransformationActionContext
 import com.embabel.agent.api.common.support.MultiTransformationAction
-import com.embabel.agent.core.Action
 import com.embabel.agent.core.IoBinding
 import com.embabel.agent.core.ToolGroupRequirement
 import org.slf4j.LoggerFactory
 import org.springframework.ai.tool.ToolCallback
 import org.springframework.core.KotlinDetector
-import org.springframework.stereotype.Component
 import org.springframework.util.ReflectionUtils
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
@@ -33,72 +32,72 @@ import kotlin.reflect.KFunction
 import kotlin.reflect.full.valueParameters
 import kotlin.reflect.jvm.isAccessible
 import kotlin.reflect.jvm.kotlinFunction
+import com.embabel.agent.core.Action as CoreAction
 
 /**
- * Implementation that creates dummy instances of domain objects to discover tools,
- * before re-reading the tool callbacks from the actual domain object instances at invocation time.
+ * Creates actions from methods defined in @State classes.
+ * Unlike the regular ActionMethodManager, this one handles instantiating the state class
+ * from the blackboard at runtime.
  */
-@Component
-internal class DefaultActionMethodManager(
-    val nameGenerator: MethodDefinedOperationNameGenerator = MethodDefinedOperationNameGenerator(),
-    override val argumentResolvers: List<ActionMethodArgumentResolver> = listOf(
-        ProcessContextArgumentResolver(),
-        OperationContextArgumentResolver(),
-        AiArgumentResolver(),
-        BlackboardArgumentResolver(),
-    ),
-) : ActionMethodManager {
+internal class StateActionMethodManager(
+    private val actionMethodManager: ActionMethodManager,
+) {
 
-    private val logger = LoggerFactory.getLogger(DefaultActionMethodManager::class.java)
+    private val logger = LoggerFactory.getLogger(StateActionMethodManager::class.java)
 
-    @Suppress("UNCHECKED_CAST")
-    override fun createAction(
+    fun createAction(
         method: Method,
-        instance: Any,
+        stateClass: Class<*>,
+        agentInstance: Any,
         toolCallbacksOnInstance: List<ToolCallback>,
-    ): Action {
+    ): CoreAction {
         requireNonAmbiguousParameters(method)
-        val actionAnnotation = method.getAnnotation(com.embabel.agent.api.annotation.Action::class.java)
-        val inputClasses = method.parameters
-            .map { it.type }
+        val actionAnnotation = method.getAnnotation(Action::class.java)
+        val achievesGoalAnnotation = method.getAnnotation(AchievesGoal::class.java)
+        val inputClasses = method.parameters.map { it.type }
         val inputs = resolveInputBindings(method)
-
+        // Add the state class itself as an input
+        val stateInput = IoBinding(
+            name = IoBinding.DEFAULT_BINDING,
+            type = stateClass.name,
+        )
+        val allInputs = inputs + stateInput
         require(method.returnType != null) { "Action method ${method.name} must have a return type" }
-
         return MultiTransformationAction(
-            name = nameGenerator.generateName(instance, method.name),
+            name = "${stateClass.simpleName}.${method.name}",
             description = actionAnnotation.description.ifBlank { method.name },
             cost = { actionAnnotation.cost },
-            inputs = inputs.toSet(),
-            canRerun = actionAnnotation.canRerun,
+            inputs = allInputs.toSet(),
+            // State actions that transition between states use canRerun=true because state
+            // transitions clear the blackboard, which resets type-based preconditions.
+            // This avoids hasRun blocking re-entry into states during loops.
+            // However, @AchievesGoal actions are terminal and should NOT be rerunnable
+            // to prevent infinite loops with Utility planner.
+            canRerun = achievesGoalAnnotation == null,
             pre = actionAnnotation.pre.toList(),
             post = actionAnnotation.post.toList(),
-            inputClasses = inputClasses,
+            inputClasses = inputClasses + stateClass,
             outputClass = method.returnType,
             outputVarName = actionAnnotation.outputBinding,
-            toolGroups = (actionAnnotation.toolGroupRequirements.map { ToolGroupRequirement(it.role) } + actionAnnotation.toolGroups.map {
-                ToolGroupRequirement(
-                    it
-                )
-            }).toSet(),
+            toolGroups = (actionAnnotation.toolGroupRequirements.map { ToolGroupRequirement(it.role) } +
+                    actionAnnotation.toolGroups.map { ToolGroupRequirement(it) }).toSet(),
         ) { context ->
-            invokeActionMethod(
+            invokeStateActionMethod(
                 method = method,
-                instance = instance,
+                stateClass = stateClass,
+                agentInstance = agentInstance,
                 actionContext = context,
             )
         }
     }
 
-    private fun resolveInputBindings(
-        javaMethod: Method,
-    ): Set<IoBinding> {
+    private fun resolveInputBindings(javaMethod: Method): Set<IoBinding> {
         val result = mutableSetOf<IoBinding>()
         val kotlinFunction = if (KotlinDetector.isKotlinReflectPresent()) javaMethod.kotlinFunction else null
         for (i in javaMethod.parameters.indices) {
             val javaParameter = javaMethod.parameters[i]
             val kotlinParameter = kotlinFunction?.valueParameters?.getOrNull(i)
-            for (argumentResolver in argumentResolvers) {
+            for (argumentResolver in actionMethodManager.argumentResolvers) {
                 if (argumentResolver.supportsParameter(javaParameter, kotlinParameter, null)) {
                     result += argumentResolver.resolveInputBinding(javaParameter, kotlinParameter)
                     break
@@ -108,48 +107,58 @@ internal class DefaultActionMethodManager(
         return result
     }
 
-    override fun <O> invokeActionMethod(
+    @Suppress("UNCHECKED_CAST")
+    private fun <O> invokeStateActionMethod(
         method: Method,
-        instance: Any,
+        stateClass: Class<*>,
+        agentInstance: Any,
         actionContext: TransformationActionContext<List<Any>, O>,
     ): O {
-        logger.debug("Invoking action method {} with payload {}", method.name, actionContext.input)
+        logger.debug("Invoking state action method {}.{}", stateClass.simpleName, method.name)
+        // First, get the state instance from the blackboard
+        val stateInstance = actionContext.processContext.agentProcess.getValue(
+            variable = IoBinding.DEFAULT_BINDING,
+            type = stateClass.name,
+        ) ?: throw IllegalStateException(
+            "State instance of type ${stateClass.name} not found in blackboard"
+        )
+        // TODO Arjen to review
         val result = if (KotlinDetector.isKotlinReflectPresent()) {
             val kFunction = method.kotlinFunction
-            if (kFunction != null) invokeActionMethodKotlinReflect(method, kFunction, instance, actionContext)
-            else invokeActionMethodJavaReflect(method, instance, actionContext)
+            if (kFunction != null) invokeStateActionMethodKotlinReflect(method, kFunction, stateInstance, actionContext)
+            else invokeStateActionMethodJavaReflect(method, stateInstance, actionContext)
         } else {
-            invokeActionMethodJavaReflect(method, instance, actionContext)
+            invokeStateActionMethodJavaReflect(method, stateInstance, actionContext)
         }
         logger.debug(
-            "Result of invoking action method {} was {}: payload {}",
+            "Result of invoking state action method {}.{} was {}",
+            stateClass.simpleName,
             method.name,
             result,
-            actionContext.input
         )
         return result
     }
 
-    private fun <O> invokeActionMethodKotlinReflect(
+    private fun <O> invokeStateActionMethodKotlinReflect(
         method: Method,
         kFunction: KFunction<*>,
-        instance: Any,
+        stateInstance: Any,
         actionContext: TransformationActionContext<List<Any>, O>,
     ): O {
         val args = arrayOfNulls<Any?>(method.parameters.size + 1)
-        args[0] = instance
+        args[0] = stateInstance
         for (i in method.parameters.indices) {
             val javaParameter = method.parameters[i]
             val kotlinParameter = kFunction.valueParameters.getOrNull(i)
             val classifier = kotlinParameter?.type?.classifier
             if (classifier is KClass<*>) {
-                for (argumentResolver in argumentResolvers) {
+                for (argumentResolver in actionMethodManager.argumentResolvers) {
                     if (argumentResolver.supportsParameter(javaParameter, kotlinParameter, actionContext)) {
                         val arg = argumentResolver.resolveArgument(javaParameter, kotlinParameter, actionContext)
                         if (arg == null) {
                             val isNullable = kotlinParameter.isOptional || kotlinParameter.type.isMarkedNullable
                             if (!isNullable) {
-                                error("Action ${actionContext.action.name}: Internal error. No value found in blackboard for non-nullable parameter ${kotlinParameter.name}:${classifier.java.name}")
+                                error("Action ${actionContext.action.name}: No value found for non-nullable parameter ${kotlinParameter.name}:${classifier.java.name}")
                             }
                         }
                         args[i + 1] = arg
@@ -157,7 +166,6 @@ internal class DefaultActionMethodManager(
                 }
             }
         }
-
         val result = try {
             try {
                 kFunction.isAccessible = true
@@ -165,54 +173,36 @@ internal class DefaultActionMethodManager(
             } catch (ite: InvocationTargetException) {
                 ReflectionUtils.handleInvocationTargetException(ite)
             }
-        } catch (awe: AwaitableResponseException) {
-            handleAwaitableResponseException(instance.javaClass.name, kFunction.name, awe)
         } catch (t: Throwable) {
-            handleThrowable(instance.javaClass.name, kFunction.name, t)
+            handleThrowable(stateInstance.javaClass.name, kFunction.name, t)
         }
+        @Suppress("UNCHECKED_CAST")
         return result as O
     }
 
-    private fun <O> invokeActionMethodJavaReflect(
+    private fun <O> invokeStateActionMethodJavaReflect(
         method: Method,
-        instance: Any,
+        stateInstance: Any,
         actionContext: TransformationActionContext<List<Any>, O>,
     ): O {
         val args = arrayOfNulls<Any?>(method.parameters.size)
         for (i in method.parameters.indices) {
             val parameter = method.parameters[i]
-            for (argumentResolver in argumentResolvers) {
+            for (argumentResolver in actionMethodManager.argumentResolvers) {
                 if (argumentResolver.supportsParameter(parameter, null, actionContext)) {
                     val arg = argumentResolver.resolveArgument(parameter, null, actionContext)
                     args[i] = arg
                 }
             }
         }
-
         val result = try {
             method.trySetAccessible()
-            ReflectionUtils.invokeMethod(method, instance, *args)
-        } catch (awe: AwaitableResponseException) {
-            handleAwaitableResponseException(instance.javaClass.name, method.name, awe)
+            ReflectionUtils.invokeMethod(method, stateInstance, *args)
         } catch (t: Throwable) {
-            handleThrowable(instance.javaClass.name, method.name, t)
+            handleThrowable(stateInstance.javaClass.name, method.name, t)
         }
+        @Suppress("UNCHECKED_CAST")
         return result as O
-    }
-
-    private fun handleAwaitableResponseException(
-        instanceName: String,
-        methodName: String,
-        awe: AwaitableResponseException,
-    ) {
-        // This is not a failure, but will drive transition to a wait state
-        logger.info(
-            "Action method {}.{} entering wait state: {}",
-            instanceName,
-            methodName,
-            awe.message,
-        )
-        throw awe
     }
 
     private fun handleThrowable(
@@ -221,12 +211,11 @@ internal class DefaultActionMethodManager(
         t: Throwable,
     ) {
         logger.warn(
-            "Error invoking action method {}.{}: {}",
+            "Error invoking state action method {}.{}: {}",
             instanceName,
             methodName,
             t.message,
         )
         throw t
     }
-
 }

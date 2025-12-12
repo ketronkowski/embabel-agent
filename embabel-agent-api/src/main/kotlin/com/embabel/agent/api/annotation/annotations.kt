@@ -133,6 +133,17 @@ annotation class Action(
     val toolGroupRequirements: Array<ToolGroup> = [],
 )
 
+/**
+ * Marks a class representing a state within a flow.
+ * States do not trigger subflows but hold a subset of actions.
+ * Returning a State from an action indicates a transition to that state
+ * and creates the effects of the state's ultimate goals.
+ */
+@Target(AnnotationTarget.CLASS)
+@Retention(AnnotationRetention.RUNTIME)
+@MustBeDocumented
+annotation class State
+
 
 /**
  * Annotation that can added to parameters of an @Action method

@@ -38,6 +38,7 @@ import com.embabel.common.util.loggerFor
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import org.slf4j.LoggerFactory
+import org.springframework.ai.tool.ToolCallback
 import org.springframework.cglib.proxy.Enhancer
 import org.springframework.context.support.StaticApplicationContext
 import org.springframework.stereotype.Service
@@ -174,16 +175,35 @@ class AgentMetadataReader(
         val toolCallbacksOnInstance = safelyGetToolCallbacksFrom(ToolObject.from(instance))
 
         val conditions = conditionMethods.map { createCondition(it, instance) }.toSet()
-        val (actions, actionGoals) = actionMethods.map { actionMethod ->
+
+        // Collect all actions and goals, including those from @State classes
+        val allActions = mutableListOf<CoreAction>()
+        val allGoals = mutableListOf<AgentCoreGoal>()
+        val processedStateTypes = mutableSetOf<Class<*>>()
+
+        // Process top-level action methods
+        for (actionMethod in actionMethods) {
             val action = actionMethodManager.createAction(actionMethod, instance, toolCallbacksOnInstance)
-            Pair(action, createGoalFromActionMethod(actionMethod, action, instance))
-        }.unzip()
+            allActions.add(action)
+            createGoalFromActionMethod(actionMethod, action, instance)?.let { allGoals.add(it) }
+
+            // Check if this action returns a @State type and unroll it
+            val returnType = actionMethod.returnType
+            unrollStateType(
+                stateType = returnType,
+                agentInstance = instance,
+                toolCallbacksOnInstance = toolCallbacksOnInstance,
+                allActions = allActions,
+                allGoals = allGoals,
+                processedStateTypes = processedStateTypes,
+            )
+        }
 
         val plannerType = agenticInfo.agentAnnotation?.planner ?: PlannerType.GOAP
 
         val goals = buildSet {
             addAll(getterGoals)
-            addAll(actionGoals.filterNotNull())
+            addAll(allGoals)
             if (plannerType == PlannerType.UTILITY) {
                 // Synthetic goal for utility-based agents
                 add(NIRVANA)
@@ -209,7 +229,7 @@ class AgentMetadataReader(
                 description = agenticInfo.agentAnnotation.description,
                 version = Semver(agenticInfo.agentAnnotation.version),
                 conditions = conditions,
-                actions = actions,
+                actions = allActions,
                 goals = goals,
                 stuckHandler = instance as? StuckHandler,
                 opaque = agenticInfo.agentAnnotation.opaque,
@@ -218,7 +238,7 @@ class AgentMetadataReader(
             AgentScope(
                 name = agenticInfo.type.name,
                 conditions = conditions,
-                actions = actions,
+                actions = allActions,
                 goals = goals,
             )
         }
@@ -234,6 +254,146 @@ class AgentMetadataReader(
         }
 
         return agent
+    }
+
+    /**
+     * Recursively unroll @State types to extract their actions and goals.
+     * If the type is a @State class or an interface/sealed class with @State implementations,
+     * extract all @Action methods from those state classes and add them to the agent.
+     */
+    private fun unrollStateType(
+        stateType: Class<*>,
+        agentInstance: Any,
+        toolCallbacksOnInstance: List<ToolCallback>,
+        allActions: MutableList<CoreAction>,
+        allGoals: MutableList<AgentCoreGoal>,
+        processedStateTypes: MutableSet<Class<*>>,
+    ) {
+        // Find all @State classes to process
+        val stateClasses = findStateClasses(stateType)
+        for (stateClass in stateClasses) {
+            if (processedStateTypes.contains(stateClass)) {
+                continue
+            }
+            processedStateTypes.add(stateClass)
+            // Find action methods in the state class
+            val stateActionMethods = findActionMethods(stateClass)
+            for (actionMethod in stateActionMethods) {
+                val action = createActionFromStateMethod(
+                    actionMethod,
+                    stateClass,
+                    agentInstance,
+                    toolCallbacksOnInstance,
+                )
+                allActions.add(action)
+                createGoalFromStateActionMethod(actionMethod, action, stateClass, agentInstance)?.let {
+                    allGoals.add(it)
+                }
+                // Recursively unroll if this action also returns a @State type
+                unrollStateType(
+                    stateType = actionMethod.returnType,
+                    agentInstance = agentInstance,
+                    toolCallbacksOnInstance = toolCallbacksOnInstance,
+                    allActions = allActions,
+                    allGoals = allGoals,
+                    processedStateTypes = processedStateTypes,
+                )
+            }
+        }
+    }
+
+    /**
+     * Find all @State classes for a given type.
+     * If the type itself is annotated with @State, return it.
+     * If the type is an interface or sealed class, find all implementations/subclasses
+     * that are annotated with @State.
+     */
+    private fun findStateClasses(type: Class<*>): List<Class<*>> {
+        val result = mutableListOf<Class<*>>()
+        // Check if the type itself is a @State
+        if (type.isAnnotationPresent(State::class.java)) {
+            validateStateClass(type)
+            result.add(type)
+        }
+        // Check for subclasses/implementations that are @State
+        // This handles sealed classes, interfaces with implementations, and abstract classes
+        val jvmType = JvmType(type)
+        val children = jvmType.children()
+        for (child in children) {
+            if (child.clazz.isAnnotationPresent(State::class.java)) {
+                validateStateClass(child.clazz)
+                result.add(child.clazz)
+            }
+        }
+        return result
+    }
+
+    /**
+     * Validates a @State class and logs warnings for potential issues.
+     * Non-static inner classes (Java) or inner classes (Kotlin) may cause
+     * serialization/persistence issues because they hold a reference to their enclosing instance.
+     */
+    private fun validateStateClass(stateClass: Class<*>) {
+        if (stateClass.enclosingClass != null && !java.lang.reflect.Modifier.isStatic(stateClass.modifiers)) {
+            logger.warn(
+                """
+                |
+                |========================================================================
+                | WARNING: @State class '${stateClass.simpleName}' is a non-static inner class.
+                | This may cause serialization/persistence issues because it holds a
+                | reference to its enclosing class '${stateClass.enclosingClass.simpleName}'.
+                | Consider making it a static nested class (Java) or a top-level class.
+                |========================================================================
+                """.trimMargin()
+            )
+        }
+    }
+
+    /**
+     * Create an action from a method defined in a @State class.
+     * The state instance will be created at runtime from the blackboard.
+     */
+    private fun createActionFromStateMethod(
+        method: Method,
+        stateClass: Class<*>,
+        agentInstance: Any,
+        toolCallbacksOnInstance: List<ToolCallback>,
+    ): CoreAction {
+        // Create a StateActionMethodManager that handles state class instantiation
+        return StateActionMethodManager(
+            actionMethodManager = actionMethodManager,
+        ).createAction(method, stateClass, agentInstance, toolCallbacksOnInstance)
+    }
+
+    /**
+     * Create a goal from an @Action method in a @State class that also has @AchievesGoal.
+     */
+    private fun createGoalFromStateActionMethod(
+        method: Method,
+        action: CoreAction,
+        stateClass: Class<*>,
+        agentInstance: Any,
+    ): AgentCoreGoal? {
+        val actionAnnotation = method.getAnnotation(Action::class.java)
+        val goalAnnotation = method.getAnnotation(AchievesGoal::class.java) ?: return null
+        val inputBinding = IoBinding(
+            name = actionAnnotation.outputBinding,
+            type = method.returnType.name,
+        )
+        return AgentCoreGoal(
+            name = "${stateClass.simpleName}.${method.name}",
+            description = goalAnnotation.description,
+            inputs = setOf(inputBinding),
+            outputType = JvmType(method.returnType),
+            value = { goalAnnotation.value },
+            pre = setOf(Rerun.hasRunCondition(action)) + action.preconditions.keys.toSet(),
+            export = Export(
+                local = goalAnnotation.export.local,
+                remote = goalAnnotation.export.remote,
+                name = goalAnnotation.export.name.ifBlank { null },
+                startingInputTypes = goalAnnotation.export.startingInputTypes.map { it.java }.toSet(),
+            )
+        )
     }
 
     private fun findConditionMethods(type: Class<*>): List<Method> {

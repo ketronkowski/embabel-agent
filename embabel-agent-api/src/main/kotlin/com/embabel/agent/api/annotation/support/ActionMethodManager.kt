@@ -26,6 +26,13 @@ import java.lang.reflect.Method
 interface ActionMethodManager {
 
     /**
+     * Strategies for resolving action method parameters into argument values
+     * Handles core types such as Ai and OperationContext, but can be
+     * extended to support custom parameter types.
+     */
+    val argumentResolvers: List<ActionMethodArgumentResolver>
+
+    /**
      * Create an Action from a method
      * @param method the method to create an action from
      * @param instance instance of Agent or AgentCapabilities-annotated class
