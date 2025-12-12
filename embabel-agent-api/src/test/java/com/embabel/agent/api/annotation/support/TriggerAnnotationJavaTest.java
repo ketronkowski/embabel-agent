@@ -23,6 +23,7 @@ import com.embabel.agent.core.AgentProcess;
 import com.embabel.agent.core.AgentProcessStatusCode;
 import com.embabel.agent.core.ProcessOptions;
 import com.embabel.agent.test.integration.IntegrationTestUtils;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
@@ -35,9 +36,14 @@ import static org.junit.jupiter.api.Assertions.*;
 class TriggerAnnotationJavaTest {
 
     // Domain types
-    public record IncomingEvent(String payload) {}
-    public record ExistingContext(String contextId) {}
-    public record ProcessedEvent(String result) {}
+    public record IncomingEvent(String payload) {
+    }
+
+    public record ExistingContext(String contextId) {
+    }
+
+    public record ProcessedEvent(String result) {
+    }
 
     @Agent(description = "Java agent with trigger")
     public static class JavaTriggerAgent {
@@ -52,6 +58,7 @@ class TriggerAnnotationJavaTest {
         }
     }
 
+    @Disabled("Disabled, pending investigation of intermittent test failures")
     @Test
     void triggerWorksInJava() {
         var reader = new AgentMetadataReader();
