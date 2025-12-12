@@ -160,6 +160,12 @@ interface Blackboard : Bindable, MayHaveLastResult, HasInfoString {
             }
         }
 
+        // Special handling for lastResult - check the last entry
+        if (variable == IoBinding.LAST_RESULT_BINDING) {
+            val last = lastResult()
+            return last != null && satisfiesType(last, type)
+        }
+
         if (variable != IoBinding.DEFAULT_BINDING) {
             // Must be precisely bound
             return false
@@ -202,6 +208,12 @@ interface Blackboard : Bindable, MayHaveLastResult, HasInfoString {
                 loggerFor<ProcessContext>().info("Adding megazord {} to blackboard", this)
                 this += aggregationInstance
             }
+        }
+
+        // Special handling for lastResult - check the last entry
+        if (variable == IoBinding.LAST_RESULT_BINDING) {
+            val last = lastResult()
+            return if (last != null && satisfiesType(last, type)) last else null
         }
 
         if (variable != IoBinding.DEFAULT_BINDING) {

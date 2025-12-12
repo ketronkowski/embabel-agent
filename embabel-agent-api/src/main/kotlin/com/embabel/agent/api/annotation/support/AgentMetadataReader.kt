@@ -380,13 +380,20 @@ class AgentMetadataReader(
             name = actionAnnotation.outputBinding,
             type = method.returnType.name,
         )
+        // Exclude trigger preconditions from goal - they control when the action fires,
+        // not whether the goal was achieved.
+        val triggerType = findTriggerType(method)
+        val triggerPrecondition = if (triggerType != null) triggerPrecondition(triggerType) else null
+        val goalPreconditions = action.preconditions.keys
+            .filter { it != triggerPrecondition }
+            .toSet()
         return AgentCoreGoal(
             name = "${stateClass.simpleName}.${method.name}",
             description = goalAnnotation.description,
             inputs = setOf(inputBinding),
             outputType = JvmType(method.returnType),
             value = { goalAnnotation.value },
-            pre = setOf(Rerun.hasRunCondition(action)) + action.preconditions.keys.toSet(),
+            pre = setOf(Rerun.hasRunCondition(action)) + goalPreconditions,
             export = Export(
                 local = goalAnnotation.export.local,
                 remote = goalAnnotation.export.remote,
@@ -610,6 +617,14 @@ class AgentMetadataReader(
             name = actionAnnotation.outputBinding,
             type = method.returnType.name,
         )
+        // Exclude trigger preconditions from goal - they control when the action fires,
+        // not whether the goal was achieved. After the action runs, the lastResult changes
+        // and the trigger condition becomes false, which should not prevent goal completion.
+        val triggerType = findTriggerType(method)
+        val triggerPrecondition = if (triggerType != null) triggerPrecondition(triggerType) else null
+        val goalPreconditions = action.preconditions.keys
+            .filter { it != triggerPrecondition }
+            .toSet()
         return AgentCoreGoal(
             name = nameGenerator.generateName(instance, method.name),
             description = goalAnnotation.description,
@@ -617,7 +632,7 @@ class AgentMetadataReader(
             outputType = JvmType(method.returnType),
             value = { goalAnnotation.value },
             // Add precondition of the action having run
-            pre = setOf(Rerun.hasRunCondition(action)) + action.preconditions.keys.toSet(),
+            pre = setOf(Rerun.hasRunCondition(action)) + goalPreconditions,
             export = Export(
                 local = goalAnnotation.export.local,
                 remote = goalAnnotation.export.remote,

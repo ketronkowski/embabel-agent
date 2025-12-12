@@ -120,7 +120,7 @@ class InMemoryBlackboard(
     }
 
     override fun expressionEvaluationModel(): Map<String, Any> {
-        return _map.toMap() // Return a snapshot copy
+        return _map.toMap()
     }
 
     override fun infoString(

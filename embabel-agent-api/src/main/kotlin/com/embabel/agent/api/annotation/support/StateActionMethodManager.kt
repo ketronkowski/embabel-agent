@@ -66,6 +66,15 @@ internal class StateActionMethodManager(
         require(method.returnType != null) { "Action method ${method.name} must have a return type" }
         val clearBlackboard = method.returnType.isAnnotationPresent(State::class.java) ||
                 actionAnnotation.clearBlackboard
+
+        // Check for @Trigger parameter and create precondition
+        val triggerType = findTriggerType(method)
+        val triggerPreconditions = if (triggerType != null) {
+            listOf(triggerPrecondition(triggerType))
+        } else {
+            emptyList()
+        }
+
         return MultiTransformationAction(
             name = "${stateClass.simpleName}.${method.name}",
             description = actionAnnotation.description.ifBlank { method.name },
@@ -78,7 +87,7 @@ internal class StateActionMethodManager(
             // to prevent infinite loops with Utility planner.
             canRerun = achievesGoalAnnotation == null,
             clearBlackboard = clearBlackboard,
-            pre = actionAnnotation.pre.toList(),
+            pre = actionAnnotation.pre.toList() + triggerPreconditions,
             post = actionAnnotation.post.toList(),
             inputClasses = inputClasses + stateClass,
             outputClass = method.returnType,

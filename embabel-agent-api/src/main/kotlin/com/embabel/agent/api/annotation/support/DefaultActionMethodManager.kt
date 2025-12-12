@@ -68,6 +68,14 @@ internal class DefaultActionMethodManager(
         val clearBlackboard = method.returnType.isAnnotationPresent(State::class.java) ||
                 actionAnnotation.clearBlackboard
 
+        // Check for @Trigger parameter and create precondition
+        val triggerType = findTriggerType(method)
+        val triggerPreconditions = if (triggerType != null) {
+            listOf(triggerPrecondition(triggerType))
+        } else {
+            emptyList()
+        }
+
         return MultiTransformationAction(
             name = nameGenerator.generateName(instance, method.name),
             description = actionAnnotation.description.ifBlank { method.name },
@@ -75,7 +83,7 @@ internal class DefaultActionMethodManager(
             inputs = inputs.toSet(),
             canRerun = actionAnnotation.canRerun,
             clearBlackboard = clearBlackboard,
-            pre = actionAnnotation.pre.toList(),
+            pre = actionAnnotation.pre.toList() + triggerPreconditions,
             post = actionAnnotation.post.toList(),
             inputClasses = inputClasses,
             outputClass = method.returnType,

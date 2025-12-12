@@ -71,6 +71,12 @@ value class IoBinding(val value: String) {
          */
         const val DEFAULT_BINDING = "it"
 
+        /**
+         * Binding name for the last result on the blackboard.
+         * Used in @Trigger preconditions to check the type of the most recent result.
+         */
+        const val LAST_RESULT_BINDING = "lastResult"
+
         operator fun invoke(
             name: String? = DEFAULT_BINDING,
             type: Class<*>,

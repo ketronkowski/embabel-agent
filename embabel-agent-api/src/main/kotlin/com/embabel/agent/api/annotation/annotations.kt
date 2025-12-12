@@ -167,3 +167,28 @@ annotation class State
 annotation class RequireNameMatch(
     val value: String = "",
 )
+
+/**
+ * Annotation that can be added to parameters of an @Action or @Condition method
+ * to indicate that the parameter must be the last result added to the blackboard.
+ * This enables reactive behavior where an action only fires when a specific type
+ * is freshly added, even when multiple parameters of various types are available.
+ *
+ * For example, in a chat system with multiple message types, you might want an action
+ * to fire only when a new user message arrives, not when other data is updated:
+ *
+ * ```kotlin
+ * @Action
+ * fun handleUserMessage(
+ *     @Trigger userMessage: UserMessage,  // Only fires when UserMessage is the last result
+ *     conversation: Conversation           // Must also be available
+ * ): Response
+ * ```
+ *
+ * @see Action
+ * @see Condition
+ */
+@Target(AnnotationTarget.VALUE_PARAMETER)
+@Retention(AnnotationRetention.RUNTIME)
+@MustBeDocumented
+annotation class Trigger

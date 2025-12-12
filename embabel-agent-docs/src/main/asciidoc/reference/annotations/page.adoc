@@ -134,6 +134,71 @@ The `@RequireNameMatch` annotation can be used to <<reference.flow__binding, bin
 
 //TODO: (jasper notes) Provide an illustrative code example here.
 
+==== Reactive triggers with `@Trigger`
+
+The `@Trigger` annotation enables reactive behavior where an action only fires when a specific parameter type is the _most recently added_ value to the blackboard.
+This is useful in event-driven scenarios where you want to react to a particular event even when multiple parameters of various types are available.
+
+For example, in a chat system you might want an action to fire only when a new user message arrives, not when other context is updated:
+
+[source,java]
+----
+@Agent(description = "Chat message handler")
+public class ChatAgent {
+
+    @AchievesGoal(description = "Respond to user message")
+    @Action
+    public Response handleMessage(
+            @Trigger UserMessage message,  // <1>
+            Conversation conversation       // <2>
+    ) {
+        return new Response("Received: " + message.content());
+    }
+}
+----
+
+<1> The `@Trigger` annotation means this action only fires when `UserMessage` is the last result added to the blackboard.
+<2> `Conversation` must also be available, but doesn't need to be the triggering event.
+
+Without `@Trigger`, an action fires as soon as all its parameters are available on the blackboard.
+With `@Trigger`, the annotated parameter must additionally be the most recent value added.
+
+This is particularly useful when:
+
+* You have multiple actions that could handle different event types
+* You want to distinguish between "data available" and "event just occurred"
+* You're building event-driven or reactive workflows
+
+[source,java]
+----
+@Agent(description = "Multi-event processor")
+public class EventProcessor {
+
+    @Action
+    public Result handleEventA(
+            @Trigger EventA eventA,  // <1>
+            EventB eventB
+    ) {
+        return new Result("Triggered by A");
+    }
+
+    @AchievesGoal(description = "Handle event B")
+    @Action
+    public Result handleEventB(
+            EventA eventA,
+            @Trigger EventB eventB  // <2>
+    ) {
+        return new Result("Triggered by B");
+    }
+}
+----
+
+<1> `handleEventA` fires when `EventA` is added (and `EventB` is available).
+<2> `handleEventB` fires when `EventB` is added (and `EventA` is available).
+
+NOTE: `@Trigger` checks that the parameter matches the `lastResult()` on the blackboard.
+The last result is the most recent object added via any binding operation.
+
 ==== Handling of return types
 
 Action methods normally return a single domain object.
