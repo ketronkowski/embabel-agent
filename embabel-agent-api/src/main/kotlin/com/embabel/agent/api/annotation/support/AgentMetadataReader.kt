@@ -312,6 +312,7 @@ class AgentMetadataReader(
         val result = mutableListOf<Class<*>>()
         // Check if the type itself is a @State
         if (type.isAnnotationPresent(State::class.java)) {
+            validateStateClass(type)
             result.add(type)
         }
         // Check for subclasses/implementations that are @State
@@ -319,11 +320,33 @@ class AgentMetadataReader(
         val jvmType = JvmType(type)
         val children = jvmType.children()
         for (child in children) {
-            if (child is JvmType && child.clazz.isAnnotationPresent(State::class.java)) {
+            if (child.clazz.isAnnotationPresent(State::class.java)) {
+                validateStateClass(child.clazz)
                 result.add(child.clazz)
             }
         }
         return result
+    }
+
+    /**
+     * Validates a @State class and logs warnings for potential issues.
+     * Non-static inner classes (Java) or inner classes (Kotlin) may cause
+     * serialization/persistence issues because they hold a reference to their enclosing instance.
+     */
+    private fun validateStateClass(stateClass: Class<*>) {
+        if (stateClass.enclosingClass != null && !java.lang.reflect.Modifier.isStatic(stateClass.modifiers)) {
+            logger.warn(
+                """
+                |
+                |========================================================================
+                | WARNING: @State class '${stateClass.simpleName}' is a non-static inner class.
+                | This may cause serialization/persistence issues because it holds a
+                | reference to its enclosing class '${stateClass.enclosingClass.simpleName}'.
+                | Consider making it a static nested class (Java) or a top-level class.
+                |========================================================================
+                """.trimMargin()
+            )
+        }
     }
 
     /**
@@ -339,7 +362,6 @@ class AgentMetadataReader(
         // Create a StateActionMethodManager that handles state class instantiation
         return StateActionMethodManager(
             actionMethodManager = actionMethodManager,
-            nameGenerator = nameGenerator,
         ).createAction(method, stateClass, agentInstance, toolCallbacksOnInstance)
     }
 

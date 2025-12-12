@@ -358,9 +358,30 @@ record ReviseStory(
 
 TIP: Use a `Properties` record to bundle configuration values that need to pass through multiple states, rather than repeating individual fields.
 
+==== State Class Requirements
+
+WARNING: State classes should be **static nested classes** (Java) or **top-level classes** (Kotlin), not non-static inner classes.
+Non-static inner classes hold a reference to their enclosing instance, which causes serialization and persistence issues.
+The framework will log a warning if it detects a non-static inner class annotated with `@State`.
+
+[source,java]
+----
+// GOOD: Static nested class (Java record is implicitly static)
+@State
+record AssessStory(UserInput userInput, Story story) implements Stage { ... }
+
+// BAD: Non-static inner class - will cause persistence issues
+@State
+class AssessStory implements Stage { ... } // Inner class in non-static context
+----
+
+In Java, records declared inside a class are implicitly static, making them ideal for state classes.
+In Kotlin, data classes declared inside a class are inner by default; use top-level declarations or companion object patterns instead.
+
 ==== Key Points
 
 - Annotate state classes with `@State`
+- Use **static nested classes** (Java records) or **top-level classes** to avoid persistence issues
 - Use a parent interface for polymorphic state returns
 - State actions are automatically discovered and registered
 - Blackboard is cleared on state transitions, enabling natural loops

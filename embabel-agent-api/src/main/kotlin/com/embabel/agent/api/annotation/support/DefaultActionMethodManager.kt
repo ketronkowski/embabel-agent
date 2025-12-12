@@ -41,7 +41,7 @@ import kotlin.reflect.jvm.kotlinFunction
 @Component
 internal class DefaultActionMethodManager(
     val nameGenerator: MethodDefinedOperationNameGenerator = MethodDefinedOperationNameGenerator(),
-    val argumentResolvers: List<ActionMethodArgumentResolver> = listOf(
+    override val argumentResolvers: List<ActionMethodArgumentResolver> = listOf(
         ProcessContextArgumentResolver(),
         OperationContextArgumentResolver(),
         AiArgumentResolver(),

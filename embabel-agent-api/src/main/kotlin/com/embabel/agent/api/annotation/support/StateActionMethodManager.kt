@@ -40,13 +40,6 @@ import com.embabel.agent.core.Action as CoreAction
  */
 internal class StateActionMethodManager(
     private val actionMethodManager: ActionMethodManager,
-    private val nameGenerator: MethodDefinedOperationNameGenerator,
-    private val argumentResolvers: List<ActionMethodArgumentResolver> = listOf(
-        ProcessContextArgumentResolver(),
-        OperationContextArgumentResolver(),
-        AiArgumentResolver(),
-        BlackboardArgumentResolver(),
-    ),
 ) {
 
     private val logger = LoggerFactory.getLogger(StateActionMethodManager::class.java)
@@ -100,7 +93,7 @@ internal class StateActionMethodManager(
         for (i in javaMethod.parameters.indices) {
             val javaParameter = javaMethod.parameters[i]
             val kotlinParameter = kotlinFunction?.valueParameters?.getOrNull(i)
-            for (argumentResolver in argumentResolvers) {
+            for (argumentResolver in actionMethodManager.argumentResolvers) {
                 if (argumentResolver.supportsParameter(javaParameter, kotlinParameter, null)) {
                     result += argumentResolver.resolveInputBinding(javaParameter, kotlinParameter)
                     break
@@ -155,7 +148,7 @@ internal class StateActionMethodManager(
             val kotlinParameter = kFunction.valueParameters.getOrNull(i)
             val classifier = kotlinParameter?.type?.classifier
             if (classifier is KClass<*>) {
-                for (argumentResolver in argumentResolvers) {
+                for (argumentResolver in actionMethodManager.argumentResolvers) {
                     if (argumentResolver.supportsParameter(javaParameter, kotlinParameter, actionContext)) {
                         val arg = argumentResolver.resolveArgument(javaParameter, kotlinParameter, actionContext)
                         if (arg == null) {
@@ -191,7 +184,7 @@ internal class StateActionMethodManager(
         val args = arrayOfNulls<Any?>(method.parameters.size)
         for (i in method.parameters.indices) {
             val parameter = method.parameters[i]
-            for (argumentResolver in argumentResolvers) {
+            for (argumentResolver in actionMethodManager.argumentResolvers) {
                 if (argumentResolver.supportsParameter(parameter, null, actionContext)) {
                     val arg = argumentResolver.resolveArgument(parameter, null, actionContext)
                     args[i] = arg
