@@ -137,3 +137,105 @@ This keeps the process running, continuously selecting the highest-value availab
 
 Utility AI fosters extensibility.
 For example, multiple groups within an organization can contribute their own `@EmbabelComponent` classes with actions that bring their own expertise to enhance behaviours around shared types, while retaining the ability to own and control their own extended model.
+
+===== Utility and States
+
+Utility AI can combine with the `@State` annotation to implement classification and routing patterns.
+This is particularly useful when you need to:
+
+* *Classify input* into different categories at runtime
+* *Route processing* through category-specific handlers
+* *Achieve different goals* based on classification
+
+The key pattern is:
+
+1. An entry action classifies input and returns a `@State` type
+2. Each `@State` class contains an `@AchievesGoal` action that produces the final output
+3. The `@AchievesGoal` output is _not_ a `@State` type (to prevent infinite loops)
+
+Here's an example of a ticket triage system that routes support tickets based on severity:
+
+[source,kotlin]
+----
+@Agent(
+    description = "Triage and process support tickets",
+    planner = PlannerType.UTILITY  // <1>
+)
+class TicketTriageAgent {
+
+    data class Ticket(val id: String, val description: String, val customerId: String)
+    data class ResolvedTicket(val id: String, val resolution: String, val handledBy: String)
+
+    @State
+    sealed interface TicketCategory  // <2>
+
+    @Action
+    fun triageTicket(ticket: Ticket): TicketCategory {  // <3>
+        return when {
+            ticket.description.contains("down", ignoreCase = true) ->
+                CriticalTicket(ticket)
+            ticket.description.contains("bug", ignoreCase = true) ->
+                BugTicket(ticket)
+            else ->
+                GeneralTicket(ticket)
+        }
+    }
+
+    @State
+    data class CriticalTicket(val ticket: Ticket) : TicketCategory {
+        @AchievesGoal(description = "Handle critical ticket with immediate escalation")  // <4>
+        @Action
+        fun handleCritical(): ResolvedTicket {
+            return ResolvedTicket(
+                id = ticket.id,
+                resolution = "Escalated to on-call engineer",
+                handledBy = "CRITICAL_RESPONSE_TEAM"
+            )
+        }
+    }
+
+    @State
+    data class BugTicket(val ticket: Ticket) : TicketCategory {
+        @AchievesGoal(description = "Handle bug report")
+        @Action
+        fun handleBug(): ResolvedTicket {
+            return ResolvedTicket(
+                id = ticket.id,
+                resolution = "Bug logged in issue tracker",
+                handledBy = "ENGINEERING_TEAM"
+            )
+        }
+    }
+
+    @State
+    data class GeneralTicket(val ticket: Ticket) : TicketCategory {
+        @AchievesGoal(description = "Handle general inquiry")
+        @Action
+        fun handleGeneral(): ResolvedTicket {
+            return ResolvedTicket(
+                id = ticket.id,
+                resolution = "Response sent with FAQ links",
+                handledBy = "SUPPORT_TEAM"
+            )
+        }
+    }
+}
+----
+
+<1> Use `PlannerType.UTILITY` for opportunistic action selection
+<2> Sealed interface as the state supertype
+<3> Entry action classifies and returns a `@State` instance
+<4> Each state has an `@AchievesGoal` action producing the final output
+
+When a `Ticket` is processed:
+
+1. The `triageTicket` action classifies it into one of the state types
+2. Entering a state clears other objects from the blackboard
+3. The Utility planner selects the `@AchievesGoal` action for that state
+4. The goal is achieved when `ResolvedTicket` is produced
+
+This pattern works well when:
+
+* Classification determines the processing path
+* Each category has distinct handling requirements
+* The final output type is the same across all categories
