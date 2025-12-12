@@ -108,9 +108,12 @@ The default planning approach is
 GOAP is a popular AI planning algorithm used in gaming. It allows for dynamic decision-making and action selection based
 on the current state of the world and the goals of the agent.
 
-Goals, actions and plans are independent of GOAP. Future planning options include:
-
-- Plans created by a reasoning model such as OpenAI o1 or DeepSeek R1.
+Goals, actions and plans are independent of GOAP. Embabel also
+supports [Utility AI](https://en.wikipedia.org/wiki/Utility_system) out of the box, which can run the same actions but
+chooses actions
+based on (potentially dynamic) utility scores rather than strict preconditions and postconditions. This is valuable for
+exploration and
+open-ended tasks, when we do not need to achieve a specific goal but want to maximize overall utility.
 
 The framework executes via an `AgentPlatform` implementation.
 
@@ -155,19 +158,14 @@ Create your own agent repo from our [Java](https://github.com/embabel/java-agent
 or [Kotlin](https://github.com/embabel/kotlin-agent-template) GitHub template by clicking the "Use this template"
 button.
 
-You can also create your own Embabel agent project locally with our quick start tool:
-
-```
-uvx --from git+https://github.com/embabel/project-creator.git project-creator
-```
-
-Choose Java or Kotlin and specify your project name and package name and you'll have an agent running in under a minute,
+You'll have an agent running in under a minute
 if you already have an `OPENAI_API_KEY` and have Maven installed.
 
 **📚 For examples and tutorials**, see
 the [Embabel Agent Examples Repository](https://github.com/embabel/embabel-agent-examples)
 
-**🚗 For a realistic example application**, see the [Tripper travel planner agent](https://github.com/embabel/tripper)
+**🚗 For a sophisticated, realistic example application**, see
+the [Tripper travel planner agent](https://github.com/embabel/tripper)
 
 <img src="images/tripper_output1.jpg" alt="Travel Planner Output" width="600"/>
 
@@ -193,12 +191,12 @@ framework on the JVM will deliver great business value.
     - Making applications more manageable and robust, enabling a workflow manager to control their execution and retry
       operations while maintaining previous state
     - Enhancing safety through the ability to apply guardrails in many places
-- _Why do we need an agent framework for the JVM when solutions exist in Python?_: While this space is presently
-  better developed in Python (or even TypeScript), it's early and there's plenty of room for novel and potentially
+- _Why do we need an agent framework for the JVM when solutions exist in Python?_: While agent frameworks initially
+  appeared predominantly Python, it's early and there's plenty of room for novel and
   superior
-  approaches. The key adjacency is often not the LLM--which is a simple HTTP call away--but existing code and
+  approaches. The key adjacency is not the LLM--which is a simple HTTP call away--but existing code and
   infrastructure
-  assets that are more likely on the JVM than in Python.
+  assets that are more valuable on the JVM than in Python.
 - _Why not use just Spring AI?_ Spring AI is great. We build on it, and embrace the Spring component model. However, we
   believe that most applications should work with higher
   level APIs. An analogy: Spring AI exists at the level of the Servlet API, while Embabel is more like Spring MVC.
@@ -233,8 +231,8 @@ public class StarNewsFinder {
     }
 
     @Action
-    public StarPerson extractStarPerson(UserInput userInput, OperationContext context) {
-        return context.ai()
+    public StarPerson extractStarPerson(UserInput userInput, Ai ai) {
+        return ai
                 .withLlm(OpenAiModels.GPT_41)
                 .createObjectIfPossible(
                         """
@@ -254,7 +252,7 @@ public class StarNewsFinder {
     public RelevantNewsStories findNewsStories(
             StarPerson person,
             Horoscope horoscope,
-            OperationContext context) {
+            Ai ai) {
         var prompt = """
                 %s is an astrology believer with the sign %s.
                 Their horoscope for today is:
@@ -272,7 +270,7 @@ public class StarNewsFinder {
                 - If the horoscope says that they may want to work on their career,
                 find news stories about training courses.""".formatted(
                 person.name(), person.sign(), horoscope.summary(), storyCount);
-        return context.ai()
+        return ai
                 .withDefaultLlm()
                 .createObject(prompt, RelevantNewsStories.class);
     }
@@ -291,7 +289,7 @@ public class StarNewsFinder {
             StarPerson person,
             RelevantNewsStories relevantNewsStories,
             Horoscope horoscope,
-            OperationContext context) {
+            Ai ai) {
         var llm = LlmOptions
                 .withModel(OpenAiModels.GPT_41_MINI)
                 // High temperature for creativity
@@ -316,7 +314,7 @@ public class StarNewsFinder {
                 
                 Format it as Markdown with links.""".formatted(
                 person.name(), person.sign(), horoscope.summary(), newsItems);
-        return context.ai()
+        return ai
                 .withLlm(llm)
                 .createObject(prompt, Writeup.class);
     }
@@ -341,10 +339,10 @@ class StarNewsFinder(
     @Action
     fun extractPerson(
         userInput: UserInput,
-        context: OperationContext
+        ai: Ai
     ): StarPerson =
         // All prompts are typesafe
-        context.ai().withDefaultLlm()
+        ai.withDefaultLlm()
             .createObject("Create a person from this user input, extracting their name and star sign: $userInput")
 
     // This action doesn't use an LLM
@@ -359,9 +357,9 @@ class StarNewsFinder(
     fun findNewsStories(
         person: StarPerson,
         horoscope: Horoscope,
-        context: OperationContext
+        ai: Ai,
     ): RelevantNewsStories =
-        context.ai().withDefaultLlm().createObject(
+        ai.withDefaultLlm().createObject(
             """
             ${person.name} is an astrology believer with the sign ${person.sign}.
             Their horoscope for today is:
@@ -391,9 +389,9 @@ class StarNewsFinder(
         person: StarPerson,
         relevantNewsStories: RelevantNewsStories,
         horoscope: Horoscope,
-        context: OperationContext,
+        ai: Ai,
     ): Writeup =
-        context.ai()
+        ai
             .withLlm(
                 LlmOptions
                     .withModel(model)
@@ -629,10 +627,12 @@ Be sure to activate the following MCP tools from the catalog:
 > You can also set up your own MCP tools using Spring AI conventions. See the `application-docker-desktop.yml` file for
 > an example.
 
-If you're running Ollama locally, include the `embabel ollama starter` and Embabel will automatically connect to your Ollama
+If you're running Ollama locally, include the `embabel ollama starter` and Embabel will automatically connect to your
+Ollama
 endpoint and make all models available.
 
 ```xml
+
 <dependency>
     <groupId>com.embabel.agent</groupId>
     <artifactId>embabel-agent-starter-ollama</artifactId>
@@ -705,10 +705,13 @@ x "fact check the following: holden cars are still made in australia; the koel i
 
 The Embabel Agent Framework supports local models from:
 
-- Ollama: Simply add `embabel-agent-starter-ollama` starter to your pom.xml and your local Ollama endpoint will be queries. All local models will be
+- Ollama: Simply add `embabel-agent-starter-ollama` starter to your pom.xml and your local Ollama endpoint will be
+  queries. All local models will be
   available.
-- Docker: Add the `embabel-agent-starter-dockermodels` starter to your pom.xml and your local Docker endpoint will be queried. All local models will be available.
-- LMStudio: This uses the openAI compatible client. Just include LMStudio as a dependency and make sure your LMStudio server is running.
+- Docker: Add the `embabel-agent-starter-dockermodels` starter to your pom.xml and your local Docker endpoint will be
+  queried. All local models will be available.
+- LMStudio: This uses the openAI compatible client. Just include LMStudio as a dependency and make sure your LMStudio
+  server is running.
 
 #### Custom LLMs
 
@@ -915,7 +918,8 @@ Spring profiles are used to configure the application for different environments
 
 Model profiles:
 
-- `docker-desktop`: Talking to Docker Desktop with the MCP extension. **This is recommended for the best experience, with Docker-provided web tools.**
+- `docker-desktop`: Talking to Docker Desktop with the MCP extension. **This is recommended for the best experience,
+  with Docker-provided web tools.**
 
 Logging profiles:
 
@@ -958,7 +962,8 @@ This makes me sad.
 
 ### Maven Central Availability
 
-**Since version 0.2.0**, Embabel Agent Framework is available directly on Maven Central, simplifying dependency management. You no longer need to configure custom repositories for stable releases.
+**Since version 0.2.0**, Embabel Agent Framework is available directly on Maven Central, simplifying dependency
+management. You no longer need to configure custom repositories for stable releases.
 
 ---
 
@@ -969,6 +974,7 @@ This makes me sad.
 Simply add the Embabel Spring Boot starter dependency to your `pom.xml`:
 
 ```xml
+
 <dependency>
     <groupId>com.embabel.agent</groupId>
     <artifactId>embabel-agent-starter</artifactId>
@@ -983,6 +989,7 @@ No additional repository configuration is needed! Maven Central is configured by
 You need to add the Embabel repositories to your `pom.xml`:
 
 ```xml
+
 <repositories>
     <repository>
         <id>embabel-releases</id>
@@ -1010,6 +1017,7 @@ You need to add the Embabel repositories to your `pom.xml`:
 Then add the dependency:
 
 ```xml
+
 <dependency>
     <groupId>com.embabel.agent</groupId>
     <artifactId>embabel-agent-starter</artifactId>
@@ -1147,9 +1155,13 @@ dependencies {
 
 #### Spring Milestones Repository
 
-The Spring Milestones repository is required because the Embabel BOM (`embabel-agent-dependencies`) has transitive dependencies on experimental Spring components, specifically the `mcp-bom`. This BOM is not available on Maven Central and is only published to the Spring milestone repository.
+The Spring Milestones repository is required because the Embabel BOM (`embabel-agent-dependencies`) has transitive
+dependencies on experimental Spring components, specifically the `mcp-bom`. This BOM is not available on Maven Central
+and is only published to the Spring milestone repository.
 
-**Note for Gradle users:** Unlike Maven, Gradle does not inherit repository configurations declared in parent POMs or BOMs. Therefore, it is necessary to explicitly declare the Spring milestone repository in your repositories block to ensure proper resolution of all transitive dependencies.
+**Note for Gradle users:** Unlike Maven, Gradle does not inherit repository configurations declared in parent POMs or
+BOMs. Therefore, it is necessary to explicitly declare the Spring milestone repository in your repositories block to
+ensure proper resolution of all transitive dependencies.
 
 #### Repository Types
 
@@ -1162,7 +1174,9 @@ The Spring Milestones repository is required because the Embabel BOM (`embabel-a
 ### Quick Start Examples
 
 #### Maven with latest stable version
+
 ```xml
+
 <dependency>
     <groupId>com.embabel.agent</groupId>
     <artifactId>embabel-agent-starter</artifactId>
@@ -1171,11 +1185,13 @@ The Spring Milestones repository is required because the Embabel BOM (`embabel-a
 ```
 
 #### Gradle Kotlin DSL with latest stable version
+
 ```kotlin
 implementation("com.embabel.agent:embabel-agent-starter:0.3.0")
 ```
 
 #### Gradle Groovy DSL with latest stable version
+
 ```groovy
 implementation 'com.embabel.agent:embabel-agent-starter:0.3.0'
 ```
