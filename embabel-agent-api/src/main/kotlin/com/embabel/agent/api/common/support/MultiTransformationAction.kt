@@ -15,7 +15,6 @@
  */
 package com.embabel.agent.api.common.support
 
-import com.embabel.agent.api.annotation.State
 import com.embabel.agent.api.common.SomeOf
 import com.embabel.agent.api.common.Transformation
 import com.embabel.agent.api.common.TransformationActionContext
@@ -28,6 +27,7 @@ import com.embabel.plan.CostComputation
  * The block takes a List<Any>.
  * Used from within ActionMethodManager to support methods with multiple parameters.
  * Handles @State returns
+ * @param clearBlackboard if true, clears the blackboard on completion before binding the output
  */
 class MultiTransformationAction<O : Any>(
     name: String,
@@ -37,6 +37,7 @@ class MultiTransformationAction<O : Any>(
     cost: CostComputation = { 0.0 },
     value: CostComputation = { 0.0 },
     canRerun: Boolean = false,
+    val clearBlackboard: Boolean = false,
     qos: ActionQos = ActionQos(),
     inputs: Set<IoBinding>,
     private val inputClasses: List<Class<*>>,
@@ -79,11 +80,12 @@ class MultiTransformationAction<O : Any>(
                 action = this,
             )
         )
-        if (output?.javaClass?.isAnnotationPresent(State::class.java) == true) {
-            // Clear blackboard as we want only the state class itself in it
+
+        if (output != null && clearBlackboard) {
+            // Clear blackboard if requested
             // This facilitates looping and also increases efficiency
             logger.info(
-                "Action {} returned @State class {}: clearing blackboard and binding only the state instance",
+                "Action {} returned class {}: clearing blackboard and binding only the state instance",
                 name,
                 output::class.java.name,
             )

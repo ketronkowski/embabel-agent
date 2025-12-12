@@ -110,6 +110,11 @@ annotation class ToolGroup(
  * used for documentation purposes, having the advantage over comments
  * that it can appear in logs. Description defaults to name
  * @param pre Preconditions for the action
+ * @param post Postconditions for the action
+ * @param canRerun can we rerun this action?
+ * If false, the action will not be rerun if it has already run in the current process
+ * @param purge If true, all previous state will be purged from the blackboard,
+ * leaving only the outputs of this action.
  * @param outputBinding Output binding for the action.
  * Only required for a custom binding: a specific variable name for the returned value.
  * @param cost Cost of executing the action
@@ -126,6 +131,7 @@ annotation class Action(
     val pre: Array<String> = [],
     val post: Array<String> = [],
     val canRerun: Boolean = false,
+    val clearBlackboard: Boolean = false,
     val outputBinding: String = IoBinding.DEFAULT_BINDING,
     val cost: ZeroToOne = 0.0,
     val value: ZeroToOne = 0.0,

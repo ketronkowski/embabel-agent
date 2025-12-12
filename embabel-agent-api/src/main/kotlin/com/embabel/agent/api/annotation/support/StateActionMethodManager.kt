@@ -17,6 +17,7 @@ package com.embabel.agent.api.annotation.support
 
 import com.embabel.agent.api.annotation.AchievesGoal
 import com.embabel.agent.api.annotation.Action
+import com.embabel.agent.api.annotation.State
 import com.embabel.agent.api.common.TransformationActionContext
 import com.embabel.agent.api.common.support.MultiTransformationAction
 import com.embabel.agent.core.IoBinding
@@ -63,6 +64,8 @@ internal class StateActionMethodManager(
         )
         val allInputs = inputs + stateInput
         require(method.returnType != null) { "Action method ${method.name} must have a return type" }
+        val clearBlackboard = method.returnType.isAnnotationPresent(State::class.java) ||
+                actionAnnotation.clearBlackboard
         return MultiTransformationAction(
             name = "${stateClass.simpleName}.${method.name}",
             description = actionAnnotation.description.ifBlank { method.name },
@@ -74,6 +77,7 @@ internal class StateActionMethodManager(
             // However, @AchievesGoal actions are terminal and should NOT be rerunnable
             // to prevent infinite loops with Utility planner.
             canRerun = achievesGoalAnnotation == null,
+            clearBlackboard = clearBlackboard,
             pre = actionAnnotation.pre.toList(),
             post = actionAnnotation.post.toList(),
             inputClasses = inputClasses + stateClass,

@@ -25,10 +25,47 @@ Action metadata can be specified on the annotation, including:
 - `post`: A list of postconditions _additional to the output type(s)_ that may be satisfied after the action is executed.
 - `canRerun`: A boolean indicating whether the action can be rerun if it has already been executed.
 Defaults to false.
+- `clearBlackboard`: A boolean indicating whether to clear the blackboard after this action completes.
+When true, all objects on the blackboard are removed except the action's output.
+This is useful for resetting context in multi-step workflows.
+It can also make persistence of flows more efficient by dispensing with objects that are no longer needed.
+Defaults to false.
 - `cost`:Relative cost of the action from 0-1. Defaults to 0.0.
 - `value`: Relative value of performing the action from 0-1. Defaults to 0.0.
 - `toolGroups`: Named tool groups the action requires.
 - `toolGroupRequirements`: Tool group requirements with QoS constraints.
+
+===== Clearing the Blackboard
+
+The `clearBlackboard` attribute is useful in multi-step workflows where you want to reset the processing context.
+When an action with `clearBlackboard = true` completes, all objects on the blackboard are removed except the action's output.
+This prevents accumulated intermediate data from affecting subsequent processing.
+
+[source,java]
+----
+@Agent(description = "Multi-step document processing")
+public class DocumentProcessor {
+
+    @Action(clearBlackboard = true)  // <1>
+    public ProcessedDocument preprocess(RawDocument doc) {
+        return new ProcessedDocument(doc.getContent().trim());
+    }
+
+    @AchievesGoal(description = "Produce final output")
+    @Action
+    public FinalOutput transform(ProcessedDocument doc) {  // <2>
+        return new FinalOutput(doc.getContent().toUpperCase());
+    }
+}
+----
+
+<1> After `preprocess` completes, the blackboard is cleared and only `ProcessedDocument` remains.
+The original `RawDocument` is removed.
+<2> The `transform` action receives only the `ProcessedDocument`, not any earlier inputs.
+
+NOTE: Avoid using `clearBlackboard` on goal-achieving actions (those with `@AchievesGoal`).
+Clearing the blackboard removes `hasRun` tracking conditions, which may interfere with goal satisfaction.
+Use `clearBlackboard` on intermediate actions instead.
 
 //TODO: (jasper notes) Provide links to detailed docs for pre, post, canRerun, cost, etc. Also brief code example is useful here.
 
@@ -43,7 +80,8 @@ This is important because they may be called multiple times.
 
 //TODO (jasper notes) Provide a simple illustrative example with story-telling and supporting code example.
 
-> Both Action and Condition methods may be inherited from superclasses. That is, annotated methods on superclasses will be treated as actions on a subclass instance.
+> Both Action and Condition methods may be inherited from superclasses.
+That is, annotated methods on superclasses will be treated as actions on a subclass instance.
 
 > Give your Action and Condition methods unique names, so the planner can distinguish between them.
 
@@ -102,8 +140,7 @@ Action methods normally return a single domain object.
 
 Nullable return types are allowed.
 Returning null will trigger replanning.
-There may or not be an alternative path from that point, but it won't be what the planner
-was previously trying to achieve.
+There may or not be an alternative path from that point, but it won't be what the planner was previously trying to achieve.
 
 //TODO: (jasper notes) A diagram showing this would be super cool here.
 
@@ -173,9 +210,9 @@ fun salesAction(intent: SalesIntent): IntentClassificationSuccess {
 // ...
 ----
 
-<1> Classification action returns supertype `Intent`. Real classification would likely use an LLM.
+<1> Classification action returns supertype `Intent`.
+Real classification would likely use an LLM.
 <2> `billingAction` and other action methods takes a subtype of `Intent`, so will only be invoked if the classification action returned that subtype.
-
 
 ==== Action method implementation
 
