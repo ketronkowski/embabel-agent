@@ -32,7 +32,8 @@ data class DocumentDeletionResult(
 )
 
 /**
- * WritableRagService that also allows us to load and save ContentElements.
+ * ContentElementRepository that can chunk and persist documents,
+ * we well as remove them.
  */
 interface ChunkingContentElementRepository : ContentElementRepository {
 

@@ -50,7 +50,7 @@ data class DefaultMaterializedContainerSection(
 ) : NavigableContainerSection
 
 /**
- * Document we can navigate through descendants of
+ * Document we can navigate descendants of
  */
 interface NavigableDocument : ContentRoot, NavigableContainerSection {
 
@@ -61,7 +61,7 @@ interface NavigableDocument : ContentRoot, NavigableContainerSection {
 }
 
 /**
- * In-memory representation of a document with sections.
+ * In-memory representation of a NavigableDocument
  */
 data class MaterializedDocument(
     override val id: String,

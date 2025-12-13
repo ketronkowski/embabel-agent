@@ -184,15 +184,20 @@ class LuceneSearchOperations @JvmOverloads constructor(
         // No op here
     }
 
-    fun findAll(): List<Chunk> {
+    fun <T : ContentElement> findAll(clazz: Class<T>): List<T> {
         ensureChunksLoaded()
-        logger.debug("Retrieving all chunks from storage")
+        logger.debug("Retrieving all content elements from storage")
         val allChunks = contentElementStorage.values
-            .filterIsInstance<Chunk>()
+            .filterIsInstance(clazz)
             .sortedBy { "${it.metadata[CONTAINER_SECTION_ID]}-${it.metadata[SEQUENCE_NUMBER]}" }
         logger.debug("Retrieved {} chunks from storage", allChunks.size)
         return allChunks
     }
+
+    /**
+     * Default to finding chunks
+     */
+    fun findAll(): List<Chunk> = findAll(Chunk::class.java)
 
     /**
      * Update keywords for existing chunks.
@@ -445,7 +450,10 @@ class LuceneSearchOperations @JvmOverloads constructor(
      * Expand a chunk by finding adjacent chunks in the same container section.
      * Returns chunks ordered by sequence number, with the original chunk included.
      */
-    private fun expandBySequence(chunk: Chunk, chunksToAdd: Int): List<Chunk> {
+    private fun expandBySequence(
+        chunk: Chunk,
+        chunksToAdd: Int,
+    ): List<Chunk> {
         val containerSectionId = chunk.metadata[CONTAINER_SECTION_ID]?.toString()
         val sequenceNumber = chunk.metadata[SEQUENCE_NUMBER]?.toString()?.toIntOrNull()
 
@@ -564,7 +572,7 @@ class LuceneSearchOperations @JvmOverloads constructor(
 
         return topDocs.scoreDocs.map { scoreDoc ->
             val doc = searcher.doc(scoreDoc.doc)
-            val retrievable = createChunkFromDocument(doc)
+            val retrievable = createChunkFromLuceneDocument(doc)
             SimpleSimilaritySearchResult(
                 match = retrievable,
                 score = scoreDoc.score.toDouble()
@@ -587,7 +595,7 @@ class LuceneSearchOperations @JvmOverloads constructor(
 
         for (scoreDoc in textResults.scoreDocs) {
             val doc = searcher.doc(scoreDoc.doc)
-            val retrievable = createChunkFromDocument(doc)
+            val retrievable = createChunkFromLuceneDocument(doc)
 
             // Get text similarity (normalized)
             val textScore = scoreDoc.score.toDouble()
@@ -613,10 +621,10 @@ class LuceneSearchOperations @JvmOverloads constructor(
         return hybridResults
     }
 
-    private fun createChunkFromDocument(doc: Document): Chunk {
-        val keywords = doc.getValues(KEYWORDS_FIELD)?.toList() ?: emptyList()
+    private fun createChunkFromLuceneDocument(luceneDocument: Document): Chunk {
+        val keywords = luceneDocument.getValues(KEYWORDS_FIELD)?.toList() ?: emptyList()
 
-        val metadata = doc.fields
+        val metadata = luceneDocument.fields
             .filter { field -> field.name() !in setOf(ID_FIELD, CONTENT_FIELD, "embedding", KEYWORDS_FIELD) }
             .associate { field -> field.name() to field.stringValue() as Any? }
             .toMutableMap()
@@ -627,9 +635,9 @@ class LuceneSearchOperations @JvmOverloads constructor(
         }
 
         return Chunk(
-            id = doc.get(ID_FIELD),
-            text = doc.get(CONTENT_FIELD),
-            parentId = doc.get(ID_FIELD),
+            id = luceneDocument.get(ID_FIELD),
+            text = luceneDocument.get(CONTENT_FIELD),
+            parentId = luceneDocument.get(ID_FIELD),
             metadata = metadata,
         )
     }
@@ -773,7 +781,7 @@ class LuceneSearchOperations @JvmOverloads constructor(
                             doc.get("id"),
                             trim(s = doc.get("content") ?: "", max = 25, keepRight = 4),
                         )
-                        val chunk = createChunkFromDocument(doc)
+                        val chunk = createChunkFromLuceneDocument(doc)
                         contentElementStorage[chunk.id] = chunk
                         logger.info(
                             "✅ Loaded chunk with id={} and keywords {}",

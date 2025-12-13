@@ -53,6 +53,7 @@ abstract class AbstractChunkingContentElementRepository(
      * Create relationships between the structural elements in this content.
      * For example, in a graph database, create relationships between documents, sections, and chunks
      * based on their ids.
+     * Not all implementations support this.
      */
     protected abstract fun createRelationships(root: NavigableDocument)
 
