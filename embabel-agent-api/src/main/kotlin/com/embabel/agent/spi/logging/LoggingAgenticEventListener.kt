@@ -222,9 +222,9 @@ open class LoggingAgenticEventListener(
     protected open fun getChatModelCallEventMessage(e: ChatModelCallEvent<*>): String {
         val promptInfo = "using ${e.llm.name.color(colorPalette.highlight)}\n${
             e.springAiPrompt.toInfoString().color(AnsiColor.GREEN)
-        }\nprompt id: '${e.interaction.id}'\ntools: [${
-            e.interaction.toolCallbacks.joinToString { it.toolDefinition.name() }
-                .color(AnsiColor.BRIGHT_MAGENTA)
+        }\nprompt id: '${e.interaction.id}'\ntools: [\n${
+            e.interaction.toolCallbacks.joinToString("\n----\n") { it.toolDefinition.name() + ": " + it.toolDefinition.description() }
+                .color(colorPalette.highlight)
         }]"
         return "${e.processId} Spring AI ChatModel call:\n${promptInfo}"
     }

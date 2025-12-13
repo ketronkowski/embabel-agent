@@ -45,7 +45,7 @@ fun interface ListenerProvider {
 
 
 /**
- * Chatbot implementation backed by an AgentProcess
+ * Chatbot implementation backed by an ongoing AgentProcess
  * The AgentProcess must react to UserMessage and respond on its output channel
  * The AgentProcess can assume that the Conversation will be available in the blackboard,
  * and the latest UserMessage.
@@ -61,6 +61,7 @@ class AgentProcessChatbot(
     private val agentSource: AgentSource,
     private val listenerProvider: ListenerProvider = ListenerProvider { _, _ -> emptyList() },
     private val plannerType: PlannerType = PlannerType.GOAP,
+    private val verbosity: Verbosity = Verbosity(),
 ) : Chatbot {
 
     override fun createSession(
@@ -77,6 +78,7 @@ class AgentProcessChatbot(
                 identities = Identities(
                     forUser = user,
                 ),
+                verbosity = verbosity,
                 plannerType = plannerType,
             ),
             bindings = emptyMap(),
@@ -98,29 +100,6 @@ class AgentProcessChatbot(
     companion object {
 
         /**
-         * Create a chatbot with the given agent. The agent is looked up by name from the agent platform.
-         * @param agentPlatform the agent platform to create and manage agent processes
-         * @param agentName the name of the agent to
-         * @param listenerProvider provider for contextual event listeners
-         */
-        @JvmStatic
-        @JvmOverloads
-        fun withAgentByName(
-            agentPlatform: AgentPlatform,
-            agentName: String,
-            listenerProvider: ListenerProvider = ListenerProvider { _, outputChannel ->
-                listOf(OutputChannelHighlightingEventListener(outputChannel))
-            },
-        ): Chatbot = AgentProcessChatbot(
-            agentPlatform = agentPlatform,
-            agentSource = {
-                agentPlatform.agents().find { it.name == agentName }
-                    ?: throw IllegalArgumentException("No agent found with name $agentName")
-            },
-            listenerProvider = listenerProvider,
-        )
-
-        /**
          * Create a chatbot that will use all actions available on the platform,
          * with utility-based planning.
          */
@@ -128,6 +107,7 @@ class AgentProcessChatbot(
         @JvmOverloads
         fun utilityFromPlatform(
             agentPlatform: AgentPlatform,
+            verbosity: Verbosity = Verbosity(),
             listenerProvider: ListenerProvider = ListenerProvider { _, outputChannel ->
                 listOf(OutputChannelHighlightingEventListener(outputChannel))
             },
@@ -137,6 +117,7 @@ class AgentProcessChatbot(
                 UtilityInvocation.on(agentPlatform).createPlatformAgent()
             },
             listenerProvider = listenerProvider,
+            verbosity = verbosity,
             plannerType = PlannerType.UTILITY,
         )
     }

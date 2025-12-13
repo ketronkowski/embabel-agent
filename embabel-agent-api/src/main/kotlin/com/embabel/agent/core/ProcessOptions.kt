@@ -21,6 +21,9 @@ import com.embabel.agent.api.common.PlannerType
 import com.embabel.agent.api.event.AgenticEventListener
 import com.embabel.agent.api.identity.User
 
+/**
+ * Control how much detail to log from LLM interactions.
+ */
 interface LlmVerbosity {
     val showPrompts: Boolean
     val showLlmResponses: Boolean
