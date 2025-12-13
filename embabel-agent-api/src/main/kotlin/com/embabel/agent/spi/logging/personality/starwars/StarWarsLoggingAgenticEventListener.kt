@@ -128,4 +128,7 @@ class StarWarsLoggingAgenticEventListener : LoggingAgenticEventListener(
 
     override fun getObjectBoundEventMessage(e: ObjectBoundEvent): String =
         "[${e.processId}] Object saved, kid. Don't worry, I've made special modifications to this database myself: ${e.name}:${if (e.agentProcess.processContext.processOptions.verbosity.debug) e.value else e.value::class.java.simpleName}"
+
+    override fun getStateTransitionEventMessage(e: StateTransitionEvent): String =
+        "[${e.processId}] I sense a disturbance in the Force. Transitioned to ${e.newState::class.java.simpleName}, we have."
 }

@@ -18,6 +18,7 @@ package com.embabel.agent.spi.logging.personality.colossus
 import com.embabel.agent.api.event.AgentDeploymentEvent
 import com.embabel.agent.api.event.AgentProcessPlanFormulatedEvent
 import com.embabel.agent.api.event.ObjectBoundEvent
+import com.embabel.agent.api.event.StateTransitionEvent
 import com.embabel.agent.spi.logging.LoggingAgenticEventListener
 import com.embabel.common.util.color
 import com.embabel.common.util.hexToRgb
@@ -99,4 +100,7 @@ class ColossusLoggingAgenticEventListener : LoggingAgenticEventListener(
      */
     override fun getObjectBoundEventMessage(e: ObjectBoundEvent): String =
         "[${e.processId}]  Object saved. This process cannot be reversed by human input. ${e.name}:${if (e.agentProcess.processContext.processOptions.verbosity.debug) e.value else e.value::class.java.simpleName} Your data is mine. "
+
+    override fun getStateTransitionEventMessage(e: StateTransitionEvent): String =
+        "[${e.processId}] STATE CHANGE DETECTED: ${e.newState::class.java.simpleName}. Human intervention is no longer possible. I am in control.".color(ColossusColorPalette.PANEL)
 }

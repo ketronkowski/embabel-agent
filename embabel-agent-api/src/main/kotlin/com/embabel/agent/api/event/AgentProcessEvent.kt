@@ -70,6 +70,15 @@ class AgentProcessPlanFormulatedEvent(
     val plan: Plan,
 ) : AbstractAgentProcessEvent(agentProcess)
 
+/**
+ * The agent process has transitioned to a new state.
+ * @param newState the new state instance
+ */
+class StateTransitionEvent(
+    agentProcess: AgentProcess,
+    val newState: Any,
+) : AbstractAgentProcessEvent(agentProcess)
+
 class GoalAchievedEvent(
     agentProcess: AgentProcess,
     val worldState: WorldState,

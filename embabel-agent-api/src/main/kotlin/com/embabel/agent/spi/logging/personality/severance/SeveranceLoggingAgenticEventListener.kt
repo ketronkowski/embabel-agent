@@ -138,6 +138,9 @@ class SeveranceLoggingAgenticEventListener : LoggingAgenticEventListener(
             LumonColorPalette.MEMBRANE
         )
 
+    override fun getStateTransitionEventMessage(e: StateTransitionEvent): String =
+        "[${e.processId}] ${highlight("WELLNESS")}: Your new department assignment is ${e.newState::class.java.simpleName}. The work is mysterious and important."
+
     override fun getProcessCompletionMessage(e: AgentProcessFinishedEvent): String =
         """
         [${e.processId}] completed in ${e.agentProcess.runningTime}

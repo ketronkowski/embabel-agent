@@ -42,8 +42,6 @@ interface LoggingPersonality {
      */
     val logger: Logger
 
-    val bannerWidth: Int get() = BANNER_WIDTH
-
     fun lineSeparator(
         text: String,
         bannerChar: String,
@@ -172,6 +170,9 @@ open class LoggingAgenticEventListener(
             .trimMargin()
             .indentLines(level = 1, skipIndentFirstLine = true)
 
+    protected open fun getStateTransitionEventMessage(e: StateTransitionEvent): String =
+        "[${e.processId}] transitioned to state: ${e.newState}"
+
     protected open fun getEarlyTerminationMessage(e: EarlyTermination): String =
         "[${e.processId}] early termination by ${e.policy} for ${e.reason} - error=${e.error}"
 
@@ -265,6 +266,10 @@ open class LoggingAgenticEventListener(
 
             is AgentProcessPlanFormulatedEvent -> {
                 logger.info(getAgentProcessPlanFormulatedEventMessage(event))
+            }
+
+            is StateTransitionEvent -> {
+                logger.info(getStateTransitionEventMessage(event))
             }
 
             is EarlyTermination -> {

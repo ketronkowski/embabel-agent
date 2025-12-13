@@ -15,9 +15,11 @@
  */
 package com.embabel.agent.api.common.support
 
+import com.embabel.agent.api.annotation.State
 import com.embabel.agent.api.common.SomeOf
 import com.embabel.agent.api.common.Transformation
 import com.embabel.agent.api.common.TransformationActionContext
+import com.embabel.agent.api.event.StateTransitionEvent
 import com.embabel.agent.core.*
 import com.embabel.agent.core.support.AbstractAction
 import com.embabel.plan.CostComputation
@@ -26,7 +28,7 @@ import com.embabel.plan.CostComputation
  * Transformer that can take multiple inputs.
  * The block takes a List<Any>.
  * Used from within ActionMethodManager to support methods with multiple parameters.
- * Handles @State returns
+ * Handles @State returns from @Action types
  * @param clearBlackboard if true, clears the blackboard on completion before binding the output
  */
 class MultiTransformationAction<O : Any>(
@@ -81,18 +83,30 @@ class MultiTransformationAction<O : Any>(
             )
         )
 
-        if (output != null && clearBlackboard) {
-            // Clear blackboard if requested
-            // This facilitates looping and also increases efficiency
-            logger.info(
-                "Action {} returned class {}: clearing blackboard and binding only the state instance",
-                name,
-                output::class.java.name,
-            )
-            processContext.blackboard.clear()
-        }
-        if (output != null && !(output is Unit || output::class.java == Void::class.java)) {
-            bindOutput(processContext, output)
+        if (output != null) {
+            if (clearBlackboard) {
+                // Clear blackboard if requested
+                // This facilitates looping and also increases efficiency
+                logger.info(
+                    "Action {} returned class {}: clearing blackboard and binding only the output instance",
+                    name,
+                    output::class.java.name,
+                )
+                processContext.blackboard.clear()
+            }
+
+            if (output.javaClass.isAnnotationPresent(State::class.java)) {
+                processContext.onProcessEvent(
+                    StateTransitionEvent(
+                        agentProcess = processContext.agentProcess,
+                        newState = output,
+                    )
+                )
+            }
+
+            if (!(output is Unit || output::class.java == Void::class.java)) {
+                bindOutput(processContext, output)
+            }
         }
     }
 

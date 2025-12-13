@@ -283,7 +283,6 @@ class AgentMetadataReader(
                     actionMethod,
                     stateClass,
                     agentInstance,
-                    toolCallbacksOnInstance,
                 )
                 allActions.add(action)
                 createGoalFromStateActionMethod(actionMethod, action, stateClass, agentInstance)?.let {
@@ -357,12 +356,10 @@ class AgentMetadataReader(
         method: Method,
         stateClass: Class<*>,
         agentInstance: Any,
-        toolCallbacksOnInstance: List<ToolCallback>,
     ): CoreAction {
-        // Create a StateActionMethodManager that handles state class instantiation
         return StateActionMethodManager(
             actionMethodManager = actionMethodManager,
-        ).createAction(method, stateClass, agentInstance, toolCallbacksOnInstance)
+        ).createAction(method, stateClass, agentInstance)
     }
 
     /**

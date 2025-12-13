@@ -177,4 +177,6 @@ The standard repository for all knowledge and wisdom in the universe
     override fun getProgressUpdateEventMessage(e: ProgressUpdateEvent): String =
         "[${e.processId}] Progress: ${e.createProgressBar(length = 50).color(HitchhikerColorPalette.BABEL_GREEN)}"
 
+    override fun getStateTransitionEventMessage(e: StateTransitionEvent): String =
+        "[${e.processId}] ${highlight("IMPROBABILITY DRIVE")}: The infinite improbability of transitioning to ${e.newState::class.java.simpleName} has been achieved. Don't Panic."
 }

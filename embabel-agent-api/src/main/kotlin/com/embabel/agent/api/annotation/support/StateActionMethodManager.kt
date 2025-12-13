@@ -23,7 +23,6 @@ import com.embabel.agent.api.common.support.MultiTransformationAction
 import com.embabel.agent.core.IoBinding
 import com.embabel.agent.core.ToolGroupRequirement
 import org.slf4j.LoggerFactory
-import org.springframework.ai.tool.ToolCallback
 import org.springframework.core.KotlinDetector
 import org.springframework.util.ReflectionUtils
 import java.lang.reflect.InvocationTargetException
@@ -50,7 +49,6 @@ internal class StateActionMethodManager(
         method: Method,
         stateClass: Class<*>,
         agentInstance: Any,
-        toolCallbacksOnInstance: List<ToolCallback>,
     ): CoreAction {
         requireNonAmbiguousParameters(method)
         val actionAnnotation = method.getAnnotation(Action::class.java)
@@ -135,7 +133,7 @@ internal class StateActionMethodManager(
         ) ?: throw IllegalStateException(
             "State instance of type ${stateClass.name} not found in blackboard"
         )
-        // TODO Arjen to review
+        // TODO Arjen to review reflection usage
         val result = if (KotlinDetector.isKotlinReflectPresent()) {
             val kFunction = method.kotlinFunction
             if (kFunction != null) invokeStateActionMethodKotlinReflect(method, kFunction, stateInstance, actionContext)
