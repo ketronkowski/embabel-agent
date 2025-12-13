@@ -18,6 +18,15 @@ package com.embabel.agent.core
 import kotlin.reflect.KClass
 
 /**
+ * Sentinel object added to the blackboard when an action completes
+ * without producing a result (null, Unit, or Void return).
+ * This invalidates any @Trigger precondition that was satisfied before the action ran.
+ */
+object ActionVoidResult {
+    override fun toString(): String = "ActionVoidResult"
+}
+
+/**
  * Binding definition of form name:Type
  * If name is omitted, it is assumed to be 'it'
  * Used to build preconditions from input and output bindings.

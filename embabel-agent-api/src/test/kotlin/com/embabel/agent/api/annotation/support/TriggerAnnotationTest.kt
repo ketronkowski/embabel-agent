@@ -39,6 +39,12 @@ data class EventB(val data: String)
 data class ProcessedResult(val source: String, val processed: String)
 
 /**
+ * Domain types for null-returning trigger test
+ */
+data class IncomingRequest(val id: String)
+data class RequestContext(val contextId: String)
+
+/**
  * Agent that uses @Trigger to react only when UserMessage is the last result.
  * Both UserMessage and SystemContext must be present, but the action only fires
  * when UserMessage was just added.
@@ -94,6 +100,31 @@ class MultiEventAgent {
         @Trigger eventB: EventB
     ): ProcessedResult {
         return ProcessedResult("B", "Processed B: ${eventB.data} with A: ${eventA.data}")
+    }
+}
+
+/**
+ * Agent that demonstrates the bug: @Trigger with canRerun=true and null return.
+ * When the action returns null, the lastResult doesn't change, so the trigger
+ * precondition remains satisfied, causing an infinite loop.
+ */
+@Agent(description = "Agent with null-returning trigger action")
+class NullReturningTriggerAgent {
+
+    var invocationCount = 0
+
+    @AchievesGoal(description = "Process request")
+    @Action(canRerun = true)
+    fun processRequest(
+        @Trigger request: IncomingRequest,
+        context: RequestContext
+    ): Unit {
+        invocationCount++
+        // Returns Unit (void) - nothing added to blackboard
+        // lastResult stays as IncomingRequest
+        // trigger precondition lastResult:IncomingRequest remains TRUE
+        // action runs again → infinite loop!
+        println("processRequest invoked: count=$invocationCount")
     }
 }
 
@@ -193,6 +224,51 @@ class TriggerAnnotationTest {
             println("Actions: $actionNames")
             assertTrue(actionNames.any { it.contains("processEventA") })
             assertTrue(actionNames.any { it.contains("processEventB") })
+        }
+    }
+
+    @Nested
+    inner class TriggerWithNullReturn {
+
+        /**
+         * This test demonstrates a BUG in the current @Trigger implementation:
+         *
+         * When an action with @Trigger and canRerun=true returns null/Unit,
+         * the lastResult on the blackboard doesn't change. This means:
+         * 1. The trigger precondition (lastResult:TriggerType) remains TRUE
+         * 2. The action's canRerun=true allows it to run again
+         * 3. The action runs again → infinite loop
+         *
+         * Expected behavior: The action should only run ONCE per trigger event.
+         * Actual behavior: The action runs repeatedly until max iterations.
+         */
+        @Test
+        fun `trigger action returning null should not loop infinitely`() {
+            val agentInstance = NullReturningTriggerAgent()
+            val agent = reader.createAgentMetadata(agentInstance) as CoreAgent
+            val ap = IntegrationTestUtils.dummyAgentPlatform()
+
+            val process = ap.runAgentFrom(
+                agent,
+                ProcessOptions(),
+                linkedMapOf(
+                    "context" to RequestContext("ctx-001"),
+                    "it" to IncomingRequest("req-001")
+                )
+            )
+
+            println("Process status: ${process.status}")
+            println("Invocation count: ${agentInstance.invocationCount}")
+            println("History: ${process.history.map { it.actionName }}")
+
+            // This assertion demonstrates the bug:
+            // The action should run exactly once, but due to the bug it runs multiple times
+            // (limited only by max iterations or other safeguards)
+            assertEquals(
+                1,
+                agentInstance.invocationCount,
+                "Action should only be invoked once per trigger, but was invoked ${agentInstance.invocationCount} times"
+            )
         }
     }
 }

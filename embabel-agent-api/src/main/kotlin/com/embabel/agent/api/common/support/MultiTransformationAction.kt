@@ -20,6 +20,7 @@ import com.embabel.agent.api.common.SomeOf
 import com.embabel.agent.api.common.Transformation
 import com.embabel.agent.api.common.TransformationActionContext
 import com.embabel.agent.api.event.StateTransitionEvent
+import com.embabel.agent.core.ActionVoidResult
 import com.embabel.agent.core.*
 import com.embabel.agent.core.support.AbstractAction
 import com.embabel.plan.CostComputation
@@ -106,7 +107,13 @@ class MultiTransformationAction<O : Any>(
 
             if (!(output is Unit || output::class.java == Void::class.java)) {
                 bindOutput(processContext, output)
+            } else {
+                // Add sentinel for void/Unit returns to invalidate any @Trigger precondition
+                processContext.agentProcess += ActionVoidResult
             }
+        } else {
+            // Add sentinel for null returns to invalidate any @Trigger precondition
+            processContext.agentProcess += ActionVoidResult
         }
     }
 
