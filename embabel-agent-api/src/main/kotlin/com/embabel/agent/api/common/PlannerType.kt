@@ -17,19 +17,20 @@ package com.embabel.agent.api.common
 
 /**
  * Specifies the type of planner that an agent uses.
+ * @param needsGoals Whether the planner requires at least one goal to function.
  */
-enum class PlannerType {
+enum class PlannerType(val needsGoals: Boolean) {
 
     /**
      * Goal Oriented Action Planning.
      * This is the default planner.
      * It uses goals, actions and conditions to plan actions.
      */
-    GOAP,
+    GOAP(needsGoals = true),
 
     /**
      * Utility AI planning.
      * This planner uses utility functions to evaluate actions.
      */
-    UTILITY,
+    UTILITY(needsGoals = false),
 }

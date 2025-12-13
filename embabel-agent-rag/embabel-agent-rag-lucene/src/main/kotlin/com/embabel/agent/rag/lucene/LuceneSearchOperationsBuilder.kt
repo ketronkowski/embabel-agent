@@ -20,6 +20,9 @@ import com.embabel.agent.rag.service.SearchOperationsBuilder
 import com.embabel.common.ai.model.EmbeddingService
 import java.nio.file.Path
 
+/**
+ * Builder for LuceneSearchOperations instances.
+ */
 data class LuceneSearchOperationsBuilder(
     private val name: String = "lucene-search",
     private val embeddingService: EmbeddingService? = null,

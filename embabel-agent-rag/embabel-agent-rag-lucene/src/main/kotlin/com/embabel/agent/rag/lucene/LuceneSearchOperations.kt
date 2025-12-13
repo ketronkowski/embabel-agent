@@ -130,9 +130,10 @@ class LuceneSearchOperations @JvmOverloads constructor(
      * Manually trigger loading of existing chunks from disk.
      * Useful for ensuring chunks are loaded immediately after startup.
      */
-    fun loadExistingChunksFromDisk() {
+    fun loadExistingChunksFromDisk(): LuceneSearchOperations {
         logger.info("Manually triggering chunk loading from disk...")
         ensureChunksLoaded()
+        return this
     }
 
     @Volatile

@@ -174,8 +174,8 @@ abstract class AbstractAgentProcess(
             return this
         }
 
-        if (agent.goals.isEmpty()) {
-            logger.info("🤔 Process {} has no goals: {}", this.id, agent.goals)
+        if (agent.goals.isEmpty() && processOptions.plannerType.needsGoals) {
+            logger.info("🛑 Process {} has no goals: {}", this.id, agent.goals)
             error("Agent ${agent.name} has no goals: ${agent.infoString(verbose = true)}")
         }
 
