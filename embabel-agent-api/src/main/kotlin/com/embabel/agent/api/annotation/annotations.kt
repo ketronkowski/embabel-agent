@@ -21,6 +21,7 @@ import com.embabel.common.core.types.Semver.Companion.DEFAULT_VERSION
 import com.embabel.common.core.types.ZeroToOne
 import org.springframework.core.annotation.AliasFor
 import org.springframework.stereotype.Component
+import kotlin.reflect.KClass
 
 
 /**
@@ -113,7 +114,7 @@ annotation class ToolGroup(
  * @param post Postconditions for the action
  * @param canRerun can we rerun this action?
  * If false, the action will not be rerun if it has already run in the current process
- * @param purge If true, all previous state will be purged from the blackboard,
+ * @param clearBlackboard If true, all previous state will be cleared from the blackboard,
  * leaving only the outputs of this action.
  * @param outputBinding Output binding for the action.
  * Only required for a custom binding: a specific variable name for the returned value.
@@ -122,6 +123,11 @@ annotation class ToolGroup(
  * @param toolGroups Tool groups that this action requires. These are well known tools from the server.
  * @param toolGroupRequirements Tool groups required, with explicit metadata such as QoS requirements.
  * @Tool methods on the @Agentic class are automatically added.
+ * @param trigger The type that must be the last result on the blackboard for this action to fire.
+ * This enables reactive behavior where an action only fires when a specific type
+ * is freshly added, even when multiple parameters of various types are available.
+ * Defaults to Unit::class (no trigger). A trigger is an **additional** precondition: it
+ * must be satisfied in addition to any preconditions listed in [pre] and the action method's input parameters.
  */
 @Target(AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.RUNTIME)
@@ -137,6 +143,7 @@ annotation class Action(
     val value: ZeroToOne = 0.0,
     val toolGroups: Array<String> = [],
     val toolGroupRequirements: Array<ToolGroup> = [],
+    val trigger: KClass<*> = Unit::class,
 )
 
 /**
@@ -167,28 +174,3 @@ annotation class State
 annotation class RequireNameMatch(
     val value: String = "",
 )
-
-/**
- * Annotation that can be added to parameters of an @Action or @Condition method
- * to indicate that the parameter must be the last result added to the blackboard.
- * This enables reactive behavior where an action only fires when a specific type
- * is freshly added, even when multiple parameters of various types are available.
- *
- * For example, in a chat system with multiple message types, you might want an action
- * to fire only when a new user message arrives, not when other data is updated:
- *
- * ```kotlin
- * @Action
- * fun handleUserMessage(
- *     @Trigger userMessage: UserMessage,  // Only fires when UserMessage is the last result
- *     conversation: Conversation           // Must also be available
- * ): Response
- * ```
- *
- * @see Action
- * @see Condition
- */
-@Target(AnnotationTarget.VALUE_PARAMETER)
-@Retention(AnnotationRetention.RUNTIME)
-@MustBeDocumented
-annotation class Trigger

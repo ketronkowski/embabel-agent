@@ -18,20 +18,19 @@ package com.embabel.agent.api.annotation.support;
 import com.embabel.agent.api.annotation.AchievesGoal;
 import com.embabel.agent.api.annotation.Action;
 import com.embabel.agent.api.annotation.Agent;
-import com.embabel.agent.api.annotation.Trigger;
 import com.embabel.agent.core.AgentProcess;
 import com.embabel.agent.core.AgentProcessStatusCode;
 import com.embabel.agent.core.ProcessOptions;
 import com.embabel.agent.test.integration.IntegrationTestUtils;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Java test for @Trigger annotation.
+ * Java test for trigger field on @Action annotation.
  */
 class TriggerAnnotationJavaTest {
 
@@ -49,16 +48,15 @@ class TriggerAnnotationJavaTest {
     public static class JavaTriggerAgent {
 
         @AchievesGoal(description = "Process incoming event")
-        @Action
+        @Action(trigger = IncomingEvent.class)
         public ProcessedEvent processEvent(
-                @Trigger IncomingEvent event,
+                IncomingEvent event,
                 ExistingContext context
         ) {
             return new ProcessedEvent("Processed " + event.payload() + " in context " + context.contextId());
         }
     }
 
-    @Disabled("Disabled, pending investigation of intermittent test failures")
     @Test
     void triggerWorksInJava() {
         var reader = new AgentMetadataReader();
@@ -67,13 +65,14 @@ class TriggerAnnotationJavaTest {
         assertTrue(metadata instanceof com.embabel.agent.core.Agent);
 
         var ap = IntegrationTestUtils.dummyAgentPlatform();
+        // Use LinkedHashMap to preserve insertion order - trigger (IncomingEvent) must be last
+        var inputs = new LinkedHashMap<String, Object>();
+        inputs.put("context", new ExistingContext("ctx-001"));
+        inputs.put("it", new IncomingEvent("test-payload"));
         AgentProcess process = ap.runAgentFrom(
                 (com.embabel.agent.core.Agent) metadata,
                 new ProcessOptions(),
-                Map.of(
-                        "context", new ExistingContext("ctx-001"),
-                        "it", new IncomingEvent("test-payload")
-                )
+                inputs
         );
 
         assertEquals(AgentProcessStatusCode.COMPLETED, process.getStatus());

@@ -16,7 +16,6 @@
 package com.embabel.agent.api.annotation.support
 
 import com.embabel.agent.api.annotation.RequireNameMatch
-import com.embabel.agent.api.annotation.Trigger
 import com.embabel.agent.api.common.Ai
 import com.embabel.agent.api.common.OperationContext
 import com.embabel.agent.api.common.support.expandInputBindings
@@ -162,23 +161,11 @@ class BlackboardArgumentResolver : ActionMethodArgumentResolver {
                 val annotation = kotlinParameter.findAnnotation<RequireNameMatch>()
                 val name = getBindingParameterName(kotlinParameter.name, annotation)
                     ?: error(PARAMETER_NAME_SHOULD_BE_AVAILABLE)
-                val hasValue = operationContext.hasValue(
+                return operationContext.hasValue(
                     variable = name,
                     type = classifier.java.name,
                     dataDictionary = operationContext.processContext.agentProcess.agent,
                 )
-                if (!hasValue) {
-                    return false
-                }
-                // Check @Trigger annotation - parameter must be the last result
-                val triggerAnnotation = kotlinParameter.findAnnotation<Trigger>()
-                if (triggerAnnotation != null) {
-                    val lastResult = operationContext.processContext.blackboard.lastResult()
-                    if (lastResult == null || !classifier.java.isInstance(lastResult)) {
-                        return false
-                    }
-                }
-                return true
             } else {
                 return false
             }
@@ -186,23 +173,11 @@ class BlackboardArgumentResolver : ActionMethodArgumentResolver {
             val annotation = javaParameter.getAnnotation(RequireNameMatch::class.java)
             val name = getBindingParameterName(javaParameter.name, annotation)
                 ?: error(PARAMETER_NAME_SHOULD_BE_AVAILABLE)
-            val hasValue = operationContext.hasValue(
+            return operationContext.hasValue(
                 variable = name,
                 type = javaParameter.type.name,
                 dataDictionary = operationContext.processContext.agentProcess.agent,
             )
-            if (!hasValue) {
-                return false
-            }
-            // Check @Trigger annotation - parameter must be the last result
-            val triggerAnnotation = javaParameter.getAnnotation(Trigger::class.java)
-            if (triggerAnnotation != null) {
-                val lastResult = operationContext.processContext.blackboard.lastResult()
-                if (lastResult == null || !javaParameter.type.isInstance(lastResult)) {
-                    return false
-                }
-            }
-            return true
         } else {
             return true
         }

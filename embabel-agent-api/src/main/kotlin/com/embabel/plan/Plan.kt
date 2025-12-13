@@ -44,6 +44,10 @@ interface Step : Named, HasInfoString {
     val value: CostComputation
 }
 
+/**
+ * An Action is a step that does something, and hence may have a cost
+ * as well as a value.
+ */
 interface Action : Step {
 
     /**

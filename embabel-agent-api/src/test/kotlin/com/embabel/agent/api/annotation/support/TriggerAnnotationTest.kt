@@ -18,7 +18,6 @@ package com.embabel.agent.api.annotation.support
 import com.embabel.agent.api.annotation.AchievesGoal
 import com.embabel.agent.api.annotation.Action
 import com.embabel.agent.api.annotation.Agent
-import com.embabel.agent.api.annotation.Trigger
 import com.embabel.agent.core.AgentProcessStatusCode
 import com.embabel.agent.core.ProcessOptions
 import com.embabel.agent.test.integration.IntegrationTestUtils
@@ -45,7 +44,7 @@ data class IncomingRequest(val id: String)
 data class RequestContext(val contextId: String)
 
 /**
- * Agent that uses @Trigger to react only when UserMessage is the last result.
+ * Agent that uses trigger to react only when UserMessage is the last result.
  * Both UserMessage and SystemContext must be present, but the action only fires
  * when UserMessage was just added.
  */
@@ -53,9 +52,9 @@ data class RequestContext(val contextId: String)
 class TriggerChatAgent {
 
     @AchievesGoal(description = "Respond to user message")
-    @Action
+    @Action(trigger = UserMessage::class)
     fun handleMessage(
-        @Trigger userMessage: UserMessage,
+        userMessage: UserMessage,
         systemContext: SystemContext
     ): Response {
         return Response("Session ${systemContext.sessionId}: Received '${userMessage.content}'")
@@ -63,7 +62,7 @@ class TriggerChatAgent {
 }
 
 /**
- * Agent without @Trigger - action fires as soon as both parameters are available,
+ * Agent without trigger - action fires as soon as both parameters are available,
  * regardless of which was added last.
  */
 @Agent(description = "Chat agent without trigger")
@@ -85,28 +84,29 @@ class NonTriggerChatAgent {
 @Agent(description = "Multi-event processor")
 class MultiEventAgent {
 
-    @Action
+    @Action(trigger = EventA::class)
     fun processEventA(
-        @Trigger eventA: EventA,
+        eventA: EventA,
         eventB: EventB
     ): ProcessedResult {
         return ProcessedResult("A", "Processed A: ${eventA.data} with B: ${eventB.data}")
     }
 
     @AchievesGoal(description = "Process event B")
-    @Action
+    @Action(trigger = EventB::class)
     fun processEventB(
         eventA: EventA,
-        @Trigger eventB: EventB
+        eventB: EventB
     ): ProcessedResult {
         return ProcessedResult("B", "Processed B: ${eventB.data} with A: ${eventA.data}")
     }
 }
 
 /**
- * Agent that demonstrates the bug: @Trigger with canRerun=true and null return.
- * When the action returns null, the lastResult doesn't change, so the trigger
- * precondition remains satisfied, causing an infinite loop.
+ * Agent that demonstrates the fix for trigger with canRerun=true and null return.
+ * Previously, when the action returned null, the lastResult didn't change, so the trigger
+ * precondition remained satisfied, causing an infinite loop.
+ * Now, ActionVoidResult is added to the blackboard to invalidate the trigger.
  */
 @Agent(description = "Agent with null-returning trigger action")
 class NullReturningTriggerAgent {
@@ -114,16 +114,16 @@ class NullReturningTriggerAgent {
     var invocationCount = 0
 
     @AchievesGoal(description = "Process request")
-    @Action(canRerun = true)
+    @Action(trigger = IncomingRequest::class, canRerun = true)
     fun processRequest(
-        @Trigger request: IncomingRequest,
+        request: IncomingRequest,
         context: RequestContext
     ): Unit {
         invocationCount++
-        // Returns Unit (void) - nothing added to blackboard
-        // lastResult stays as IncomingRequest
-        // trigger precondition lastResult:IncomingRequest remains TRUE
-        // action runs again → infinite loop!
+        // Returns Unit (void) - ActionVoidResult added to blackboard
+        // lastResult becomes ActionVoidResult, not IncomingRequest
+        // trigger precondition lastResult:IncomingRequest becomes FALSE
+        // action does not rerun
         println("processRequest invoked: count=$invocationCount")
     }
 }
@@ -136,7 +136,7 @@ class TriggerAnnotationTest {
     inner class BasicTriggerBehavior {
 
         @Test
-        fun `action with trigger fires when trigger parameter is last result`() {
+        fun `action with trigger fires when trigger type is last result`() {
             val agent = reader.createAgentMetadata(TriggerChatAgent()) as CoreAgent
             val ap = IntegrationTestUtils.dummyAgentPlatform()
 

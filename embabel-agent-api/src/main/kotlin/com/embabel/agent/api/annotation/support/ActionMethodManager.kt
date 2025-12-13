@@ -15,16 +15,12 @@
  */
 package com.embabel.agent.api.annotation.support
 
-import com.embabel.agent.api.annotation.Trigger
+import com.embabel.agent.api.annotation.Action as ActionAnnotation
 import com.embabel.agent.api.common.TransformationActionContext
 import com.embabel.agent.core.Action
 import com.embabel.agent.core.IoBinding
 import org.springframework.ai.tool.ToolCallback
-import org.springframework.core.KotlinDetector
 import java.lang.reflect.Method
-import kotlin.reflect.full.findAnnotation
-import kotlin.reflect.full.valueParameters
-import kotlin.reflect.jvm.kotlinFunction
 
 /**
  * Creates and invokes actions from annotated methods.
@@ -61,23 +57,13 @@ interface ActionMethodManager {
 }
 
 /**
- * Find the type of the parameter annotated with @Trigger, if any.
+ * Find the trigger type for an action method from the @Action annotation's trigger field.
  * Shared between DefaultActionMethodManager and StateActionMethodManager.
  */
 internal fun findTriggerType(method: Method): Class<*>? {
-    val kotlinFunction = if (KotlinDetector.isKotlinReflectPresent()) method.kotlinFunction else null
-    for (i in method.parameters.indices) {
-        val javaParameter = method.parameters[i]
-        val kotlinParameter = kotlinFunction?.valueParameters?.getOrNull(i)
-
-        // Check Kotlin annotation first
-        if (kotlinParameter?.findAnnotation<Trigger>() != null) {
-            return javaParameter.type
-        }
-        // Check Java annotation
-        if (javaParameter.getAnnotation(Trigger::class.java) != null) {
-            return javaParameter.type
-        }
+    val actionAnnotation = method.getAnnotation(ActionAnnotation::class.java)
+    if (actionAnnotation != null && actionAnnotation.trigger != Unit::class) {
+        return actionAnnotation.trigger.java
     }
     return null
 }
