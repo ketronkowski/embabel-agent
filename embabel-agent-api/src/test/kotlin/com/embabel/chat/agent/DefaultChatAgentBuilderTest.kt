@@ -37,7 +37,7 @@ class DefaultChatAgentBuilderTest {
         )
         val chatAgent = cab.build()
         val m = UserMessage("Hello")
-        val conversation = InMemoryConversation.of(messages = listOf(m))
+        val conversation = InMemoryConversation(listOf(m))
         val agentProcess = agentPlatform.runAgentFrom(
             agent = chatAgent,
             processOptions = ProcessOptions(),

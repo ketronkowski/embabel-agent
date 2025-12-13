@@ -19,29 +19,34 @@ import com.embabel.chat.Conversation
 import com.embabel.chat.Message
 import com.embabel.common.core.MobyNameGenerator
 
-data class InMemoryConversation @JvmOverloads constructor(
-    private val _messages: MutableList<Message> = mutableListOf(),
+/**
+ * Simple in-memory implementation of [Conversation] for testing and ephemeral use cases.
+ */
+class InMemoryConversation private constructor(
     override val id: String = MobyNameGenerator.generateName(),
     private val persistent: Boolean = false,
+    private val _messages: MutableList<Message> = mutableListOf(),
 ) : Conversation {
 
-    override fun addMessage(message: Message): Conversation {
+    @JvmOverloads
+    constructor(
+        messages: List<Message> = emptyList(),
+        id: String = MobyNameGenerator.generateName(),
+        persistent: Boolean = false,
+    ) : this(
+        id = id,
+        persistent = persistent,
+        _messages = messages.toMutableList(),
+    )
+
+    override fun addMessage(message: Message): Message {
         _messages += message
-        return this
+        return message
     }
 
     override val messages: List<Message>
         get() = _messages
 
     override fun persistent(): Boolean = persistent
-
-    companion object {
-
-        fun of(
-            messages: List<Message>,
-        ): InMemoryConversation {
-            return InMemoryConversation(messages.toMutableList())
-        }
-    }
 
 }

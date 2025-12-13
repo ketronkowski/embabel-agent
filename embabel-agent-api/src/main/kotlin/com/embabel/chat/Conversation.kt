@@ -44,9 +44,9 @@ interface Conversation : StableIdentified, HasInfoString {
 
     /**
      * Modify the state of this conversation
-     * This method is mutable, and returns itself only for convenience
+     * Return the newly added message for convenience
      */
-    fun addMessage(message: Message): Conversation
+    fun addMessage(message: Message): Message
 
     /**
      * Prompt contributor that represents the conversation so far.
@@ -132,7 +132,7 @@ class UserMessage : Message, UserContent {
     constructor(
         parts: List<ContentPart>,
         name: String? = null,
-        timestamp: Instant = Instant.now()
+        timestamp: Instant = Instant.now(),
     ) : super(role = Role.USER, parts = parts, name = name, timestamp = timestamp)
 
     /**
@@ -142,7 +142,7 @@ class UserMessage : Message, UserContent {
     constructor(
         content: String,
         name: String? = null,
-        timestamp: Instant = Instant.now()
+        timestamp: Instant = Instant.now(),
     ) : this(parts = listOf(TextPart(content)), name = name, timestamp = timestamp)
 
     override fun toString(): String {
@@ -162,7 +162,12 @@ open class AssistantMessage @JvmOverloads constructor(
     name: String? = null,
     val awaitable: Awaitable<*, *>? = null,
     override val timestamp: Instant = Instant.now(),
-) : Message(role = Role.ASSISTANT, parts = listOf(TextPart(content)), name = name, timestamp = timestamp), AssistantContent {
+) : Message(
+    role = Role.ASSISTANT,
+    parts = listOf(TextPart(content)),
+    name = name,
+    timestamp = timestamp
+), AssistantContent {
 
     override fun toString(): String {
         return "AssistantMessage(from='${sender}', content='${trim(content, 80, 10)}')"
