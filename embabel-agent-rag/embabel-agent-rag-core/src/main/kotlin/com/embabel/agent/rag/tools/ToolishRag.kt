@@ -46,7 +46,15 @@ class ToolishRag @JvmOverloads constructor(
             }
         }
 
-    override fun notes() = "Search acceptance criteria:\n$goal"
+    override fun notes() = """
+        ${
+        (searchOperations as? TextSearch)?.let {
+            "Lucene search syntax support: ${searchOperations.luceneSyntaxNotes}\n"
+        }
+    }
+        Search acceptance criteria:
+        $goal
+      """.trimIndent()
 
     companion object {
         val DEFAULT_GOAL = """

@@ -55,6 +55,7 @@ import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.sqrt
 
+
 /**
  * Lucene RAG facet with optional vector search support via an EmbeddingModel.
  * Supports both in-memory and disk-based persistence.
@@ -69,7 +70,7 @@ import kotlin.math.sqrt
  * @param chunkerConfig Configuration for content chunking
  * @param indexPath Optional path for disk-based index storage; if null, uses in-memory storage
  */
-class LuceneRagFacetProvider @JvmOverloads constructor(
+class LuceneSearchOperations @JvmOverloads constructor(
     override val name: String,
     override val enhancers: List<RetrievableEnhancer> = emptyList(),
     private val embeddingModel: EmbeddingModel? = null,
@@ -79,7 +80,7 @@ class LuceneRagFacetProvider @JvmOverloads constructor(
     private val indexPath: Path? = null,
 ) : RagFacetProvider, AbstractChunkingContentElementRepository(chunkerConfig), HasInfoString, Closeable, CoreSearchOperations {
 
-    private val logger = LoggerFactory.getLogger(LuceneRagFacetProvider::class.java)
+    private val logger = LoggerFactory.getLogger(LuceneSearchOperations::class.java)
 
     private val analyzer = StandardAnalyzer()
     private val directory: Directory = indexPath?.let { FSDirectory.open(it) } ?: ByteBuffersDirectory()
@@ -87,10 +88,19 @@ class LuceneRagFacetProvider @JvmOverloads constructor(
     private var indexWriter = IndexWriter(directory, indexWriterConfig)
     private val queryParser = QueryParser("content", analyzer)
 
+    override val luceneSyntaxNotes: String = "Full support"
+
     companion object {
         const val KEYWORDS_FIELD = "keywords"
         private const val CONTENT_FIELD = "content"
         private const val ID_FIELD = "id"
+
+        @JvmStatic
+        fun builder(): LuceneSearchOperationsBuilder = LuceneSearchOperationsBuilder()
+
+        @JvmStatic
+        fun withName(name: String): LuceneSearchOperationsBuilder =
+            LuceneSearchOperationsBuilder().withName(name)
     }
 
     init {
@@ -902,6 +912,7 @@ class LuceneRagFacetProvider @JvmOverloads constructor(
             indexPath = indexPath?.toString()
         )
     }
+
 }
 
 /**

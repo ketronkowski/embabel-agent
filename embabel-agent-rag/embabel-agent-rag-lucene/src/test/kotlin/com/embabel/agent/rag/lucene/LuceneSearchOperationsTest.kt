@@ -29,16 +29,16 @@ import org.springframework.ai.embedding.EmbeddingResponse
 import kotlin.reflect.full.functions
 import kotlin.reflect.jvm.isAccessible
 
-class LuceneRagFacetProviderTest {
+class LuceneSearchOperationsTest {
 
-    private lateinit var ragService: LuceneRagFacetProvider
-    private lateinit var ragServiceWithEmbedding: LuceneRagFacetProvider
+    private lateinit var ragService: LuceneSearchOperations
+    private lateinit var ragServiceWithEmbedding: LuceneSearchOperations
     private val mockEmbeddingModel = MockEmbeddingModel()
 
     /**
      * Helper method to convert Spring AI Documents to Chunks and add them to the service
      */
-    private fun LuceneRagFacetProvider.acceptDocuments(documents: List<Document>) {
+    private fun LuceneSearchOperations.acceptDocuments(documents: List<Document>) {
         val chunks = documents.map { doc ->
             val docId = doc.id ?: error("Document ID cannot be null")
             com.embabel.agent.rag.model.Chunk(
@@ -61,7 +61,7 @@ class LuceneRagFacetProviderTest {
     /**
      * Helper method to call protected commit() using reflection
      */
-    private fun LuceneRagFacetProvider.commitChanges() {
+    private fun LuceneSearchOperations.commitChanges() {
         val commitMethod = this::class.functions.find { it.name == "commit" }
         commitMethod?.let {
             it.isAccessible = true
@@ -71,8 +71,8 @@ class LuceneRagFacetProviderTest {
 
     @BeforeEach
     fun setUp() {
-        ragService = LuceneRagFacetProvider(name = "lucene-rag")
-        ragServiceWithEmbedding = LuceneRagFacetProvider(
+        ragService = LuceneSearchOperations(name = "lucene-rag")
+        ragServiceWithEmbedding = LuceneSearchOperations(
             name = "hybrid-lucene-rag",
             embeddingModel = mockEmbeddingModel,
             vectorWeight = 0.5
@@ -259,7 +259,7 @@ class LuceneRagFacetProviderTest {
 
     @Test
     fun `should weight vector similarity appropriately`() {
-        val ragServiceHighVector = LuceneRagFacetProvider(
+        val ragServiceHighVector = LuceneSearchOperations(
             name = "high-vector-weight",
             embeddingModel = mockEmbeddingModel,
             vectorWeight = 0.9 // High vector weight

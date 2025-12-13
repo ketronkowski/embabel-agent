@@ -20,9 +20,10 @@ import com.embabel.common.core.types.SimilarityResult
 import com.embabel.common.core.types.TextSimilaritySearchRequest
 
 /**
- * Tag interface for earch operations
+ * Tag interface for search operations
+ * Concrete implementations implement one or more subinterfaces
  */
-sealed interface SearchOperations
+interface SearchOperations
 
 /**
  * RAG building blocks
@@ -90,6 +91,12 @@ interface TextSearch : SearchOperations {
         topK: Int,
         clazz: Class<T>,
     ): List<SimilarityResult<T>>
+
+    /**
+     * Notes on how much Lucene syntax is supported by this implementation
+     * to help LLMs and users craft effective queries.
+     */
+    val luceneSyntaxNotes: String
 }
 
 /**

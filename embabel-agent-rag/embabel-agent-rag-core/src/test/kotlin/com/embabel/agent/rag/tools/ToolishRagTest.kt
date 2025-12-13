@@ -16,19 +16,23 @@
 package com.embabel.agent.rag.tools
 
 import com.embabel.agent.rag.model.Chunk
-import com.embabel.agent.rag.model.Retrievable
 import com.embabel.agent.rag.service.*
-import com.embabel.common.core.types.SimilarityResult
 import com.embabel.common.core.types.SimpleSimilaritySearchResult
 import com.embabel.common.core.types.TextSimilaritySearchRequest
-import io.mockk.*
-import org.junit.jupiter.api.Assertions.*
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.verify
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
 class ToolishRagTest {
 
-    private fun createChunk(id: String, text: String): Chunk =
+    private fun createChunk(
+        id: String,
+        text: String,
+    ): Chunk =
         Chunk(id = id, text = text, parentId = "parent", metadata = emptyMap())
 
     @Nested
@@ -104,6 +108,25 @@ class ToolishRagTest {
         }
 
         @Test
+        fun `should include lucene syntax notes in notes`() {
+            val textSearch = mockk<TextSearch>()
+            val support = "basic +, -, and quotes for phrases"
+            every {
+                textSearch.luceneSyntaxNotes
+            } returns support
+
+            val toolishRag = ToolishRag(
+                name = "test-rag",
+                description = "Test RAG",
+                searchOperations = textSearch
+            )
+
+            val notes = toolishRag.notes()
+
+            assertTrue(notes.contains("Lucene search syntax support: $support"))
+        }
+
+        @Test
         fun `should include custom goal in notes`() {
             val vectorSearch = mockk<VectorSearch>()
             val customGoal = "Find all relevant documents about Kotlin"
@@ -140,8 +163,8 @@ class ToolishRagTest {
                 vectorSearch.vectorSearch(
                     match<TextSimilaritySearchRequest> { request ->
                         request.query == "test query" &&
-                            request.topK == 10 &&
-                            request.similarityThreshold == 0.5
+                                request.topK == 10 &&
+                                request.similarityThreshold == 0.5
                     },
                     Chunk::class.java
                 )
@@ -207,8 +230,8 @@ class ToolishRagTest {
                 textSearch.textSearch(
                     match<TextSimilaritySearchRequest> { request ->
                         request.query == "+kotlin +coroutines" &&
-                            request.topK == 5 &&
-                            request.similarityThreshold == 0.7
+                                request.topK == 5 &&
+                                request.similarityThreshold == 0.7
                     },
                     Chunk::class.java
                 )

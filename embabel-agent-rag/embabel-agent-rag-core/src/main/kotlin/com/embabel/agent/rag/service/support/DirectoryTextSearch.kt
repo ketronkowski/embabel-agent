@@ -28,7 +28,6 @@ import java.nio.file.Path
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.name
-import kotlin.io.path.pathString
 
 /**
  * Perform text search on files in a directory.
@@ -46,7 +45,7 @@ import kotlin.io.path.pathString
  * **Tip:** Use a restrictive [Config.fileGlob] pattern (e.g., `**&#47;*.kt`) to reduce the number of
  * files scanned and improve performance.
  *
- * For larger directories or frequent searches, use [com.embabel.agent.rag.lucene.LuceneRagFacetProvider]
+ * For larger directories or frequent searches, use [com.embabel.agent.rag.lucene.LuceneSearchOperations]
  * which provides proper Lucene indexing and is orders of magnitude faster after initial indexing.
  *
  * @param directory Root directory to search in
@@ -97,6 +96,8 @@ class DirectoryTextSearch @JvmOverloads constructor(
     private val globMatcher = config.fileGlob?.let {
         java.nio.file.FileSystems.getDefault().getPathMatcher("glob:$it")
     }
+
+    override val luceneSyntaxNotes: String = "Not supported"
 
     override fun <T : Retrievable> textSearch(
         request: TextSimilaritySearchRequest,

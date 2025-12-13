@@ -16,8 +16,10 @@
 package com.embabel.agent.rag.service
 
 import com.embabel.common.ai.model.LlmOptions
+import org.jetbrains.annotations.ApiStatus
 import org.springframework.boot.context.properties.ConfigurationProperties
 
+@ApiStatus.Experimental
 @ConfigurationProperties(prefix = "embabel.agent.rag")
 data class RagServiceEnhancerProperties(
     val compressionLlm: LlmOptions = LlmOptions.withAutoLlm(),
