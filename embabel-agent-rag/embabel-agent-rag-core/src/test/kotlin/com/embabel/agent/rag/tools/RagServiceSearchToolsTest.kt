@@ -46,6 +46,7 @@ class RagServiceSearchToolsTest {
         val ragTools = SingleShotRagServiceSearchTools(options)
 
         val mockChunk = mockk<Chunk>()
+        every { mockChunk.id } returns "chunk-1"
         every { mockChunk.text } returns "Test chunk content"
         every { mockChunk.uri } returns null
         every { mockChunk.infoString(any(), any()) } returns "Test chunk info"
@@ -203,11 +204,13 @@ class RagServiceSearchToolsTest {
         val ragTools = SingleShotRagServiceSearchTools(options)
 
         val mockChunk1 = mockk<Chunk>()
+        every { mockChunk1.id } returns "chunk-1"
         every { mockChunk1.text } returns "First chunk"
         every { mockChunk1.uri } returns null
         every { mockChunk1.infoString(any(), any()) } returns "First chunk info"
 
         val mockChunk2 = mockk<Chunk>()
+        every { mockChunk2.id } returns "chunk-2"
         every { mockChunk2.text } returns "Second chunk"
         every { mockChunk2.uri } returns null
         every { mockChunk2.infoString(any(), any()) } returns "Second chunk info"

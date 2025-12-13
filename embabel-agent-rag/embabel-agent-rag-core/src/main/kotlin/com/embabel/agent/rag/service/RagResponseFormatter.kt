@@ -56,7 +56,7 @@ object SimpleRagResponseFormatter : RagResponseFormatter {
 
                 is Chunk -> {
                     val urlHeader = match.uri?.let { "url: $it\n" } ?: ""
-                    "$urlHeader$formattedScore - ${match.text}"
+                    "chunkId: ${match.id} $urlHeader$formattedScore - ${match.text}"
                 }
 
                 is Fact -> {

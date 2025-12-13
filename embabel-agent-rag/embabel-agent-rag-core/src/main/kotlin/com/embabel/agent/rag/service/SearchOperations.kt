@@ -15,6 +15,7 @@
  */
 package com.embabel.agent.rag.service
 
+import com.embabel.agent.rag.model.Chunk
 import com.embabel.agent.rag.model.Retrievable
 import com.embabel.common.core.types.SimilarityResult
 import com.embabel.common.core.types.TextSimilaritySearchRequest
@@ -97,6 +98,28 @@ interface TextSearch : SearchOperations {
      * to help LLMs and users craft effective queries.
      */
     val luceneSyntaxNotes: String
+}
+
+interface ChunkExpander : SearchOperations {
+
+    enum class Method {
+        /** Expand to previous and next chunks in sequence */
+        SEQUENCE
+    }
+
+    /**
+     * Expand the given chunk by finding related chunks.
+     * Could be based on vector similarity, text similarity, or other relationships.
+     * @param chunkId the ID of the chunk to expand
+     * @param method the expansion method to use
+     * @param chunksToAdd number of chunks to add
+     * @return list of related chunks
+     */
+    fun expandChunk(
+        chunkId: String,
+        method: Method,
+        chunksToAdd: Int,
+    ): List<Chunk>
 }
 
 /**

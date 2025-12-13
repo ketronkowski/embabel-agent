@@ -21,6 +21,7 @@ import com.embabel.agent.rag.ingestion.ContentChunker.Companion.CONTAINER_SECTIO
 import com.embabel.agent.rag.ingestion.ContentChunker.Companion.SEQUENCE_NUMBER
 import com.embabel.agent.rag.ingestion.RetrievableEnhancer
 import com.embabel.agent.rag.model.*
+import com.embabel.agent.rag.service.ChunkExpander
 import com.embabel.agent.rag.service.CoreSearchOperations
 import com.embabel.agent.rag.service.RagRequest
 import com.embabel.agent.rag.service.support.FunctionRagFacet
@@ -77,7 +78,7 @@ class LuceneSearchOperations @JvmOverloads constructor(
     private val vectorWeight: Double = 0.5,
     chunkerConfig: ContentChunker.Config = ContentChunker.DefaultConfig(),
     private val indexPath: Path? = null,
-) : RagFacetProvider, AbstractChunkingContentElementRepository(chunkerConfig), HasInfoString, Closeable, CoreSearchOperations {
+) : RagFacetProvider, AbstractChunkingContentElementRepository(chunkerConfig), HasInfoString, Closeable, CoreSearchOperations, ChunkExpander {
 
     private val analyzer = StandardAnalyzer()
     private val directory: Directory = indexPath?.let { FSDirectory.open(it) } ?: ByteBuffersDirectory()
@@ -420,6 +421,82 @@ class LuceneSearchOperations @JvmOverloads constructor(
             results.size,
         )
         return results
+    }
+
+    override fun expandChunk(
+        chunkId: String,
+        method: ChunkExpander.Method,
+        chunksToAdd: Int,
+    ): List<Chunk> {
+        ensureChunksLoaded()
+
+        val chunk = contentElementStorage[chunkId] as? Chunk
+        if (chunk == null) {
+            logger.warn("Chunk with id='{}' not found for expansion", chunkId)
+            return emptyList()
+        }
+
+        return when (method) {
+            ChunkExpander.Method.SEQUENCE -> expandBySequence(chunk, chunksToAdd)
+        }
+    }
+
+    /**
+     * Expand a chunk by finding adjacent chunks in the same container section.
+     * Returns chunks ordered by sequence number, with the original chunk included.
+     */
+    private fun expandBySequence(chunk: Chunk, chunksToAdd: Int): List<Chunk> {
+        val containerSectionId = chunk.metadata[CONTAINER_SECTION_ID]?.toString()
+        val sequenceNumber = chunk.metadata[SEQUENCE_NUMBER]?.toString()?.toIntOrNull()
+
+        if (containerSectionId == null || sequenceNumber == null) {
+            logger.warn(
+                "Chunk id='{}' missing required metadata for sequence expansion: containerSectionId={}, sequenceNumber={}",
+                chunk.id,
+                containerSectionId,
+                sequenceNumber
+            )
+            return listOf(chunk)
+        }
+
+        // Find all chunks in the same container section
+        val chunksInSection = contentElementStorage.values
+            .filterIsInstance<Chunk>()
+            .filter { it.metadata[CONTAINER_SECTION_ID]?.toString() == containerSectionId }
+            .mapNotNull { c ->
+                val seqNum = c.metadata[SEQUENCE_NUMBER]?.toString()?.toIntOrNull()
+                if (seqNum != null) c to seqNum else null
+            }
+            .sortedBy { it.second }
+
+        if (chunksInSection.isEmpty()) {
+            return listOf(chunk)
+        }
+
+        // Find index of current chunk
+        val currentIndex = chunksInSection.indexOfFirst { it.first.id == chunk.id }
+        if (currentIndex == -1) {
+            return listOf(chunk)
+        }
+
+        // Calculate range to include: chunksToAdd before and after
+        val startIndex = (currentIndex - chunksToAdd).coerceAtLeast(0)
+        val endIndex = (currentIndex + chunksToAdd).coerceAtMost(chunksInSection.size - 1)
+
+        val expandedChunks = chunksInSection
+            .subList(startIndex, endIndex + 1)
+            .map { it.first }
+
+        logger.debug(
+            "Expanded chunk id='{}' (seq={}) to {} chunks (seq range {}-{})",
+            chunk.id,
+            sequenceNumber,
+            expandedChunks.size,
+            expandedChunks.firstOrNull()?.metadata?.get(SEQUENCE_NUMBER),
+            expandedChunks.lastOrNull()?.metadata?.get(SEQUENCE_NUMBER)
+        )
+
+        return expandedChunks
     }
 
     @Suppress("UNCHECKED_CAST")

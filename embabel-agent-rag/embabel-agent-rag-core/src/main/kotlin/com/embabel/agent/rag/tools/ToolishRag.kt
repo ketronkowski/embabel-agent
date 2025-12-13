@@ -48,6 +48,10 @@ class ToolishRag @JvmOverloads constructor(
                 logger.info("Adding TextSearchTools to ToolishRag tools {}", name)
                 add(TextSearchTools(searchOperations))
             }
+            if (searchOperations is ChunkExpander) {
+                logger.info("Adding ChunkExpansionTools to ToolishRag tools {}", name)
+                add(ChunkExpansionTools(searchOperations))
+            }
         }
 
     override fun notes() = """
@@ -70,6 +74,9 @@ class ToolishRag @JvmOverloads constructor(
     }
 }
 
+/**
+ * Classic vector search
+ */
 class VectorSearchTools(
     private val vectorSearch: VectorSearch,
 ) {
@@ -87,10 +94,35 @@ class VectorSearchTools(
             RagRequest.query(query).withTopK(topK).withSimilarityThreshold(threshold),
             Chunk::class.java
         )
-        return SimpleRagResponseFormatter.formatResults(SimilarityResults.Companion.fromList(results))
+        return SimpleRagResponseFormatter.formatResults(SimilarityResults.fromList(results))
     }
 }
 
+/**
+ * Tools to expand chunks around an anchor chunk that has already been retrieved
+ */
+class ChunkExpansionTools(
+    private val chunkExpander: ChunkExpander,
+) {
+
+    @Tool(description = "given a chunk ID, expand to surrounding chunks")
+    fun broadenChunk(
+        @ToolParam(description = "id of the chunk to expand") chunkId: String,
+        @ToolParam(description = "chunksToAdd", required = false) chunksToAdd: Int = 2,
+    ): String {
+        val expandedChunks = chunkExpander.expandChunk(chunkId, ChunkExpander.Method.SEQUENCE, chunksToAdd)
+        return expandedChunks.joinToString("\n") { chunk ->
+            "Chunk ID: ${chunk.id}\nContent: ${chunk.text}\n"
+        }
+    }
+
+    // TODO related chunk expansion based on vector similarity
+
+}
+
+/**
+ * Tools to perform text search operations with Lucene syntax
+ */
 class TextSearchTools(
     private val textSearch: TextSearch,
 ) {
@@ -120,7 +152,7 @@ class TextSearchTools(
             RagRequest.query(query).withTopK(topK).withSimilarityThreshold(threshold),
             Chunk::class.java
         )
-        return SimpleRagResponseFormatter.formatResults(SimilarityResults.Companion.fromList(results))
+        return SimpleRagResponseFormatter.formatResults(SimilarityResults.fromList(results))
     }
 
     @Tool(description = "Perform regex search across chunks. Specify topK")
