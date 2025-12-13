@@ -22,7 +22,7 @@ import com.embabel.common.ai.prompt.PromptContributor
  * CO-STAR prompt framework
  * See https://towardsdatascience.com/how-i-won-singapores-gpt-4-prompt-engineering-competition-34c195a93d41/
  */
-data class CoStar(
+data class CoStar @JvmOverloads constructor(
     val context: String,
     val objective: String,
     val style: String,
