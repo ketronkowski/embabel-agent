@@ -92,6 +92,18 @@ class LuceneSearchOperations @JvmOverloads constructor(
         const val KEYWORDS_FIELD = "keywords"
         private const val CONTENT_FIELD = "content"
         private const val ID_FIELD = "id"
+        private const val ELEMENT_TYPE_FIELD = "_element_type"
+        private const val TITLE_FIELD = "title"
+        private const val URI_FIELD = "uri"
+        private const val PARENT_ID_FIELD = "parentId"
+        private const val TEXT_FIELD = "text"
+        private const val INGESTION_TIMESTAMP_FIELD = "ingestionTimestamp"
+
+        // Element type values
+        private const val TYPE_CHUNK = "Chunk"
+        private const val TYPE_LEAF_SECTION = "LeafSection"
+        private const val TYPE_CONTAINER_SECTION = "ContainerSection"
+        private const val TYPE_DOCUMENT = "Document"
 
         @JvmStatic
         fun builder(): LuceneSearchOperationsBuilder = LuceneSearchOperationsBuilder()
@@ -177,7 +189,59 @@ class LuceneSearchOperations @JvmOverloads constructor(
 
     override fun save(element: ContentElement): ContentElement {
         contentElementStorage[element.id] = element
+        // Persist structural elements to Lucene (Chunks are handled separately in onNewRetrievable)
+        if (element !is Chunk) {
+            persistStructuralElement(element)
+        }
         return element
+    }
+
+    /**
+     * Persist a structural element (Document, Section, etc.) to Lucene for recovery after restart.
+     * Chunks are handled separately via onNewRetrievable which also handles embeddings.
+     */
+    private fun persistStructuralElement(element: ContentElement) {
+        val luceneDoc = Document().apply {
+            add(StringField(ID_FIELD, element.id, Field.Store.YES))
+
+            // Store element type for reconstruction
+            val elementType = when (element) {
+                is NavigableDocument -> TYPE_DOCUMENT
+                is LeafSection -> TYPE_LEAF_SECTION
+                is ContainerSection -> TYPE_CONTAINER_SECTION
+                else -> element.javaClass.simpleName
+            }
+            add(StringField(ELEMENT_TYPE_FIELD, elementType, Field.Store.YES))
+
+            // Store common fields
+            if (element is HierarchicalContentElement) {
+                element.parentId?.let { add(StoredField(PARENT_ID_FIELD, it)) }
+            }
+
+            // Title is on Section and ContentRoot
+            when (element) {
+                is Section -> add(StoredField(TITLE_FIELD, element.title))
+                is ContentRoot -> add(StoredField(TITLE_FIELD, element.title))
+            }
+
+            if (element is ContentRoot) {
+                add(StoredField(URI_FIELD, element.uri))
+                add(StoredField(INGESTION_TIMESTAMP_FIELD, element.ingestionTimestamp.toString()))
+            }
+
+            if (element is LeafSection) {
+                add(StoredField(TEXT_FIELD, element.text))
+            }
+
+            // Store metadata
+            element.metadata.forEach { (key, value) ->
+                if (value != null) {
+                    add(StringField(key, value.toString(), Field.Store.YES))
+                }
+            }
+        }
+        indexWriter.addDocument(luceneDoc)
+        logger.debug("Persisted structural element id='{}' type='{}'", element.id, element.javaClass.simpleName)
     }
 
     override fun createRelationships(root: NavigableDocument) {
@@ -642,6 +706,138 @@ class LuceneSearchOperations @JvmOverloads constructor(
         )
     }
 
+    /**
+     * Rebuild parent-child relationships after loading elements from disk.
+     * This replaces container elements with new instances that have their children populated.
+     * Uses bottom-up approach to ensure nested children are resolved before their parents.
+     */
+    private fun rebuildHierarchy() {
+        // Build a map of parentId -> children
+        val childrenByParentId = mutableMapOf<String, MutableList<NavigableSection>>()
+
+        contentElementStorage.values
+            .filterIsInstance<NavigableSection>()
+            .filter { (it as? HierarchicalContentElement)?.parentId != null }
+            .forEach { section ->
+                val parentId = (section as HierarchicalContentElement).parentId!!
+                childrenByParentId.getOrPut(parentId) { mutableListOf() }.add(section)
+            }
+
+        // Recursively rebuild a container with its children
+        fun rebuildContainer(id: String): ContentElement? {
+            val element = contentElementStorage[id] ?: return null
+
+            // Get direct children for this element
+            val directChildren = childrenByParentId[id] ?: emptyList()
+
+            // Recursively rebuild any container children first
+            val rebuiltChildren = directChildren.map { child ->
+                when (child) {
+                    is DefaultMaterializedContainerSection -> {
+                        val rebuilt = rebuildContainer(child.id)
+                        (rebuilt as? NavigableSection) ?: child
+                    }
+                    else -> child
+                }
+            }
+
+            // Now rebuild this element with its children
+            return when (element) {
+                is DefaultMaterializedContainerSection -> {
+                    if (rebuiltChildren.isNotEmpty()) {
+                        element.copy(children = rebuiltChildren).also {
+                            contentElementStorage[id] = it
+                        }
+                    } else element
+                }
+                is MaterializedDocument -> {
+                    if (rebuiltChildren.isNotEmpty()) {
+                        element.copy(children = rebuiltChildren).also {
+                            contentElementStorage[id] = it
+                        }
+                    } else element
+                }
+                else -> element
+            }
+        }
+
+        // Rebuild from roots (documents)
+        contentElementStorage.values
+            .filterIsInstance<MaterializedDocument>()
+            .forEach { doc -> rebuildContainer(doc.id) }
+
+        // Also rebuild any orphaned container sections (those without a document parent in storage)
+        contentElementStorage.values
+            .filterIsInstance<DefaultMaterializedContainerSection>()
+            .filter { section ->
+                section.parentId == null || contentElementStorage[section.parentId] !is NavigableContainerSection
+            }
+            .forEach { section -> rebuildContainer(section.id) }
+
+        logger.debug("Rebuilt hierarchy for {} containers", childrenByParentId.size)
+    }
+
+    /**
+     * Create the appropriate ContentElement type from a Lucene document based on stored type.
+     */
+    private fun createContentElementFromLuceneDocument(
+        luceneDocument: Document,
+        elementType: String?,
+    ): ContentElement? {
+        val id = luceneDocument.get(ID_FIELD) ?: return null
+
+        // Extract common metadata (excluding reserved fields)
+        val reservedFields = setOf(
+            ID_FIELD, CONTENT_FIELD, ELEMENT_TYPE_FIELD, TITLE_FIELD,
+            URI_FIELD, PARENT_ID_FIELD, TEXT_FIELD, INGESTION_TIMESTAMP_FIELD,
+            KEYWORDS_FIELD, "embedding"
+        )
+        val metadata = luceneDocument.fields
+            .filter { field -> field.name() !in reservedFields }
+            .associate { field -> field.name() to (field.stringValue() as Any?) }
+
+        return when (elementType) {
+            TYPE_DOCUMENT -> {
+                MaterializedDocument(
+                    id = id,
+                    uri = luceneDocument.get(URI_FIELD) ?: "",
+                    title = luceneDocument.get(TITLE_FIELD) ?: "",
+                    ingestionTimestamp = luceneDocument.get(INGESTION_TIMESTAMP_FIELD)?.let {
+                        java.time.Instant.parse(it)
+                    } ?: java.time.Instant.now(),
+                    children = emptyList(), // Children are loaded separately
+                    metadata = metadata
+                )
+            }
+            TYPE_LEAF_SECTION -> {
+                LeafSection(
+                    id = id,
+                    title = luceneDocument.get(TITLE_FIELD) ?: "",
+                    text = luceneDocument.get(TEXT_FIELD) ?: "",
+                    parentId = luceneDocument.get(PARENT_ID_FIELD),
+                    metadata = metadata
+                )
+            }
+            TYPE_CONTAINER_SECTION -> {
+                DefaultMaterializedContainerSection(
+                    id = id,
+                    title = luceneDocument.get(TITLE_FIELD) ?: "",
+                    children = emptyList(), // Children are loaded separately
+                    parentId = luceneDocument.get(PARENT_ID_FIELD),
+                    metadata = metadata
+                )
+            }
+            null, TYPE_CHUNK -> {
+                // No type field means it's a legacy chunk or explicitly a chunk
+                createChunkFromLuceneDocument(luceneDocument)
+            }
+            else -> {
+                logger.warn("Unknown element type '{}' for id='{}', treating as Chunk", elementType, id)
+                createChunkFromLuceneDocument(luceneDocument)
+            }
+        }
+    }
+
     override fun onNewRetrievables(retrievables: List<Retrievable>) {
         retrievables.forEach { onNewRetrievable(it) }
     }
@@ -775,27 +971,38 @@ class LuceneSearchOperations @JvmOverloads constructor(
 
                     try {
                         val doc = reader.storedFields().document(i)
+                        val elementType = doc.get(ELEMENT_TYPE_FIELD)
+                        val id = doc.get(ID_FIELD)
+
                         logger.debug(
-                            "Loading document {}: id={}, content preview={}",
+                            "Loading document {}: id={}, type={}, content preview={}",
                             i,
-                            doc.get("id"),
-                            trim(s = doc.get("content") ?: "", max = 25, keepRight = 4),
+                            id,
+                            elementType,
+                            trim(s = doc.get(CONTENT_FIELD) ?: "", max = 25, keepRight = 4),
                         )
-                        val chunk = createChunkFromLuceneDocument(doc)
-                        contentElementStorage[chunk.id] = chunk
-                        logger.info(
-                            "✅ Loaded chunk with id={} and keywords {}",
-                            chunk.id,
-                            chunk.metadata.get(KEYWORDS_FIELD),
-                        )
+
+                        val element = createContentElementFromLuceneDocument(doc, elementType)
+                        if (element != null) {
+                            contentElementStorage[element.id] = element
+                            logger.info(
+                                "✅ Loaded {} with id={}",
+                                elementType ?: "Chunk",
+                                element.id,
+                            )
+                        }
                     } catch (e: Exception) {
                         logger.error("❌ Failed to load document {}: {}", i, e.message, e)
                     }
                 }
 
                 reader.close()
+
+                // Rebuild parent-child relationships
+                rebuildHierarchy()
+
                 logger.info(
-                    "✅ Loaded {} existing chunks from disk index {}",
+                    "✅ Loaded {} existing elements from disk index {}",
                     contentElementStorage.size,
                     indexPath,
                 )

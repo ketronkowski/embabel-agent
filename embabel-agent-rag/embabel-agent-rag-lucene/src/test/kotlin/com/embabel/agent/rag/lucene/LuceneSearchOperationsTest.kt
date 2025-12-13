@@ -2218,6 +2218,458 @@ class LuceneSearchOperationsTest {
         }
     }
 
+    @Nested
+    inner class ContentElementPersistenceTests {
+
+        private lateinit var tempDir: java.nio.file.Path
+
+        @BeforeEach
+        fun setUp() {
+            tempDir = java.nio.file.Files.createTempDirectory("lucene-test-")
+        }
+
+        @AfterEach
+        fun tearDown() {
+            tempDir.toFile().deleteRecursively()
+        }
+
+        @Test
+        fun `chunks should survive restart`() {
+            val indexPath = tempDir
+
+            // Create and populate first instance
+            val service1 = LuceneSearchOperations(
+                name = "persist-test",
+                embeddingModel = null,
+                indexPath = indexPath
+            )
+
+            val leaf = com.embabel.agent.rag.model.LeafSection(
+                id = "leaf-1",
+                title = "Test Leaf",
+                text = "Some content for testing persistence",
+                parentId = "root-1"
+            )
+
+            val document = com.embabel.agent.rag.model.MaterializedDocument(
+                id = "root-1",
+                uri = "test://persistence",
+                title = "Test Document",
+                children = listOf(leaf)
+            )
+
+            val chunkIds = service1.writeAndChunkDocument(document)
+            assertTrue(chunkIds.isNotEmpty(), "Should create chunks")
+
+            service1.close()
+
+            // Create second instance and verify chunks are loaded
+            val service2 = LuceneSearchOperations(
+                name = "persist-test",
+                embeddingModel = null,
+                indexPath = indexPath
+            )
+            service2.loadExistingChunksFromDisk()
+
+            chunkIds.forEach { chunkId ->
+                val chunk = service2.findById(chunkId)
+                assertNotNull(chunk, "Chunk $chunkId should survive restart")
+                assertTrue(chunk is Chunk, "Should be a Chunk instance")
+            }
+
+            service2.close()
+        }
+
+        @Test
+        fun `document root should survive restart`() {
+            val indexPath = tempDir
+
+            // Create and populate first instance
+            val service1 = LuceneSearchOperations(
+                name = "persist-test",
+                embeddingModel = null,
+                indexPath = indexPath
+            )
+
+            val leaf = com.embabel.agent.rag.model.LeafSection(
+                id = "leaf-1",
+                title = "Test Leaf",
+                text = "Content",
+                parentId = "root-1"
+            )
+
+            val document = com.embabel.agent.rag.model.MaterializedDocument(
+                id = "root-1",
+                uri = "test://persistence",
+                title = "Test Document",
+                children = listOf(leaf)
+            )
+
+            service1.writeAndChunkDocument(document)
+
+            // Verify root exists before close
+            val rootBefore = service1.findById("root-1")
+            assertNotNull(rootBefore, "Root should exist before close")
+
+            service1.close()
+
+            // Create second instance and verify root is loaded
+            val service2 = LuceneSearchOperations(
+                name = "persist-test",
+                embeddingModel = null,
+                indexPath = indexPath
+            )
+            service2.loadExistingChunksFromDisk()
+
+            val rootAfter = service2.findById("root-1")
+            assertNotNull(rootAfter, "Document root should survive restart")
+            assertTrue(
+                rootAfter is com.embabel.agent.rag.model.ContentRoot,
+                "Should be a ContentRoot instance, but was ${rootAfter?.javaClass?.name}"
+            )
+
+            service2.close()
+        }
+
+        @Test
+        fun `leaf sections should survive restart`() {
+            val indexPath = tempDir
+
+            val service1 = LuceneSearchOperations(
+                name = "persist-test",
+                embeddingModel = null,
+                indexPath = indexPath
+            )
+
+            val leaf = com.embabel.agent.rag.model.LeafSection(
+                id = "leaf-1",
+                title = "Test Leaf",
+                text = "Leaf section content",
+                parentId = "root-1"
+            )
+
+            val document = com.embabel.agent.rag.model.MaterializedDocument(
+                id = "root-1",
+                uri = "test://persistence",
+                title = "Test Document",
+                children = listOf(leaf)
+            )
+
+            service1.writeAndChunkDocument(document)
+            service1.close()
+
+            val service2 = LuceneSearchOperations(
+                name = "persist-test",
+                embeddingModel = null,
+                indexPath = indexPath
+            )
+            service2.loadExistingChunksFromDisk()
+
+            val leafAfter = service2.findById("leaf-1")
+            assertNotNull(leafAfter, "LeafSection should survive restart")
+            assertTrue(
+                leafAfter is com.embabel.agent.rag.model.LeafSection,
+                "Should be a LeafSection instance, but was ${leafAfter?.javaClass?.name}"
+            )
+
+            service2.close()
+        }
+
+        @Test
+        fun `container sections should survive restart`() {
+            val indexPath = tempDir
+
+            val service1 = LuceneSearchOperations(
+                name = "persist-test",
+                embeddingModel = null,
+                indexPath = indexPath
+            )
+
+            val leaf = com.embabel.agent.rag.model.LeafSection(
+                id = "leaf-1",
+                title = "Nested Leaf",
+                text = "Nested content",
+                parentId = "section-1"
+            )
+
+            val section = com.embabel.agent.rag.model.DefaultMaterializedContainerSection(
+                id = "section-1",
+                title = "Container Section",
+                children = listOf(leaf),
+                parentId = "root-1"
+            )
+
+            val document = com.embabel.agent.rag.model.MaterializedDocument(
+                id = "root-1",
+                uri = "test://persistence",
+                title = "Test Document",
+                children = listOf(section)
+            )
+
+            service1.writeAndChunkDocument(document)
+            service1.close()
+
+            val service2 = LuceneSearchOperations(
+                name = "persist-test",
+                embeddingModel = null,
+                indexPath = indexPath
+            )
+            service2.loadExistingChunksFromDisk()
+
+            val sectionAfter = service2.findById("section-1")
+            assertNotNull(sectionAfter, "ContainerSection should survive restart")
+            assertTrue(
+                sectionAfter is com.embabel.agent.rag.model.ContainerSection,
+                "Should be a ContainerSection instance, but was ${sectionAfter?.javaClass?.name}"
+            )
+
+            service2.close()
+        }
+
+        @Test
+        fun `all content elements should survive restart with correct count`() {
+            val indexPath = tempDir
+
+            val service1 = LuceneSearchOperations(
+                name = "persist-test",
+                embeddingModel = null,
+                indexPath = indexPath
+            )
+
+            val leaf1 = com.embabel.agent.rag.model.LeafSection(
+                id = "leaf-1",
+                title = "Leaf 1",
+                text = "First leaf content",
+                parentId = "section-1"
+            )
+
+            val leaf2 = com.embabel.agent.rag.model.LeafSection(
+                id = "leaf-2",
+                title = "Leaf 2",
+                text = "Second leaf content",
+                parentId = "section-1"
+            )
+
+            val section = com.embabel.agent.rag.model.DefaultMaterializedContainerSection(
+                id = "section-1",
+                title = "Section",
+                children = listOf(leaf1, leaf2),
+                parentId = "root-1"
+            )
+
+            val document = com.embabel.agent.rag.model.MaterializedDocument(
+                id = "root-1",
+                uri = "test://persistence",
+                title = "Test Document",
+                children = listOf(section)
+            )
+
+            val chunkIds = service1.writeAndChunkDocument(document)
+            val countBefore = service1.count()
+
+            service1.close()
+
+            val service2 = LuceneSearchOperations(
+                name = "persist-test",
+                embeddingModel = null,
+                indexPath = indexPath
+            )
+            service2.loadExistingChunksFromDisk()
+
+            val countAfter = service2.count()
+
+            // We expect: root + section + 2 leaves + chunks
+            assertEquals(
+                countBefore,
+                countAfter,
+                "All content elements should survive restart. Before: $countBefore, After: $countAfter"
+            )
+
+            service2.close()
+        }
+
+        @Test
+        fun `document metadata should survive restart`() {
+            val indexPath = tempDir
+
+            val service1 = LuceneSearchOperations(
+                name = "persist-test",
+                embeddingModel = null,
+                indexPath = indexPath
+            )
+
+            val timestamp = java.time.Instant.parse("2025-01-15T10:30:00Z")
+
+            val leaf = com.embabel.agent.rag.model.LeafSection(
+                id = "leaf-1",
+                title = "Test Leaf",
+                text = "Content",
+                parentId = "root-1",
+                metadata = mapOf("customKey" to "customValue")
+            )
+
+            val document = com.embabel.agent.rag.model.MaterializedDocument(
+                id = "root-1",
+                uri = "test://persistence",
+                title = "Test Document With Metadata",
+                ingestionTimestamp = timestamp,
+                children = listOf(leaf)
+            )
+
+            service1.writeAndChunkDocument(document)
+            service1.close()
+
+            val service2 = LuceneSearchOperations(
+                name = "persist-test",
+                embeddingModel = null,
+                indexPath = indexPath
+            )
+            service2.loadExistingChunksFromDisk()
+
+            val rootAfter = service2.findById("root-1") as? com.embabel.agent.rag.model.ContentRoot
+            assertNotNull(rootAfter, "Root should exist after restart")
+            assertEquals("Test Document With Metadata", rootAfter?.title, "Title should be preserved")
+            assertEquals("test://persistence", rootAfter?.uri, "URI should be preserved")
+            assertEquals(timestamp, rootAfter?.ingestionTimestamp, "Ingestion timestamp should be preserved")
+
+            service2.close()
+        }
+
+        @Test
+        fun `parent-child navigation should work after restart`() {
+            val indexPath = tempDir
+
+            val service1 = LuceneSearchOperations(
+                name = "persist-test",
+                embeddingModel = null,
+                indexPath = indexPath
+            )
+
+            val leaf1 = com.embabel.agent.rag.model.LeafSection(
+                id = "leaf-1",
+                title = "Leaf One",
+                text = "First leaf content",
+                parentId = "section-1"
+            )
+
+            val leaf2 = com.embabel.agent.rag.model.LeafSection(
+                id = "leaf-2",
+                title = "Leaf Two",
+                text = "Second leaf content",
+                parentId = "section-1"
+            )
+
+            val section = com.embabel.agent.rag.model.DefaultMaterializedContainerSection(
+                id = "section-1",
+                title = "Container Section",
+                children = listOf(leaf1, leaf2),
+                parentId = "root-1"
+            )
+
+            val document = com.embabel.agent.rag.model.MaterializedDocument(
+                id = "root-1",
+                uri = "test://navigation",
+                title = "Test Document",
+                children = listOf(section)
+            )
+
+            service1.writeAndChunkDocument(document)
+            service1.close()
+
+            // Reload from disk
+            val service2 = LuceneSearchOperations(
+                name = "persist-test",
+                embeddingModel = null,
+                indexPath = indexPath
+            )
+            service2.loadExistingChunksFromDisk()
+
+            // Test upward navigation via parentId
+            val leafAfter = service2.findById("leaf-1") as? com.embabel.agent.rag.model.LeafSection
+            assertNotNull(leafAfter, "Leaf should exist")
+            assertEquals("section-1", leafAfter?.parentId, "Leaf should have correct parentId")
+
+            val sectionAfter = service2.findById("section-1") as? com.embabel.agent.rag.model.DefaultMaterializedContainerSection
+            assertNotNull(sectionAfter, "Section should exist")
+            assertEquals("root-1", sectionAfter?.parentId, "Section should have correct parentId")
+
+            // Test downward navigation via children
+            val docAfter = service2.findById("root-1") as? com.embabel.agent.rag.model.NavigableDocument
+            assertNotNull(docAfter, "Document should exist")
+            assertEquals(1, docAfter?.children?.count(), "Document should have 1 child section")
+
+            val sectionChildren = sectionAfter?.children?.toList() ?: emptyList()
+            assertEquals(2, sectionChildren.size, "Section should have 2 leaf children")
+
+            // Verify children are the correct leaves
+            val childIds = sectionChildren.map { it.id }.toSet()
+            assertTrue(childIds.contains("leaf-1"), "Section should contain leaf-1")
+            assertTrue(childIds.contains("leaf-2"), "Section should contain leaf-2")
+
+            service2.close()
+        }
+
+        @Test
+        fun `descendants navigation should work after restart`() {
+            val indexPath = tempDir
+
+            val service1 = LuceneSearchOperations(
+                name = "persist-test",
+                embeddingModel = null,
+                indexPath = indexPath
+            )
+
+            val leaf = com.embabel.agent.rag.model.LeafSection(
+                id = "deep-leaf",
+                title = "Deep Leaf",
+                text = "Deeply nested content",
+                parentId = "nested-section"
+            )
+
+            val nestedSection = com.embabel.agent.rag.model.DefaultMaterializedContainerSection(
+                id = "nested-section",
+                title = "Nested Section",
+                children = listOf(leaf),
+                parentId = "root-1"
+            )
+
+            val document = com.embabel.agent.rag.model.MaterializedDocument(
+                id = "root-1",
+                uri = "test://descendants",
+                title = "Test Document",
+                children = listOf(nestedSection)
+            )
+
+            service1.writeAndChunkDocument(document)
+            service1.close()
+
+            val service2 = LuceneSearchOperations(
+                name = "persist-test",
+                embeddingModel = null,
+                indexPath = indexPath
+            )
+            service2.loadExistingChunksFromDisk()
+
+            val docAfter = service2.findById("root-1") as? com.embabel.agent.rag.model.NavigableDocument
+            assertNotNull(docAfter, "Document should exist")
+
+            // Test descendants() navigation
+            val descendants = docAfter?.descendants()?.toList() ?: emptyList()
+            assertEquals(2, descendants.size, "Should have 2 descendants (nested section + leaf)")
+
+            val descendantIds = descendants.map { it.id }.toSet()
+            assertTrue(descendantIds.contains("nested-section"), "Should contain nested section")
+            assertTrue(descendantIds.contains("deep-leaf"), "Should contain deep leaf")
+
+            // Test leaves() navigation
+            val leaves = docAfter?.leaves()?.toList() ?: emptyList()
+            assertEquals(1, leaves.size, "Should have 1 leaf")
+            assertEquals("deep-leaf", leaves.first().id, "Leaf should be 'deep-leaf'")
+
+            service2.close()
+        }
+    }
+
 
 }
 
