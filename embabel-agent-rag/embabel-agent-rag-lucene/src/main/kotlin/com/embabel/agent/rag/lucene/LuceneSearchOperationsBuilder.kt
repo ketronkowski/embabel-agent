@@ -33,7 +33,7 @@ data class LuceneSearchOperationsBuilder(
     override fun withName(name: String): LuceneSearchOperationsBuilder = copy(name = name)
 
     override fun withEmbeddingService(embeddingService: EmbeddingService): LuceneSearchOperationsBuilder =
-        copy(embeddingService = this@LuceneSearchOperationsBuilder.embeddingService)
+        copy(embeddingService = embeddingService)
 
     /**
      * Sets the path where the Lucene index will be stored.

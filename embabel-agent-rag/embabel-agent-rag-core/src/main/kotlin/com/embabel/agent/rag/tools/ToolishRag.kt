@@ -36,12 +36,16 @@ class ToolishRag @JvmOverloads constructor(
     val formatter: RagResponseFormatter = SimpleRagResponseFormatter,
 ) : LlmReference {
 
+    private val logger = LoggerFactory.getLogger(javaClass)
+
     override fun toolInstances(): List<Any> =
         buildList {
             if (searchOperations is VectorSearch) {
+                logger.info("Adding VectorSearchTools to ToolishRag tools {}", name)
                 add(VectorSearchTools(searchOperations))
             }
             if (searchOperations is TextSearch) {
+                logger.info("Adding TextSearchTools to ToolishRag tools {}", name)
                 add(TextSearchTools(searchOperations))
             }
         }
