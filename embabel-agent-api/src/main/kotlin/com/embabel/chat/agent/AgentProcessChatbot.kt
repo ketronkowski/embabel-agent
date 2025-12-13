@@ -21,8 +21,8 @@ import com.embabel.agent.api.common.PlannerType
 import com.embabel.agent.api.event.AgenticEventListener
 import com.embabel.agent.api.event.progress.OutputChannelHighlightingEventListener
 import com.embabel.agent.api.identity.User
+import com.embabel.agent.api.invocation.UtilityInvocation
 import com.embabel.agent.core.*
-import com.embabel.agent.spi.common.Constants.EMBABEL_PROVIDER
 import com.embabel.chat.ChatSession
 import com.embabel.chat.Chatbot
 import com.embabel.chat.Conversation
@@ -134,11 +134,7 @@ class AgentProcessChatbot(
         ): Chatbot = AgentProcessChatbot(
             agentPlatform = agentPlatform,
             agentSource = {
-                agentPlatform.createAgent(
-                    name = "chatbot-agent",
-                    provider = EMBABEL_PROVIDER,
-                    description = "Chatbot agent",
-                )
+                UtilityInvocation.on(agentPlatform).createPlatformAgent()
             },
             listenerProvider = listenerProvider,
             plannerType = PlannerType.UTILITY,

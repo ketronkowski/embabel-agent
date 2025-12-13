@@ -75,7 +75,10 @@ data class UtilityInvocation @JvmOverloads constructor(
         return agentPlatform.start(agentProcess)
     }
 
-    private fun createPlatformAgent(): Agent {
+    /**
+     * Create a platform agent for utility invocations
+     */
+    fun createPlatformAgent(): Agent {
         val agent = agentScopeBuilder
             .build()
             .createAgent(
