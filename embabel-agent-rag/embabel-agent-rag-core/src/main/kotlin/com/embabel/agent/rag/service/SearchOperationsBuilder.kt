@@ -15,6 +15,7 @@
  */
 package com.embabel.agent.rag.service
 
+import com.embabel.agent.rag.ingestion.ContentChunker
 import com.embabel.common.ai.model.EmbeddingService
 
 /**
@@ -32,6 +33,17 @@ interface SearchOperationsBuilder<T : SearchOperations, THIS : SearchOperationsB
 
     /**
      * Build the SearchOperations instance.
+     * Return an instance which is ready to use.
      */
     fun build(): T
+}
+
+/**
+ * Extension of [SearchOperationsBuilder] for builders that support
+ * configuring content chunking and ingestion.
+ */
+interface IngestingSearchOperationsBuilder<T : CoreSearchOperations, THIS : IngestingSearchOperationsBuilder<T, THIS>> :
+    SearchOperationsBuilder<T, THIS> {
+
+    fun withChunkerConfig(chunkerConfig: ContentChunker.Config): THIS
 }

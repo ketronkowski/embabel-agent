@@ -156,7 +156,7 @@ interface Blackboard : Bindable, MayHaveLastResult, HasInfoString {
                     aggregationClass as Class<Aggregation>,
                 )
             if (aggregationInstance != null) {
-                return true;
+                return true
             }
         }
 

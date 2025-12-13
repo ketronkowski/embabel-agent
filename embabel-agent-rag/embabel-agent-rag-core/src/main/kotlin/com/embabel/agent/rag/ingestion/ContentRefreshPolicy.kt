@@ -25,7 +25,7 @@ import com.embabel.agent.rag.store.ChunkingContentElementRepository
 interface ContentRefreshPolicy {
 
     /**
-     * Should we reread the document at the given rootUri
+     * Should we reread the document at the given rootUri?
      */
     fun shouldReread(
         repository: ChunkingContentElementRepository,
@@ -33,13 +33,20 @@ interface ContentRefreshPolicy {
     ): Boolean
 
     /**
-     * Should we refresh the given document we've read
+     * Should we refresh the given document we've read?
      */
     fun shouldRefreshDocument(
         repository: ChunkingContentElementRepository,
         root: NavigableDocument,
     ): Boolean
 
+    /**
+     * Ingest the document at the given rootUri if needed according to the policy.
+     * @param repository the repository to check and write to
+     * @param hierarchicalContentReader the reader to parse the document
+     * @param rootUri the uri of the document to ingest
+     * @return the ingested document if it was ingested, or null if no ingestion
+     */
     fun ingestUriIfNeeded(
         repository: ChunkingContentElementRepository,
         hierarchicalContentReader: HierarchicalContentReader,

@@ -17,6 +17,8 @@ package com.embabel.agent.rag.store
 
 import com.embabel.agent.rag.ingestion.ContentChunker
 import com.embabel.agent.rag.model.NavigableDocument
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 /**
  * Convenience base class for ChunkingContentElementRepository implementations.
@@ -24,6 +26,8 @@ import com.embabel.agent.rag.model.NavigableDocument
 abstract class AbstractChunkingContentElementRepository(
     private val chunkerConfig: ContentChunker.Config,
 ) : ChunkingContentElementRepository {
+
+    protected val logger: Logger = LoggerFactory.getLogger(javaClass)
 
     /**
      * Will call save on the root and all descendants.
@@ -41,6 +45,7 @@ abstract class AbstractChunkingContentElementRepository(
         onNewRetrievables(chunks)
         createRelationships(root)
         commit()
+        logger.info("Wrote and chunked document ${root.id} with ${chunks.size} chunks")
         return chunks.map { it.id }
     }
 

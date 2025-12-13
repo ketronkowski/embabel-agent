@@ -16,7 +16,7 @@
 package com.embabel.agent.rag.lucene
 
 import com.embabel.agent.rag.ingestion.ContentChunker
-import com.embabel.agent.rag.service.SearchOperationsBuilder
+import com.embabel.agent.rag.service.IngestingSearchOperationsBuilder
 import com.embabel.common.ai.model.EmbeddingService
 import java.nio.file.Path
 
@@ -28,25 +28,40 @@ data class LuceneSearchOperationsBuilder(
     private val embeddingService: EmbeddingService? = null,
     private val chunkerConfig: ContentChunker.Config = ContentChunker.DefaultConfig(),
     private val indexPath: Path? = null,
-) : SearchOperationsBuilder<LuceneSearchOperations, LuceneSearchOperationsBuilder> {
+) : IngestingSearchOperationsBuilder<LuceneSearchOperations, LuceneSearchOperationsBuilder> {
 
     override fun withName(name: String): LuceneSearchOperationsBuilder = copy(name = name)
 
     override fun withEmbeddingService(embeddingService: EmbeddingService): LuceneSearchOperationsBuilder =
         copy(embeddingService = this@LuceneSearchOperationsBuilder.embeddingService)
 
+    /**
+     * Sets the path where the Lucene index will be stored.
+     * If not set, storage will be in memory only.
+     */
     fun withIndexPath(indexPath: Path): LuceneSearchOperationsBuilder =
         copy(indexPath = indexPath)
 
-    fun withChunkerConfig(chunkerConfig: ContentChunker.Config): LuceneSearchOperationsBuilder =
+    override fun withChunkerConfig(chunkerConfig: ContentChunker.Config): LuceneSearchOperationsBuilder =
         copy(chunkerConfig = chunkerConfig)
 
     override fun build(): LuceneSearchOperations {
-        return LuceneSearchOperations(
+        val luceneSearchOperations = LuceneSearchOperations(
             name = name,
             embeddingModel = embeddingService?.model,
             indexPath = indexPath,
             chunkerConfig = chunkerConfig,
         )
+        luceneSearchOperations.provision()
+        return luceneSearchOperations
+    }
+
+    /**
+     * Builds the LuceneSearchOperations and loads existing chunks from disk.
+     */
+    fun buildAndLoadChunks(): LuceneSearchOperations {
+        val luceneSearchOperations = build()
+        luceneSearchOperations.loadExistingChunksFromDisk()
+        return luceneSearchOperations
     }
 }

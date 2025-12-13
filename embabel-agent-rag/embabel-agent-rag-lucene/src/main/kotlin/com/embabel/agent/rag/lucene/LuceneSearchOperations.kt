@@ -48,7 +48,6 @@ import org.apache.lucene.search.TopDocs
 import org.apache.lucene.store.ByteBuffersDirectory
 import org.apache.lucene.store.Directory
 import org.apache.lucene.store.FSDirectory
-import org.slf4j.LoggerFactory
 import org.springframework.ai.embedding.EmbeddingModel
 import java.io.Closeable
 import java.nio.file.Path
@@ -79,8 +78,6 @@ class LuceneSearchOperations @JvmOverloads constructor(
     chunkerConfig: ContentChunker.Config = ContentChunker.DefaultConfig(),
     private val indexPath: Path? = null,
 ) : RagFacetProvider, AbstractChunkingContentElementRepository(chunkerConfig), HasInfoString, Closeable, CoreSearchOperations {
-
-    private val logger = LoggerFactory.getLogger(LuceneSearchOperations::class.java)
 
     private val analyzer = StandardAnalyzer()
     private val directory: Directory = indexPath?.let { FSDirectory.open(it) } ?: ByteBuffersDirectory()
@@ -874,8 +871,10 @@ class LuceneSearchOperations @JvmOverloads constructor(
 
     /**
      * Clear all stored content - useful for testing
+     * @return Number of chunks cleared
      */
-    fun clear() {
+    fun clear(): Int {
+        val count = contentElementStorage.size
         logger.info("Clearing all indexed content from Lucene RAG service")
         synchronized(this) {
             // Clear chunk storage
@@ -888,6 +887,8 @@ class LuceneSearchOperations @JvmOverloads constructor(
             // Invalidate reader
             invalidateReader()
         }
+        logger.info("Cleared {} chunks from Lucene RAG service", count)
+        return count
     }
 
     /**
