@@ -36,6 +36,11 @@ interface ContentElementRepository : Named {
 
     fun findById(id: String): ContentElement?
 
+    /**
+     * Save or update the given content element.
+     * Does not perform embedding or any other processing,
+     * even if the ContentElementRepository supports that.
+     */
     fun save(element: ContentElement): ContentElement
 
     /**
