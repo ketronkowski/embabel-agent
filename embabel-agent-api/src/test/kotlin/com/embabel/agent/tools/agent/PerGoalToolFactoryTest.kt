@@ -23,8 +23,8 @@ import com.embabel.agent.api.dsl.userInputToFrogOrPersonBranch
 import com.embabel.agent.test.integration.IntegrationTestUtils
 import com.embabel.agent.test.integration.RandomRanker
 import com.embabel.agent.test.integration.forAutonomyTesting
-import org.junit.Test
 import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Test
 
 
 class PerGoalToolFactoryTest {
