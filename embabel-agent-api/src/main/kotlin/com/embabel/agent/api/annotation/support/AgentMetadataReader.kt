@@ -171,6 +171,7 @@ class AgentMetadataReader(
         val getterGoals = findGoalGetters(targetType).map { getGoal(it, instance) }
         val actionMethods = findActionMethods(targetType)
         val conditionMethods = findConditionMethods(targetType)
+        val costMethods = findCostMethods(targetType, instance)
 
         val toolCallbacksOnInstance = safelyGetToolCallbacksFrom(ToolObject.from(instance))
 
@@ -183,7 +184,7 @@ class AgentMetadataReader(
 
         // Process top-level action methods
         for (actionMethod in actionMethods) {
-            val action = actionMethodManager.createAction(actionMethod, instance, toolCallbacksOnInstance)
+            val action = actionMethodManager.createAction(actionMethod, instance, toolCallbacksOnInstance, costMethods)
             allActions.add(action)
             createGoalFromActionMethod(actionMethod, action, instance)?.let { allGoals.add(it) }
 
@@ -409,6 +410,27 @@ class AgentMetadataReader(
                 isConditionMethod(method, type)
             })
         return conditionMethods
+    }
+
+    /**
+     * Find all @Cost methods on the type and return a map of cost method name -> CostMethodInfo.
+     */
+    private fun findCostMethods(type: Class<*>, instance: Any): Map<String, CostMethodInfo> {
+        val costMethods = mutableMapOf<String, CostMethodInfo>()
+        ReflectionUtils.doWithMethods(
+            type,
+            { method ->
+                val costAnnotation = method.getAnnotation(Cost::class.java)
+                val name = costAnnotation.name.ifBlank {
+                    nameGenerator.generateName(instance, method.name)
+                }
+                costMethods[name] = CostMethodInfo(method, instance)
+            },
+            { method ->
+                method.isAnnotationPresent(Cost::class.java) &&
+                        (type.declaredMethods.contains(method) || isMethodFromSupertype(method, type))
+            })
+        return costMethods
     }
 
     private fun findActionMethods(type: Class<*>): List<Method> {

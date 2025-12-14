@@ -74,18 +74,54 @@ private class FromMapWorldStateDeterminer(
  * Represents the state of the world at any time.
  * World state is just a map. This class exposes operations on the state.
  */
-data class ConditionWorldState(
-    val state: ConditionState = emptyMap(),
-) : WorldState {
+interface ConditionWorldState : WorldState {
 
-    override val timestamp: Instant = Instant.now()
+    val state: ConditionState
 
     /**
      * Apply an action to a state, returning the resulting new state.
      */
-    operator fun plus(
-        action: ConditionAction,
-    ): ConditionWorldState {
+    operator fun plus(action: ConditionAction): ConditionWorldState
+
+    /**
+     * Add a single condition determination
+     */
+    operator fun plus(pair: Pair<String, ConditionDetermination>): ConditionWorldState
+
+    fun unknownConditions(): Collection<String>
+
+    /**
+     * Generate variants with different definite values for the given condition
+     */
+    fun variants(unknownCondition: String): Collection<ConditionWorldState>
+
+    /**
+     * Generate all possible changes to the world state where only one condition is changed
+     */
+    fun withOneChange(): Collection<ConditionWorldState>
+
+    /**
+     * Are all preconditions satisfied in this world state?
+     */
+    infix fun satisfiesPreconditions(preconditions: EffectSpec): Boolean
+
+    companion object {
+
+        operator fun invoke(
+            state: ConditionState = emptyMap(),
+        ): ConditionWorldState =
+            ConditionWorldStateImpl(state)
+    }
+}
+
+
+private data class ConditionWorldStateImpl(
+    override val state: ConditionState = emptyMap(),
+) : ConditionWorldState {
+
+    override val timestamp: Instant = Instant.now()
+
+    override operator fun plus(action: ConditionAction): ConditionWorldState {
         val newState = state.toMutableMap()
         action.effects.forEach { (key, value) ->
             newState[key] = value
@@ -93,30 +129,24 @@ data class ConditionWorldState(
         return ConditionWorldState(newState as HashMap<String, ConditionDetermination>)
     }
 
-    fun unknownConditions(): Collection<String> =
+    override operator fun plus(pair: Pair<String, ConditionDetermination>): ConditionWorldState =
+        ConditionWorldState(this.state + pair)
+
+    override fun unknownConditions(): Collection<String> =
         state.entries
             .filter { it.value == ConditionDetermination.UNKNOWN }
             .map { it.key }
 
-    /**
-     * Generate variants with different definite values for the given condition
-     */
-    internal fun variants(unknownCondition: String): Collection<ConditionWorldState> {
+    override fun variants(unknownCondition: String): Collection<ConditionWorldState> {
         return setOf(ConditionDetermination.TRUE, ConditionDetermination.FALSE).map {
             this + (unknownCondition to it)
         }
     }
 
-    /**
-     * Generate all possible changes to the world state where only one condition is changed
-     * For each existing condition, generate variants where that condition is flipped to the other values
-     * (TRUE -> FALSE and UNKNOWN, FALSE -> TRUE and UNKNOWN, UNKNOWN -> TRUE and FALSE)
-     */
-    fun withOneChange(): Collection<ConditionWorldState> {
+    override fun withOneChange(): Collection<ConditionWorldState> {
         val result = mutableListOf<ConditionWorldState>()
 
         for ((condition, currentValue) in state) {
-            // Generate variants where this condition has a different value
             when (currentValue) {
                 ConditionDetermination.TRUE -> {
                     result.add(ConditionWorldState(state + (condition to ConditionDetermination.FALSE)))
@@ -138,18 +168,10 @@ data class ConditionWorldState(
         return result
     }
 
-    /**
-     * Are all preconditions satisfied in this world state?
-     */
-    infix fun satisfiesPreconditions(
-        preconditions: EffectSpec,
-    ): Boolean =
+    override infix fun satisfiesPreconditions(preconditions: EffectSpec): Boolean =
         preconditions.all { (key, value) -> state[key] == value }
 
-    override fun infoString(
-        verbose: Boolean?,
-        indent: Int,
-    ): String =
+    override fun infoString(verbose: Boolean?, indent: Int): String =
         if (verbose == true)
             state.entries
                 .toList()
@@ -162,7 +184,4 @@ data class ConditionWorldState(
                 }
         else
             state.toString()
-
-    operator fun plus(pair: Pair<String, ConditionDetermination>): ConditionWorldState =
-        ConditionWorldState(this.state + pair)
 }

@@ -93,6 +93,37 @@ annotation class Condition(
     val cost: ZeroToOne = 0.0,
 )
 
+/**
+ * Annotates a method that computes the dynamic cost or value of an action at planning time.
+ * Similar to @Condition, this method can take domain object parameters from the blackboard.
+ * **Unlike @Condition, all domain object parameters must be nullable.**
+ * If a parameter is not available on the blackboard, null will be passed.
+ *
+ * The method can also take a `Blackboard` parameter for direct access to all available objects.
+ *
+ * The method must return a Double between 0.0 and 1.0.
+ *
+ * Example:
+ * ```java
+ * @Cost(name = "processingCost")
+ * public double computeProcessingCost(@Nullable LargeDataSet largeData) {
+ *     return largeData != null ? 0.9 : 0.1;
+ * }
+ *
+ * @Action(costMethod = "processingCost")
+ * public DataOutput processData(DataInput input) { ... }
+ * ```
+ *
+ * @param name Name of the cost method. Referenced by @Action.costMethod or @Action.valueMethod.
+ * If not provided, the name will be the method name.
+ */
+@Target(AnnotationTarget.FUNCTION)
+@Retention(AnnotationRetention.RUNTIME)
+@MustBeDocumented
+annotation class Cost(
+    val name: String = "",
+)
+
 @Retention(AnnotationRetention.RUNTIME)
 @MustBeDocumented
 annotation class ToolGroup(
@@ -118,8 +149,12 @@ annotation class ToolGroup(
  * leaving only the outputs of this action.
  * @param outputBinding Output binding for the action.
  * Only required for a custom binding: a specific variable name for the returned value.
- * @param cost Cost of executing the action
- * @param value Value of performing the action
+ * @param cost Static cost of executing the action. Ignored if [costMethod] is specified.
+ * @param value Static value of performing the action. Ignored if [valueMethod] is specified.
+ * @param costMethod Name of a @Cost method to compute dynamic cost at planning time.
+ * When specified, overrides the static [cost] field.
+ * @param valueMethod Name of a @Cost method to compute dynamic value at planning time.
+ * When specified, overrides the static [value] field.
  * @param toolGroups Tool groups that this action requires. These are well known tools from the server.
  * @param toolGroupRequirements Tool groups required, with explicit metadata such as QoS requirements.
  * @Tool methods on the @Agentic class are automatically added.
@@ -141,6 +176,8 @@ annotation class Action(
     val outputBinding: String = IoBinding.DEFAULT_BINDING,
     val cost: ZeroToOne = 0.0,
     val value: ZeroToOne = 0.0,
+    val costMethod: String = "",
+    val valueMethod: String = "",
     val toolGroups: Array<String> = [],
     val toolGroupRequirements: Array<ToolGroup> = [],
     val trigger: KClass<*> = Unit::class,

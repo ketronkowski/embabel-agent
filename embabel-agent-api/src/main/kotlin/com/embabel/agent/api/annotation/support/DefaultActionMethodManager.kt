@@ -16,12 +16,21 @@
 package com.embabel.agent.api.annotation.support
 
 import com.embabel.agent.api.annotation.AwaitableResponseException
+import com.embabel.agent.api.annotation.RequireNameMatch
 import com.embabel.agent.api.annotation.State
+import com.embabel.agent.api.common.OperationContext
 import com.embabel.agent.api.common.TransformationActionContext
 import com.embabel.agent.api.common.support.MultiTransformationAction
 import com.embabel.agent.core.Action
+import com.embabel.agent.core.Blackboard
+import com.embabel.agent.core.DataDictionary
+import com.embabel.agent.core.DomainType
 import com.embabel.agent.core.IoBinding
 import com.embabel.agent.core.ToolGroupRequirement
+import com.embabel.agent.core.support.BlackboardWorldState
+import com.embabel.common.core.types.ZeroToOne
+import com.embabel.plan.CostComputation
+import com.embabel.plan.WorldState
 import org.slf4j.LoggerFactory
 import org.springframework.ai.tool.ToolCallback
 import org.springframework.core.KotlinDetector
@@ -57,6 +66,7 @@ internal class DefaultActionMethodManager(
         method: Method,
         instance: Any,
         toolCallbacksOnInstance: List<ToolCallback>,
+        costMethods: Map<String, CostMethodInfo>,
     ): Action {
         requireNonAmbiguousParameters(method)
         val actionAnnotation = method.getAnnotation(com.embabel.agent.api.annotation.Action::class.java)
@@ -76,10 +86,27 @@ internal class DefaultActionMethodManager(
             emptyList()
         }
 
+        // Create cost computation - either from @Cost method or static value
+        val costComputation = resolveCostComputation(
+            methodName = actionAnnotation.costMethod,
+            staticValue = actionAnnotation.cost,
+            costMethods = costMethods,
+            instance = instance,
+        )
+
+        // Create value computation - either from @Cost method or static value
+        val valueComputation = resolveCostComputation(
+            methodName = actionAnnotation.valueMethod,
+            staticValue = actionAnnotation.value,
+            costMethods = costMethods,
+            instance = instance,
+        )
+
         return MultiTransformationAction(
             name = nameGenerator.generateName(instance, method.name),
             description = actionAnnotation.description.ifBlank { method.name },
-            cost = { actionAnnotation.cost },
+            cost = costComputation,
+            value = valueComputation,
             inputs = inputs.toSet(),
             canRerun = actionAnnotation.canRerun,
             clearBlackboard = clearBlackboard,
@@ -99,6 +126,98 @@ internal class DefaultActionMethodManager(
                 instance = instance,
                 actionContext = context,
             )
+        }
+    }
+
+    /**
+     * Create a CostComputation from a @Cost method reference or fall back to a static value.
+     */
+    private fun resolveCostComputation(
+        methodName: String,
+        staticValue: ZeroToOne,
+        costMethods: Map<String, CostMethodInfo>,
+        instance: Any,
+    ): CostComputation {
+        if (methodName.isBlank()) {
+            return { staticValue }
+        }
+        val costMethodInfo = costMethods[methodName]
+            ?: costMethods[nameGenerator.generateName(instance, methodName)]
+        if (costMethodInfo == null) {
+            logger.warn("@Cost method '{}' not found, falling back to static value {}", methodName, staticValue)
+            return { staticValue }
+        }
+        return { worldState ->
+            invokeCostMethod(costMethodInfo.method, costMethodInfo.instance, worldState)
+        }
+    }
+
+    /**
+     * Invoke a @Cost method with nullable domain object parameters.
+     * Infrastructure parameters (OperationContext) are not supported at planning time.
+     * Domain object parameters are resolved from the blackboard if available, otherwise null.
+     */
+    private fun invokeCostMethod(
+        method: Method,
+        instance: Any,
+        worldState: WorldState,
+    ): ZeroToOne {
+        val blackboard = (worldState as? BlackboardWorldState)?.blackboard
+        val args = arrayOfNulls<Any?>(method.parameters.size)
+
+        for (i in method.parameters.indices) {
+            val parameter = method.parameters[i]
+            when {
+                OperationContext::class.java.isAssignableFrom(parameter.type) -> {
+                    logger.warn(
+                        "@Cost method {}.{} has OperationContext parameter which is not available at planning time",
+                        instance.javaClass.name,
+                        method.name,
+                    )
+                    args[i] = null
+                }
+
+                Blackboard::class.java.isAssignableFrom(parameter.type) -> {
+                    args[i] = blackboard
+                }
+
+                else -> {
+                    // Domain object parameter - resolve from blackboard or pass null
+                    if (blackboard != null) {
+                        val requireNameMatch = parameter.getAnnotation(RequireNameMatch::class.java)
+                        val variable = getBindingParameterName(parameter.name, requireNameMatch)
+                            ?: IoBinding.DEFAULT_BINDING
+                        args[i] = blackboard.getValue(
+                            variable = variable,
+                            type = parameter.type.name,
+                            dataDictionary = EmptyDataDictionary,
+                        )
+                    } else {
+                        args[i] = null
+                    }
+                }
+            }
+        }
+
+        return try {
+            method.trySetAccessible()
+            val result = ReflectionUtils.invokeMethod(method, instance, *args)
+            when (result) {
+                is Double -> result
+                is Number -> result.toDouble()
+                else -> {
+                    logger.warn(
+                        "@Cost method {}.{} returned non-numeric value: {}",
+                        instance.javaClass.name,
+                        method.name,
+                        result,
+                    )
+                    0.0
+                }
+            }
+        } catch (t: Throwable) {
+            logger.warn("Error invoking @Cost method {}.{}: {}", instance.javaClass.name, method.name, t.message)
+            0.0
         }
     }
 
@@ -241,4 +360,12 @@ internal class DefaultActionMethodManager(
         throw t
     }
 
+}
+
+/**
+ * Empty DataDictionary for use when resolving @Cost method parameters
+ * at planning time without access to full agent metadata.
+ */
+private object EmptyDataDictionary : DataDictionary {
+    override val domainTypes: Collection<DomainType> = emptyList()
 }

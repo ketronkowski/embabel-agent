@@ -69,6 +69,78 @@ Use `clearBlackboard` on intermediate actions instead.
 
 //TODO: (jasper notes) Provide links to detailed docs for pre, post, canRerun, cost, etc. Also brief code example is useful here.
 
+===== Dynamic Cost Computation with `@Cost`
+
+While the `cost` and `value` fields on `@Action` allow specifying static values, you can compute these dynamically at planning time using the `@Cost` annotation.
+This is useful when the cost of an action depends on the current state of the blackboard.
+
+The `@Cost` annotation marks a method that returns a cost value (a `double` between 0.0 and 1.0).
+You then reference this method from the `@Action` annotation using `costMethod` or `valueMethod`.
+
+[source,java]
+----
+@Agent(description = "Processor with dynamic cost")
+public class DataProcessor {
+
+    @Cost(name = "processingCost")  // <1>
+    public double computeProcessingCost(@Nullable LargeDataSet data) {  // <2>
+        if (data != null && data.size() > 1000) {
+            return 0.9;  // High cost for large datasets
+        }
+        return 0.1;  // Low cost for small or missing datasets
+    }
+
+    @Action(costMethod = "processingCost")  // <3>
+    public ProcessedData process(RawData input) {
+        return new ProcessedData(input.transform());
+    }
+}
+----
+
+<1> The `@Cost` annotation marks a method for dynamic cost computation.
+The `name` parameter identifies this cost method.
+<2> Domain object parameters in `@Cost` methods must be nullable.
+If the object isn't on the blackboard, `null` is passed.
+<3> The `costMethod` field references the `@Cost` method by name.
+
+Key differences from `@Condition` methods:
+
+* All domain object parameters in `@Cost` methods must be nullable (use `@Nullable` in Java or `?` in Kotlin)
+* When a domain object is not available on the blackboard, `null` is passed instead of causing the method to fail
+* The method must return a `double` between 0.0 and 1.0
+* The `Blackboard` can be passed as a parameter for direct access to all available objects
+
+You can also compute dynamic value using `valueMethod`:
+
+[source,kotlin]
+----
+@Agent(description = "Agent with dynamic value computation")
+class PrioritizedAgent {
+
+    @Cost(name = "urgencyValue")
+    fun computeUrgency(task: Task?): Double {
+        return when {
+            task == null -> 0.5
+            task.priority == Priority.HIGH -> 1.0
+            task.priority == Priority.MEDIUM -> 0.6
+            else -> 0.2
+        }
+    }
+
+    @AchievesGoal(description = "Process high-priority tasks")
+    @Action(valueMethod = "urgencyValue")
+    fun processTask(task: Task): Result {
+        return Result("Processed: ${task.name}")
+    }
+}
+----
+
+NOTE: The `@Cost` method is called during planning, before the action executes.
+It allows the planner to make informed decisions about which actions to prefer based on runtime state.
+
+TIP: Dynamic cost is especially useful with *Utility planning* (`PlannerType.UTILITY`), where cost/value tradeoffs are a core concept.
+The utility planner evaluates actions based on their net value (value minus cost), making dynamic cost computation essential for sophisticated decision-making.
+
 ==== The `@Condition` annotation
 
 The `@Condition` annotation is used to mark methods that evaluate conditions.

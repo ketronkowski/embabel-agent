@@ -16,6 +16,7 @@
 package com.embabel.agent.core.support
 
 import com.embabel.agent.api.common.OperationContext
+import com.embabel.agent.core.Blackboard
 import com.embabel.agent.core.Condition
 import com.embabel.agent.core.ProcessContext
 import com.embabel.agent.core.satisfiesType
@@ -24,7 +25,20 @@ import com.embabel.agent.spi.expression.LogicalExpressionParser
 import com.embabel.plan.common.condition.ConditionDetermination
 import com.embabel.plan.common.condition.ConditionWorldState
 import com.embabel.plan.common.condition.WorldStateDeterminer
+import com.fasterxml.jackson.annotation.JsonIgnore
 import org.slf4j.LoggerFactory
+
+/**
+ * WorldState implementation that wraps a ConditionWorldState and includes
+ * a reference to the Blackboard for accessing domain objects at planning time.
+ * This enables @Cost methods to access domain objects for dynamic cost computation.
+ */
+class BlackboardWorldState(
+    val conditionWorldState: ConditionWorldState,
+    @field:JsonIgnore
+    val blackboard: Blackboard,
+) : ConditionWorldState by conditionWorldState
+
 
 /**
  * Determine world state for the given ProcessContext,
@@ -39,14 +53,14 @@ class BlackboardWorldStateDeterminer(
 
     private val knownConditions = processContext.agentProcess.agent.planningSystem.knownConditions()
 
-    override fun determineWorldState(): ConditionWorldState {
+    override fun determineWorldState(): BlackboardWorldState {
         val map = mutableMapOf<String, ConditionDetermination>()
         knownConditions.forEach { condition ->
             // TODO shouldn't evaluate expensive conditions, just
             // return unknown
             map[condition] = determineCondition(condition)
         }
-        return ConditionWorldState(map)
+        return BlackboardWorldState(ConditionWorldState(map), processContext.blackboard)
     }
 
     override fun determineCondition(condition: String): ConditionDetermination {

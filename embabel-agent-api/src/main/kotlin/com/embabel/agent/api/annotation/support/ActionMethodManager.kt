@@ -23,6 +23,14 @@ import org.springframework.ai.tool.ToolCallback
 import java.lang.reflect.Method
 
 /**
+ * Information about a @Cost annotated method for invoking cost/value computations.
+ */
+data class CostMethodInfo(
+    val method: Method,
+    val instance: Any,
+)
+
+/**
  * Creates and invokes actions from annotated methods.
  */
 interface ActionMethodManager {
@@ -39,11 +47,13 @@ interface ActionMethodManager {
      * @param method the method to create an action from
      * @param instance instance of Agent or AgentCapabilities-annotated class
      * @param toolCallbacksOnInstance tool callbacks to use from instance level
+     * @param costMethods map of cost method name to CostMethodInfo for dynamic cost/value computation
      */
     fun createAction(
         method: Method,
         instance: Any,
         toolCallbacksOnInstance: List<ToolCallback>,
+        costMethods: Map<String, CostMethodInfo> = emptyMap(),
     ): Action
 
     /**
