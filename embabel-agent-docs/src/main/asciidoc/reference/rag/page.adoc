@@ -1,0 +1,363 @@
+[[reference.rag]]
+=== RAG (Retrieval-Augmented Generation)
+
+Retrieval-Augmented Generation (RAG) is a technique that enhances LLM responses by retrieving relevant information from a knowledge base before generating answers. This grounds LLM outputs in specific, verifiable sources rather than relying solely on training data.
+
+For more background on RAG concepts, see:
+
+- https://en.wikipedia.org/wiki/Retrieval-augmented_generation[Wikipedia: Retrieval-Augmented Generation]
+- https://aws.amazon.com/what-is/retrieval-augmented-generation/[AWS: What is RAG?]
+
+Embabel Agent provides RAG support through the `LlmReference` interface, which allows you to attach references (including RAG stores) to LLM calls. The key classes are `ToolishRag` for exposing search operations as LLM tools, and `SearchOperations` for the underlying search functionality.
+
+==== Agentic RAG Architecture
+
+Unlike traditional RAG implementations that perform a single retrieval step, Embabel Agent's RAG is **entirely agentic and tool-based**. The LLM has full control over the retrieval process:
+
+- **Autonomous Search**: The LLM decides when to search, what queries to use, and how many results to retrieve
+- **Iterative Refinement**: The LLM can perform multiple searches with different queries until it finds relevant information
+- **Cross-Reference Discovery**: The LLM can follow references, expand chunks to see surrounding context, and zoom out to parent sections
+- **HyDE Support**: The LLM can generate hypothetical documents (HyDE queries) to improve semantic search results
+
+This agentic approach produces better results than single-shot RAG because the LLM can:
+
+1. Start with a broad search and narrow down
+2. Try different phrasings if initial queries return poor results
+3. Expand promising results to get more context
+4. Combine information from multiple chunks
+
+==== Facade Pattern for Safe Tool Exposure
+
+Embabel Agent uses a facade pattern to expose RAG capabilities safely and consistently across different store implementations. The `ToolishRag` class acts as a facade that:
+
+1. **Inspects Store Capabilities**: Examines which `SearchOperations` subinterfaces the store implements
+2. **Exposes Appropriate Tools**: Only creates tool wrappers for supported operations
+3. **Provides Consistent Interface**: All tools use the same parameter patterns regardless of underlying store
+
+[source,kotlin]
+----
+override fun toolInstances(): List<Any> =
+    buildList {
+        if (searchOperations is VectorSearch) {
+            add(VectorSearchTools(searchOperations))
+        }
+        if (searchOperations is TextSearch) {
+            add(TextSearchTools(searchOperations))
+        }
+        if (searchOperations is ResultExpander) {
+            add(ResultExpanderTools(searchOperations))
+        }
+    }
+----
+
+This means:
+
+- A Lucene store exposes vector search, text search, AND result expansion tools
+- A Spring AI VectorStore adapter exposes only vector search tools
+- A basic text-only store exposes only text search tools
+
+The LLM sees only the tools that actually work with the configured store, preventing runtime errors from unsupported operations.
+
+==== Getting Started
+
+To use RAG in your Embabel Agent application, add the `rag-core` module and a store implementation to your `pom.xml`:
+
+[source,xml]
+----
+<dependency>
+    <groupId>com.embabel.agent</groupId>
+    <artifactId>embabel-agent-rag-lucene</artifactId>
+    <version>${embabel-agent.version}</version>
+</dependency>
+
+<dependency>
+    <groupId>com.embabel.agent</groupId>
+    <artifactId>embabel-agent-rag-tika</artifactId>
+    <version>${embabel-agent.version}</version>
+</dependency>
+----
+
+The `embabel-agent-rag-lucene` module provides Lucene-based vector and text search. The `embabel-agent-rag-tika` module provides Apache Tika integration for parsing various document formats.
+
+==== Our Model
+
+Embabel Agent uses a hierarchical content model that goes beyond traditional flat chunk storage:
+
+===== Content Elements
+
+The `ContentElement` interface is the supertype for all content in the RAG system. Key subtypes include:
+
+- **`ContentRoot`** / **`NavigableDocument`**: The root of a document hierarchy, with a required URI and title
+- **`Section`**: A hierarchical division of content with a title
+  - **`ContainerSection`**: A section containing other sections
+  - **`LeafSection`**: A section containing actual text content
+- **`Chunk`**: Traditional RAG text chunks, created by splitting `LeafSection` content
+
+===== Chunks
+
+`Chunk` is the primary unit for vector search. Each chunk:
+
+- Contains a `text` field with the content
+- Has a `parentId` linking to its source section
+- Includes `metadata` with information about its origin (root document, container section, leaf section)
+- Can compute its `pathFromRoot` through the document hierarchy
+
+This hierarchical model enables advanced RAG capabilities like "zoom out" to parent sections or expansion to adjacent chunks.
+
+==== SearchOperations
+
+`SearchOperations` is the tag interface for search functionality. Concrete implementations implement one or more subinterfaces:
+
+===== VectorSearch
+
+Classic semantic vector search:
+
+[source,kotlin]
+----
+interface VectorSearch : SearchOperations {
+    fun <T : Retrievable> vectorSearch(
+        request: TextSimilaritySearchRequest,
+        clazz: Class<T>,
+    ): List<SimilarityResult<T>>
+}
+----
+
+===== TextSearch
+
+Full-text search using Lucene query syntax:
+
+[source,kotlin]
+----
+interface TextSearch : SearchOperations {
+    fun <T : Retrievable> textSearch(
+        request: TextSimilaritySearchRequest,
+        clazz: Class<T>,
+    ): List<SimilarityResult<T>>
+}
+----
+
+Supported query syntax includes:
+
+- `+term` - term must appear
+- `-term` - term must not appear
+- `"phrase"` - exact phrase match
+- `term*` - prefix wildcard
+- `term~` - fuzzy match
+
+===== ResultExpander
+
+Expand search results to surrounding context:
+
+[source,kotlin]
+----
+interface ResultExpander : SearchOperations {
+    fun expandResult(
+        id: String,
+        method: Method,
+        elementsToAdd: Int,
+    ): List<ContentElement>
+}
+----
+
+Expansion methods:
+
+- `SEQUENCE` - expand to previous and next chunks
+- `ZOOM_OUT` - expand to enclosing section
+
+==== ToolishRag
+
+`ToolishRag` is an `LlmReference` that exposes `SearchOperations` as LLM tools. This gives the LLM fine-grained control over RAG searches.
+
+===== Configuration
+
+Create a `ToolishRag` by wrapping your `SearchOperations`:
+
+[source,java]
+----
+public ChatActions(SearchOperations searchOperations) {
+    this.toolishRag = new ToolishRag(
+            "sources",
+            "Sources for answering user questions",
+            searchOperations
+    );
+}
+----
+
+===== Using with LLM Calls
+
+Attach `ToolishRag` to an LLM call using `.withReference()`:
+
+[source,java]
+----
+@Action(canRerun = true, trigger = UserMessage.class)
+void respond(Conversation conversation, ActionContext context) {
+    var assistantMessage = context.ai()
+            .withLlm(properties.chatLlm())
+            .withReference(toolishRag)
+            .withTemplate("ragbot")
+            .respondWithSystemPrompt(conversation, Map.of(
+                    "properties", properties
+            ));
+    context.sendMessage(conversation.addMessage(assistantMessage));
+}
+----
+
+Based on the capabilities of the underlying `SearchOperations`, `ToolishRag` exposes:
+
+- **VectorSearchTools**: `vectorSearch(query, topK, threshold)` - semantic similarity search
+- **TextSearchTools**: `textSearch(query, topK, threshold)` - BM25 full-text search, `regexSearch(regex, topK)`
+- **ResultExpanderTools**: `broadenChunk(chunkId, chunksToAdd)` - expand to adjacent chunks, `zoomOut(id)` - expand to parent section
+
+The LLM autonomously decides when to use these tools based on user queries.
+
+==== Ingestion
+
+===== Document Parsing with Tika
+
+Embabel Agent uses Apache Tika for document parsing. `TikaHierarchicalContentReader` reads various formats (Markdown, HTML, PDF, Word, etc.) and extracts a hierarchical structure:
+
+[source,java]
+----
+@ShellMethod("Ingest URL or file path")
+String ingest(@ShellOption(defaultValue = "./data/document.md") String location) {
+    var uri = location.startsWith("http://") || location.startsWith("https://")
+            ? location
+            : Path.of(location).toAbsolutePath().toUri().toString();
+    var ingested = NeverRefreshExistingDocumentContentPolicy.INSTANCE
+            .ingestUriIfNeeded(
+                    luceneSearchOperations,
+                    new TikaHierarchicalContentReader(),
+                    uri
+            );
+    return ingested != null ?
+            "Ingested document with ID: " + ingested :
+            "Document already exists, no ingestion performed.";
+}
+----
+
+===== Chunking Configuration
+
+Content is split into chunks with configurable parameters:
+
+[source,yaml]
+----
+ragbot:
+  chunker-config:
+    max-chunk-size: 800
+    overlap-size: 100
+----
+
+Configuration options:
+
+- `maxChunkSize` - Maximum characters per chunk (default: 1500)
+- `overlapSize` - Character overlap between consecutive chunks (default: 200)
+- `includeSectionTitleInChunk` - Include section title in chunk text (default: true)
+
+===== Using Docling for Markdown Conversion
+
+While we strongly believe you should write your Gen AI *applications* in Java, ingestion is more in the realm of data science, and Python is indisputably strong in this area.
+
+For complex documents like PDFs, consider using https://github.com/DS4SD/docling[Docling] to convert to Markdown first:
+
+[source,bash]
+----
+docling https://example.com/document.pdf --from pdf --to md --output ./data
+----
+
+Markdown is easier to parse hierarchically and produces better chunks than raw PDF extraction.
+
+==== Supported Stores
+
+Embabel Agent provides several RAG store implementations:
+
+===== Lucene (embabel-agent-rag-lucene)
+
+Full-featured store with vector search, text search, and result expansion. Supports both in-memory and file-based persistence:
+
+[source,java]
+----
+@Bean
+LuceneSearchOperations luceneSearchOperations(
+        ModelProvider modelProvider,
+        RagbotProperties properties) {
+    var embeddingService = modelProvider.getEmbeddingService(
+            DefaultModelSelectionCriteria.INSTANCE);
+    return LuceneSearchOperations
+            .withName("docs")
+            .withEmbeddingService(embeddingService)
+            .withChunkerConfig(properties.chunkerConfig())
+            .withIndexPath(Paths.get("./.lucene-index"))  // File persistence
+            .buildAndLoadChunks();
+}
+----
+
+Omit `.withIndexPath()` for in-memory only storage.
+
+===== Neo4j
+
+Graph database store for RAG (available in separate modules `embabel-agent-rag-neo-drivine` and `embabel-agent-rag-neo-ogm`). Ideal when you need graph relationships between content elements.
+
+===== Spring AI VectorStore (SpringVectorStoreVectorSearch)
+
+Adapter that wraps any Spring AI `VectorStore`, enabling use of any vector database Spring AI supports:
+
+[source,kotlin]
+----
+class SpringVectorStoreVectorSearch(
+    private val vectorStore: VectorStore,
+) : VectorSearch {
+    override fun <T : Retrievable> vectorSearch(
+        request: TextSimilaritySearchRequest,
+        clazz: Class<T>,
+    ): List<SimilarityResult<T>> {
+        val searchRequest = SearchRequest
+            .builder()
+            .query(request.query)
+            .similarityThreshold(request.similarityThreshold)
+            .topK(request.topK)
+            .build()
+        val results = vectorStore.similaritySearch(searchRequest)
+        // ... convert results
+    }
+}
+----
+
+This allows integration with Pinecone, Weaviate, Milvus, Chroma, and other stores via Spring AI.
+
+==== Implementing Your Own RAG Store
+
+To implement a custom RAG store, implement as many of the `SearchOperations` subinterfaces as your store supports:
+
+[source,kotlin]
+----
+class MyCustomSearchOperations : VectorSearch, TextSearch {
+
+    override fun <T : Retrievable> vectorSearch(
+        request: TextSimilaritySearchRequest,
+        clazz: Class<T>,
+    ): List<SimilarityResult<T>> {
+        // Implement vector similarity search
+    }
+
+    override fun <T : Retrievable> textSearch(
+        request: TextSimilaritySearchRequest,
+        clazz: Class<T>,
+    ): List<SimilarityResult<T>> {
+        // Implement full-text search
+    }
+
+    override val luceneSyntaxNotes: String = "Full Lucene syntax supported"
+}
+----
+
+For ingestion support, extend `ChunkingContentElementRepository` to handle document storage and chunking.
+
+==== Complete Example
+
+See the https://github.com/embabel/rag-demo[rag-demo] project for a complete working example including:
+
+- Lucene-based RAG store configuration
+- Document ingestion via Tika
+- Chatbot with RAG-powered responses
+- Jinja prompt templates for system prompts
+- Spring Shell commands for interactive testing

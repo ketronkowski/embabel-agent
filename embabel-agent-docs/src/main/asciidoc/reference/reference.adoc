@@ -13,6 +13,7 @@ include::types/page.adoc[]
 include::tools/page.adoc[]
 include::prompt-contributors/page.adoc[]
 include::templates/page.adoc[]
+include::rag/page.adoc[]
 
 include::agent-process/page.adoc[]
 include::agent-platform/page.adoc[]
