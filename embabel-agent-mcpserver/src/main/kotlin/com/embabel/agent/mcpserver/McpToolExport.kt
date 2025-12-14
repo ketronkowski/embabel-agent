@@ -18,8 +18,9 @@ package com.embabel.agent.mcpserver
 import com.embabel.agent.api.common.LlmReference
 import com.embabel.agent.api.common.ToolObject
 import com.embabel.agent.core.support.safelyGetToolCallbacks
-import com.embabel.agent.core.support.safelyGetToolCallbacksFrom
+import com.embabel.common.util.loggerFor
 import org.springframework.ai.tool.ToolCallback
+import org.springframework.ai.tool.definition.ToolDefinition
 
 /**
  * Convenient way to programmatically export MCP tools
@@ -28,20 +29,19 @@ import org.springframework.ai.tool.ToolCallback
 interface McpToolExport : McpExportToolCallbackPublisher {
 
     companion object {
+
         /**
          * Export the tools on this ToolObject.
          */
         @JvmStatic
-        fun fromToolObject(toolObject: ToolObject): McpToolExport {
-            return McpToolExportImpl(
-                toolCallbacks = safelyGetToolCallbacksFrom(toolObject),
-            )
-        }
+        fun fromToolObject(toolObject: ToolObject): McpToolExport =
+            fromToolObjects(listOf(toolObject))
 
         @JvmStatic
         fun fromToolObjects(toolObjects: List<ToolObject>): McpToolExport {
             return McpToolExportImpl(
-                toolCallbacks = safelyGetToolCallbacks(toolObjects),
+                toolCallbacks = safelyGetToolCallbacks(toolObjects)
+                    .map { decorate(it) },
             )
         }
 
@@ -62,6 +62,20 @@ interface McpToolExport : McpExportToolCallbackPublisher {
         @JvmStatic
         fun fromLlmReferences(llmReferences: List<LlmReference>): McpToolExport {
             return fromToolObjects(llmReferences.map { it.toolObject() })
+        }
+
+        private fun decorate(toolCallback: ToolCallback): ToolCallback {
+            return LoggingToolCallback(delegate = toolCallback)
+        }
+
+        private class LoggingToolCallback(private var delegate: ToolCallback) : ToolCallback {
+
+            override fun getToolDefinition(): ToolDefinition = delegate.toolDefinition
+
+            override fun call(toolInput: String): String {
+                loggerFor<McpToolExport>().info("Calling tool ${delegate.toolDefinition.name()}($toolInput)")
+                return delegate.call(toolInput)
+            }
         }
     }
 }
