@@ -17,6 +17,7 @@ package com.embabel.agent.rag.store
 
 import com.embabel.agent.rag.ingestion.ContentChunker
 import com.embabel.agent.rag.model.NavigableDocument
+import com.embabel.agent.rag.model.Retrievable
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -35,15 +36,17 @@ abstract class AbstractChunkingContentElementRepository(
      * rather than otherwise consider the entire structure.
      */
     final override fun writeAndChunkDocument(root: NavigableDocument): List<String> {
+        logger.info("Writing and chunking document ${root.id} with uri ${root.uri} and title '${root.title}'")
         val chunker = ContentChunker(chunkerConfig)
         val chunks = chunker.chunk(root)
             .map { enhance(it) }
-
+        logger.info("Chunked document ${root.id} into ${chunks.size} chunks")
         save(root)
         root.descendants().forEach { save(it) }
+        onNewRetrievables(root.descendants().filterIsInstance<Retrievable>())
         chunks.forEach { save(it) }
         onNewRetrievables(chunks)
-        createRelationships(root)
+        createInternalRelationships(root)
         commit()
         logger.info("Wrote and chunked document ${root.id} with ${chunks.size} chunks")
         return chunks.map { it.id }
@@ -55,7 +58,7 @@ abstract class AbstractChunkingContentElementRepository(
      * based on their ids.
      * Not all implementations support this.
      */
-    protected abstract fun createRelationships(root: NavigableDocument)
+    protected abstract fun createInternalRelationships(root: NavigableDocument)
 
     /**
      * Commit after a write operation if needed.

@@ -244,7 +244,7 @@ class LuceneSearchOperations @JvmOverloads constructor(
         logger.debug("Persisted structural element id='{}' type='{}'", element.id, element.javaClass.simpleName)
     }
 
-    override fun createRelationships(root: NavigableDocument) {
+    override fun createInternalRelationships(root: NavigableDocument) {
         // No op here
     }
 
@@ -737,6 +737,7 @@ class LuceneSearchOperations @JvmOverloads constructor(
                         val rebuilt = rebuildContainer(child.id)
                         (rebuilt as? NavigableSection) ?: child
                     }
+
                     else -> child
                 }
             }
@@ -750,6 +751,7 @@ class LuceneSearchOperations @JvmOverloads constructor(
                         }
                     } else element
                 }
+
                 is MaterializedDocument -> {
                     if (rebuiltChildren.isNotEmpty()) {
                         element.copy(children = rebuiltChildren).also {
@@ -757,6 +759,7 @@ class LuceneSearchOperations @JvmOverloads constructor(
                         }
                     } else element
                 }
+
                 else -> element
             }
         }
@@ -809,6 +812,7 @@ class LuceneSearchOperations @JvmOverloads constructor(
                     metadata = metadata
                 )
             }
+
             TYPE_LEAF_SECTION -> {
                 LeafSection(
                     id = id,
@@ -818,6 +822,7 @@ class LuceneSearchOperations @JvmOverloads constructor(
                     metadata = metadata
                 )
             }
+
             TYPE_CONTAINER_SECTION -> {
                 DefaultMaterializedContainerSection(
                     id = id,
@@ -827,10 +832,12 @@ class LuceneSearchOperations @JvmOverloads constructor(
                     metadata = metadata
                 )
             }
+
             null, TYPE_CHUNK -> {
                 // No type field means it's a legacy chunk or explicitly a chunk
                 createChunkFromLuceneDocument(luceneDocument)
             }
+
             else -> {
                 logger.warn("Unknown element type '{}' for id='{}', treating as Chunk", elementType, id)
                 createChunkFromLuceneDocument(luceneDocument)
@@ -845,8 +852,13 @@ class LuceneSearchOperations @JvmOverloads constructor(
     private fun onNewRetrievable(
         retrievable: Retrievable,
     ) {
+        // Only process Chunks here - structural elements are persisted via save() -> persistStructuralElement()
         if (retrievable !is Chunk) {
-            logger.warn("Only Chunk retrievables are supported; skipping retrievable with id='{}'", retrievable.id)
+            logger.debug(
+                "Skipping non-Chunk retrievable with id='{}' (type={})",
+                retrievable.id,
+                retrievable.javaClass.simpleName
+            )
             return
         }
 

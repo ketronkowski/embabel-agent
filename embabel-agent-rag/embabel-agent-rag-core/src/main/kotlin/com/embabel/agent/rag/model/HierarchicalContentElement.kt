@@ -92,7 +92,7 @@ interface ContainerSection : Section {
 }
 
 /**
- * Contains content
+ * Contains content without further subdivisions.
  */
 data class LeafSection(
     override val id: String,
@@ -101,17 +101,26 @@ data class LeafSection(
     val text: String,
     override val parentId: String? = null,
     override val metadata: Map<String, Any?> = emptyMap(),
-) : NavigableSection, HasContent {
+) : NavigableSection, Retrievable, HasContent {
 
     override val content get() = text
 
     override val children: Iterable<NavigableSection> get() = emptyList()
 
-    override fun propertiesToPersist(): Map<String, Any?> = super.propertiesToPersist() + mapOf(
+    override fun propertiesToPersist(): Map<String, Any?> = super<NavigableSection>.propertiesToPersist() + mapOf(
         "text" to content,
     )
 
     override fun labels(): Set<String> {
-        return super.labels() + setOf("LeafSection")
+        return super<NavigableSection>.labels() + super<Retrievable>.labels() + setOf("LeafSection")
+    }
+
+    override fun infoString(
+        verbose: Boolean?,
+        indent: Int,
+    ): String = "id:$id\n${embeddableValue()}"
+
+    override fun embeddableValue(): String {
+        return "$title\n$text"
     }
 }

@@ -17,7 +17,6 @@ package com.embabel.agent.rag.model
 
 import com.embabel.agent.api.common.Embedding
 import com.embabel.common.core.types.HasInfoString
-import org.jetbrains.annotations.ApiStatus
 
 /**
  * Embedded object instance.
@@ -53,13 +52,4 @@ interface Embeddable {
  * (normally a chunk or an entity) that can be retrieved by RAG.
  * It has a stable id.
  */
-interface Retrievable : HasInfoString, Datum, Embeddable {
-
-    /**
-     * Neighbors of this retrievable object.
-     * Allows navigation of a graph
-     */
-    @get:ApiStatus.Experimental
-    val neighbors: Map<String, Collection<Retrievable>> get() = mapOf()
-
-}
+interface Retrievable : HasInfoString, Datum, Embeddable
