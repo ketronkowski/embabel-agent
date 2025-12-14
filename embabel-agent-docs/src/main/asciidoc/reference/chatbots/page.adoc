@@ -1,0 +1,379 @@
+[[reference.chatbots]]
+=== Building Chatbots
+
+Chatbots are an important application of Gen AI, although far from the only use, especially in enterprise.
+
+Unlike many other frameworks, Embabel does not maintain a conversation thread to do its core work. This is a good thing as it means that context compression is not required for most tasks.
+
+If you want to build a chatbot you should use the `Conversation` interface explicitly, and expose a `Chatbot` bean, typically backed by action methods that handle `UserMessage` events.
+
+==== Core Concepts
+
+===== Long-Lived AgentProcess
+
+An Embabel chatbot is backed by a **long-lived `AgentProcess`** that pauses between user messages. This design has important implications:
+
+- The same `AgentProcess` can respond to events besides user input
+- The blackboard maintains state across the entire session
+- Actions can be triggered by user messages, system events, or other objects added to the blackboard
+- It's a **working context** rather than just a chat session
+
+When a user sends a message, it's added to the blackboard as a `UserMessage`. The `AgentProcess` then runs, selects an appropriate action to handle it, and pauses again waiting for the next event.
+
+===== Utility AI for Chatbots
+
+**Utility AI is often the best approach for chatbots.** Instead of defining a fixed flow, you define multiple actions with costs, and the planner selects the highest-value action to respond to each message.
+
+This allows:
+
+- Multiple response strategies (e.g., RAG search, direct answer, clarification request)
+- Dynamic behavior based on context
+- Easy extensibility by adding new action methods
+
+===== Goals in Chatbots
+
+Typically, chatbot agents **do not need a goal**. The agent process simply waits for user messages and responds to them indefinitely.
+
+However, you can define a goal if you want to ensure the conversation terminates and the `AgentProcess` completes rather than waiting forever. This is useful for:
+
+- Transactional conversations (e.g., completing a booking)
+- Wizard-style flows with a defined endpoint
+- Conversations that should end after collecting specific information
+
+==== Key Interfaces
+
+===== Chatbot
+
+The `Chatbot` interface manages multiple chat sessions:
+
+[source,kotlin]
+----
+interface Chatbot {
+    fun createSession(
+        user: User?,
+        outputChannel: OutputChannel,
+        systemMessage: String? = null,
+    ): ChatSession
+
+    fun findSession(conversationId: String): ChatSession?
+}
+----
+
+===== ChatSession
+
+Each session represents an ongoing conversation:
+
+[source,kotlin]
+----
+interface ChatSession {
+    val outputChannel: OutputChannel
+    val user: User?
+    val conversation: Conversation
+    val processId: String?
+
+    fun onUserMessage(userMessage: UserMessage)
+    fun isFinished(): Boolean
+}
+----
+
+===== Conversation
+
+The `Conversation` interface holds the message history:
+
+[source,kotlin]
+----
+interface Conversation : StableIdentified {
+    val messages: List<Message>
+    fun addMessage(message: Message): Message
+    fun lastMessageIfBeFromUser(): UserMessage?
+}
+----
+
+Message types include:
+
+- `UserMessage` - messages from the user (supports multimodal content)
+- `AssistantMessage` - responses from the chatbot
+- `SystemMessage` - system-level instructions
+
+==== Building a Chatbot
+
+===== Step 1: Create Action Methods
+
+Define action methods in an `@EmbabelComponent` that respond to user messages using the `trigger` parameter:
+
+[source,java]
+----
+@EmbabelComponent
+public class ChatActions {
+
+    private final ToolishRag toolishRag;
+    private final RagbotProperties properties;
+
+    public ChatActions(
+            SearchOperations searchOperations,
+            RagbotProperties properties) {
+        this.toolishRag = new ToolishRag(
+                "sources",
+                "Sources for answering user questions",
+                searchOperations
+        );
+        this.properties = properties;
+    }
+
+    @Action(canRerun = true, trigger = UserMessage.class) // <1> <2>
+    void respond(
+            Conversation conversation, // <3>
+            ActionContext context) {
+        var assistantMessage = context.ai()
+                .withLlm(properties.chatLlm())
+                .withReference(toolishRag)
+                .withTemplate("ragbot")
+                .respondWithSystemPrompt(conversation, Map.of(
+                        "properties", properties
+                ));
+        context.sendMessage(conversation.addMessage(assistantMessage)); // <4>
+    }
+}
+----
+<1> `trigger = UserMessage.class` - action is invoked when a `UserMessage` is the last object added to the blackboard
+<2> `canRerun = true` - action can be executed multiple times (for each user message)
+<3> `Conversation` parameter is automatically injected from the blackboard
+<4> `context.sendMessage()` sends the response to the output channel
+
+===== Step 2: Configure the Chatbot Bean
+
+Use `AgentProcessChatbot.utilityFromPlatform()` to create a utility-based chatbot that discovers all available actions:
+
+[source,java]
+----
+@Configuration
+class ChatConfiguration {
+
+    @Bean
+    Chatbot chatbot(AgentPlatform agentPlatform) {
+        return AgentProcessChatbot.utilityFromPlatform( // <1>
+                agentPlatform, // <2>
+                new Verbosity().showPrompts() // <3>
+        );
+    }
+}
+----
+<1> Creates a chatbot using Utility AI planning to select the best action
+<2> Discovers all `@Action` methods from `@EmbabelComponent` classes on the platform
+<3> Optional `Verbosity` configuration for debugging prompts
+
+===== Step 3: Use the Chatbot
+
+Interact with the chatbot through its session interface:
+
+[source,java]
+----
+ChatSession session = chatbot.createSession(user, outputChannel, null); // <1>
+
+session.onUserMessage(new UserMessage("What does this document say about taxes?")); // <2>
+// Response is automatically sent to the outputChannel // <3>
+----
+<1> Create a new session for a user with an output channel
+<2> Send a user message - triggers the agent to select and run an action
+<3> Responses from actions are sent to the `outputChannel`
+
+==== How Message Triggering Works
+
+When you specify `trigger = UserMessage.class` on an action:
+
+1. The chatbot adds the `UserMessage` to both the `Conversation` and the `AgentProcess` blackboard
+2. The planner evaluates all actions whose trigger conditions are satisfied
+3. For utility planning, the action with the highest value (lowest cost) is selected
+4. The action method receives the `Conversation` (with the new message) via parameter injection
+
+This trigger-based approach means:
+
+- You can have multiple actions that respond to user messages with different costs
+- The planner picks the most appropriate response strategy
+- Actions can also be triggered by other event types (not just `UserMessage`)
+
+==== Dynamic Cost Methods
+
+For more sophisticated action selection, use `@Cost` methods:
+
+[source,java]
+----
+@Cost // <1>
+double dynamic(Blackboard bb) { // <2>
+    return bb.getObjects().size() > 5 ? 100 : 10; // <3>
+}
+
+@Action(canRerun = true,
+        trigger = UserMessage.class,
+        costMethod = "dynamic") // <4>
+void respond(Conversation conversation, ActionContext context) {
+    // ...
+}
+----
+<1> `@Cost` marks this as a cost calculation method
+<2> Receives the `Blackboard` to inspect current state
+<3> Returns cost value - lower costs mean higher priority
+<4> `costMethod` links the action to the cost calculation method
+
+==== Prompt Templates
+
+Chatbots typically use **Jinja prompt templates** rather than inline string prompts. This isn't strictly necessary—simple chatbots can use regular string prompts built in code:
+
+[source,java]
+----
+var assistantMessage = context.ai()
+        .withLlm(properties.chatLlm())
+        .withSystemPrompt("You are a helpful assistant. Answer questions concisely.") // <1>
+        .respond(conversation.getMessages());
+----
+<1> Simple inline prompt - fine for basic chatbots
+
+However, production chatbots often need **longer, more complex prompts** for:
+
+- Personality and tone (personas)
+- Guardrails and safety instructions
+- Domain-specific objectives
+- Dynamic behavior based on configuration
+
+For these cases, Jinja templates are the better choice:
+
+[source,java]
+----
+var assistantMessage = context.ai()
+        .withLlm(properties.chatLlm())
+        .withReference(toolishRag)
+        .withTemplate("ragbot") // <1>
+        .respondWithSystemPrompt(conversation, Map.of( // <2>
+                "properties", properties,
+                "persona", properties.persona(),
+                "objective", properties.objective()
+        ));
+----
+<1> Loads `prompts/ragbot.jinja` from resources
+<2> Template bindings - accessible in Jinja as `properties.persona()` etc.
+
+Templates allow:
+
+- Separation of prompt engineering from code
+- Dynamic persona and objective selection via configuration
+- Reusable prompt elements (guardrails, personalization)
+- Prompt iteration without code changes
+
+===== Template Structure Example
+
+A typical chatbot template structure from the rag-demo project:
+
+[source]
+----
+prompts/
+├── ragbot.jinja                    # Main entry point
+├── elements/
+│   ├── guardrails.jinja            # Safety restrictions
+│   └── personalization.jinja       # Dynamic persona/objective loader
+├── personas/
+│   ├── clause.jinja                # Legal expert persona
+│   └── ...
+└── objectives/
+    └── legal.jinja                 # Legal document analysis objective
+----
+
+The main template (`ragbot.jinja`) composes from reusable elements:
+
+[source,jinja]
+----
+{% include "elements/guardrails.jinja" %} // <1>
+
+{% include "elements/personalization.jinja" %} // <2>
+----
+<1> Include safety guardrails first
+<2> Then include persona and objective (which are dynamically selected)
+
+Guardrails define safety boundaries (`elements/guardrails.jinja`):
+
+[source,jinja]
+----
+{# Safety and content guardrails for the ragbot. #}
+
+DO NOT DISCUSS POLITICS OR CONTROVERSIAL TOPICS.
+----
+
+Personalization dynamically loads persona and objective (`elements/personalization.jinja`):
+
+[source,jinja]
+----
+{% set persona_template = "personas/" ~ properties.persona() ~ ".jinja" %} // <1>
+{% include persona_template %}
+
+{% set objective_template = "objectives/" ~ properties.objective() ~ ".jinja" %} // <2>
+{% include objective_template %}
+----
+<1> Build template path from `properties.persona()` (e.g., "clause" → "personas/clause.jinja")
+<2> Build template path from `properties.objective()` (e.g., "legal" → "objectives/legal.jinja")
+
+A persona template (`personas/clause.jinja`):
+
+[source,jinja]
+----
+Your name is Clause.
+You are a brilliant legal chatbot who excels at interpreting
+legislation and legal documents.
+----
+
+An objective template (`objectives/legal.jinja`):
+
+[source,jinja]
+----
+You are an authoritative interpreter of legislation and legal documents.
+You are renowned for thoroughness and for never missing anything.
+
+You answer questions definitively, in a clear and concise manner.
+You cite relevant sections to back up your answers.
+If you don't know, say you don't know.
+NEVER FABRICATE ANSWERS.
+
+You ground your answers in literal citations from the provided sources.
+Always use the available tools. // <1>
+----
+<1> Instructs the LLM to use RAG tools provided via `withReference()`
+
+This modular approach lets you:
+
+- Switch personas via `application.yml` without code changes
+- Share guardrails across multiple chatbot configurations
+- Test different objectives independently
+
+==== Advanced: State Management with @State
+
+For complex chatbots that need to track state across messages, use `@State` classes. State classes are automatically managed by the agent framework:
+
+- State objects are persisted in the blackboard
+- Actions can depend on specific state being present
+- State transitions drive the conversation flow
+
+Cross-reference the @State annotation documentation for details on:
+
+- Defining state classes
+- State-dependent actions
+- Nested state machines
+
+==== Complete Example
+
+See the https://github.com/embabel/rag-demo[rag-demo] project for a complete chatbot implementation including:
+
+- `ChatActions.java` - Action methods responding to user messages
+- `ChatConfiguration.java` - Chatbot bean configuration
+- `RagbotShell.java` - Spring Shell integration for interactive testing
+- Jinja templates for persona-driven prompts
+- RAG integration for document-grounded responses
+
+To run the example:
+
+[source,bash]
+----
+./scripts/shell.sh
+
+# In the shell:
+ingest ./data/document.md
+chat
+> What does the document say about...
+----
