@@ -21,9 +21,9 @@ import com.embabel.agent.rag.ingestion.ContentChunker.Companion.CONTAINER_SECTIO
 import com.embabel.agent.rag.ingestion.ContentChunker.Companion.SEQUENCE_NUMBER
 import com.embabel.agent.rag.ingestion.RetrievableEnhancer
 import com.embabel.agent.rag.model.*
-import com.embabel.agent.rag.service.ChunkExpander
 import com.embabel.agent.rag.service.CoreSearchOperations
 import com.embabel.agent.rag.service.RagRequest
+import com.embabel.agent.rag.service.ResultExpander
 import com.embabel.agent.rag.service.support.FunctionRagFacet
 import com.embabel.agent.rag.service.support.RagFacet
 import com.embabel.agent.rag.service.support.RagFacetProvider
@@ -78,7 +78,7 @@ class LuceneSearchOperations @JvmOverloads constructor(
     private val vectorWeight: Double = 0.5,
     chunkerConfig: ContentChunker.Config = ContentChunker.DefaultConfig(),
     private val indexPath: Path? = null,
-) : RagFacetProvider, AbstractChunkingContentElementRepository(chunkerConfig), HasInfoString, Closeable, CoreSearchOperations, ChunkExpander {
+) : RagFacetProvider, AbstractChunkingContentElementRepository(chunkerConfig), HasInfoString, Closeable, CoreSearchOperations, ResultExpander {
 
     private val analyzer = StandardAnalyzer()
     private val directory: Directory = indexPath?.let { FSDirectory.open(it) } ?: ByteBuffersDirectory()
@@ -492,21 +492,47 @@ class LuceneSearchOperations @JvmOverloads constructor(
         return results
     }
 
-    override fun expandChunk(
-        chunkId: String,
-        method: ChunkExpander.Method,
-        chunksToAdd: Int,
-    ): List<Chunk> {
+    override fun expandResult(
+        id: String,
+        method: ResultExpander.Method,
+        elementsToAdd: Int,
+    ): List<ContentElement> {
         ensureChunksLoaded()
 
-        val chunk = contentElementStorage[chunkId] as? Chunk
-        if (chunk == null) {
-            logger.warn("Chunk with id='{}' not found for expansion", chunkId)
+        val contentElement = contentElementStorage[id]
+        if (contentElement == null) {
+            logger.warn("Chunk with id='{}' not found for expansion", id)
             return emptyList()
         }
 
         return when (method) {
-            ChunkExpander.Method.SEQUENCE -> expandBySequence(chunk, chunksToAdd)
+            ResultExpander.Method.SEQUENCE -> {
+                if (contentElement !is Chunk) {
+                    logger.warn("Content element id='{}' is not a Chunk; cannot expand by sequence", id)
+                    return emptyList()
+                }
+                expandBySequence(contentElement, elementsToAdd)
+            }
+
+            ResultExpander.Method.ZOOM_OUT -> {
+                val parentId = when (contentElement) {
+                    is Chunk -> contentElement.parentId
+                    is HierarchicalContentElement -> contentElement.parentId
+                    else -> null
+                }
+                if (parentId != null) {
+                    val parentElement = contentElementStorage[parentId]
+                    if (parentElement != null) {
+                        listOf(parentElement)
+                    } else {
+                        logger.warn("Parent element with id='{}' not found for zoom out expansion", parentId)
+                        emptyList()
+                    }
+                } else {
+                    logger.warn("Content element id='{}' has no parentId for zoom out expansion", id)
+                    emptyList()
+                }
+            }
         }
     }
 

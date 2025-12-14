@@ -1954,10 +1954,10 @@ class LuceneSearchOperationsTest {
 
         @Test
         fun `should return empty list when chunk not found`() {
-            val result = ragService.expandChunk(
+            val result = ragService.expandResult(
                 "non-existent-chunk",
-                com.embabel.agent.rag.service.ChunkExpander.Method.SEQUENCE,
-                chunksToAdd = 1
+                com.embabel.agent.rag.service.ResultExpander.Method.SEQUENCE,
+                elementsToAdd = 1
             )
             assertTrue(result.isEmpty())
         }
@@ -1974,10 +1974,10 @@ class LuceneSearchOperationsTest {
             ragService.onNewRetrievables(listOf(chunk))
             ragService.commitChanges()
 
-            val result = ragService.expandChunk(
+            val result = ragService.expandResult(
                 "no-meta-chunk",
-                com.embabel.agent.rag.service.ChunkExpander.Method.SEQUENCE,
-                chunksToAdd = 1
+                com.embabel.agent.rag.service.ResultExpander.Method.SEQUENCE,
+                elementsToAdd = 1
             )
 
             assertEquals(1, result.size)
@@ -2003,10 +2003,10 @@ class LuceneSearchOperationsTest {
             ragService.commitChanges()
 
             // Expand middle chunk (seq=2) with chunksToAdd=1
-            val result = ragService.expandChunk(
+            val result = ragService.expandResult(
                 "chunk-2",
-                com.embabel.agent.rag.service.ChunkExpander.Method.SEQUENCE,
-                chunksToAdd = 1
+                com.embabel.agent.rag.service.ResultExpander.Method.SEQUENCE,
+                elementsToAdd = 1
             )
 
             // Should include chunk-1, chunk-2, chunk-3
@@ -2032,10 +2032,10 @@ class LuceneSearchOperationsTest {
             ragService.commitChanges()
 
             // Expand first chunk (seq=0) with chunksToAdd=2
-            val result = ragService.expandChunk(
+            val result = ragService.expandResult(
                 "start-chunk-0",
-                com.embabel.agent.rag.service.ChunkExpander.Method.SEQUENCE,
-                chunksToAdd = 2
+                com.embabel.agent.rag.service.ResultExpander.Method.SEQUENCE,
+                elementsToAdd = 2
             )
 
             // Should include chunk-0, chunk-1, chunk-2 (can't go before 0)
@@ -2061,10 +2061,10 @@ class LuceneSearchOperationsTest {
             ragService.commitChanges()
 
             // Expand last chunk (seq=4) with chunksToAdd=2
-            val result = ragService.expandChunk(
+            val result = ragService.expandResult(
                 "end-chunk-4",
-                com.embabel.agent.rag.service.ChunkExpander.Method.SEQUENCE,
-                chunksToAdd = 2
+                com.embabel.agent.rag.service.ResultExpander.Method.SEQUENCE,
+                elementsToAdd = 2
             )
 
             // Should include chunk-2, chunk-3, chunk-4 (can't go beyond 4)
@@ -2101,10 +2101,10 @@ class LuceneSearchOperationsTest {
             ragService.commitChanges()
 
             // Expand chunk from section 1
-            val result = ragService.expandChunk(
+            val result = ragService.expandResult(
                 "s1-chunk-1",
-                com.embabel.agent.rag.service.ChunkExpander.Method.SEQUENCE,
-                chunksToAdd = 5
+                com.embabel.agent.rag.service.ResultExpander.Method.SEQUENCE,
+                elementsToAdd = 5
             )
 
             // Should only include chunks from section 1
@@ -2131,10 +2131,10 @@ class LuceneSearchOperationsTest {
             ragService.commitChanges()
 
             // Expand middle chunk
-            val result = ragService.expandChunk(
+            val result = ragService.expandResult(
                 "ordered-chunk-2",
-                com.embabel.agent.rag.service.ChunkExpander.Method.SEQUENCE,
-                chunksToAdd = 10
+                com.embabel.agent.rag.service.ResultExpander.Method.SEQUENCE,
+                elementsToAdd = 10
             )
 
             // Should be ordered by sequence number
@@ -2162,10 +2162,10 @@ class LuceneSearchOperationsTest {
             ragService.onNewRetrievables(chunks)
             ragService.commitChanges()
 
-            val result = ragService.expandChunk(
+            val result = ragService.expandResult(
                 "zero-chunk-1",
-                com.embabel.agent.rag.service.ChunkExpander.Method.SEQUENCE,
-                chunksToAdd = 0
+                com.embabel.agent.rag.service.ResultExpander.Method.SEQUENCE,
+                elementsToAdd = 0
             )
 
             // Should return only the original chunk
@@ -2207,14 +2207,54 @@ class LuceneSearchOperationsTest {
 
             // Get the first chunk and try to expand it
             val firstChunkId = chunkIds.first()
-            val result = ragService.expandChunk(
+            val result = ragService.expandResult(
                 firstChunkId,
-                com.embabel.agent.rag.service.ChunkExpander.Method.SEQUENCE,
-                chunksToAdd = 1
+                com.embabel.agent.rag.service.ResultExpander.Method.SEQUENCE,
+                elementsToAdd = 1
             )
 
             assertTrue(result.isNotEmpty(), "Should return expanded chunks")
             assertTrue(result.any { it.id == firstChunkId }, "Result should include the original chunk")
+        }
+
+        @Test
+        fun `zoomOut should return parent LeafSection of a chunk`() {
+            // Create a LeafSection as the parent
+            val leafSection = com.embabel.agent.rag.model.LeafSection(
+                id = "parent-leaf-section",
+                title = "Parent Section Title",
+                text = "This is the parent section content that contains multiple paragraphs of text.",
+                parentId = "document-root"
+            )
+            ragService.save(leafSection)
+
+            // Create a chunk whose parentId points to the LeafSection
+            val chunk = Chunk(
+                id = "child-chunk",
+                text = "This is chunked content from the parent section.",
+                parentId = "parent-leaf-section",
+                metadata = mapOf(
+                    "container_section_id" to "parent-leaf-section",
+                    "sequence_number" to 0
+                )
+            )
+            ragService.onNewRetrievables(listOf(chunk))
+            ragService.commitChanges()
+
+            // Use ZOOM_OUT to get the parent
+            val result = ragService.expandResult(
+                "child-chunk",
+                com.embabel.agent.rag.service.ResultExpander.Method.ZOOM_OUT,
+                elementsToAdd = 1
+            )
+
+            // Should return the parent LeafSection
+            assertEquals(1, result.size, "ZOOM_OUT should return exactly one parent element")
+            val parent = result.first()
+            assertEquals("parent-leaf-section", parent.id, "Should return the parent LeafSection")
+            assertTrue(parent is com.embabel.agent.rag.model.LeafSection, "Parent should be a LeafSection")
+            assertEquals("Parent Section Title", (parent as com.embabel.agent.rag.model.LeafSection).title)
+            assertEquals("This is the parent section content that contains multiple paragraphs of text.", parent.text)
         }
     }
 
@@ -2589,7 +2629,8 @@ class LuceneSearchOperationsTest {
             assertNotNull(leafAfter, "Leaf should exist")
             assertEquals("section-1", leafAfter?.parentId, "Leaf should have correct parentId")
 
-            val sectionAfter = service2.findById("section-1") as? com.embabel.agent.rag.model.DefaultMaterializedContainerSection
+            val sectionAfter =
+                service2.findById("section-1") as? com.embabel.agent.rag.model.DefaultMaterializedContainerSection
             assertNotNull(sectionAfter, "Section should exist")
             assertEquals("root-1", sectionAfter?.parentId, "Section should have correct parentId")
 

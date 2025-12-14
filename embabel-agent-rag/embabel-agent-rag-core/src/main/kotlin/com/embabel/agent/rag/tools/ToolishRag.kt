@@ -17,6 +17,8 @@ package com.embabel.agent.rag.tools
 
 import com.embabel.agent.api.common.LlmReference
 import com.embabel.agent.rag.model.Chunk
+import com.embabel.agent.rag.model.ContentElement
+import com.embabel.agent.rag.model.Embeddable
 import com.embabel.agent.rag.service.*
 import com.embabel.common.core.types.ZeroToOne
 import org.slf4j.Logger
@@ -48,9 +50,9 @@ class ToolishRag @JvmOverloads constructor(
                 logger.info("Adding TextSearchTools to ToolishRag tools {}", name)
                 add(TextSearchTools(searchOperations))
             }
-            if (searchOperations is ChunkExpander) {
-                logger.info("Adding ChunkExpansionTools to ToolishRag tools {}", name)
-                add(ChunkExpansionTools(searchOperations))
+            if (searchOperations is ResultExpander) {
+                logger.info("Adding ResultExpanderTools to ToolishRag tools {}", name)
+                add(ResultExpanderTools(searchOperations))
             }
         }
 
@@ -101,8 +103,8 @@ class VectorSearchTools(
 /**
  * Tools to expand chunks around an anchor chunk that has already been retrieved
  */
-class ChunkExpansionTools(
-    private val chunkExpander: ChunkExpander,
+class ResultExpanderTools(
+    private val resultExpander: ResultExpander,
 ) {
 
     @Tool(description = "given a chunk ID, expand to surrounding chunks")
@@ -110,10 +112,24 @@ class ChunkExpansionTools(
         @ToolParam(description = "id of the chunk to expand") chunkId: String,
         @ToolParam(description = "chunksToAdd", required = false) chunksToAdd: Int = 2,
     ): String {
-        val expandedChunks = chunkExpander.expandChunk(chunkId, ChunkExpander.Method.SEQUENCE, chunksToAdd)
-        return expandedChunks.joinToString("\n") { chunk ->
-            "Chunk ID: ${chunk.id}\nContent: ${chunk.text}\n"
-        }
+        val expandedElements = resultExpander.expandResult(chunkId, ResultExpander.Method.SEQUENCE, chunksToAdd)
+        return expandedElements
+            .filterIsInstance<Chunk>()
+            .joinToString("\n") { chunk ->
+                "Chunk ID: ${chunk.id}\nContent: ${chunk.text}\n"
+            }
+    }
+
+    @Tool(description = "given a content element ID, expand to parent section")
+    fun zoomOut(
+        @ToolParam(description = "id of the content element to expand") id: String,
+    ): String {
+        val expandedElements: List<ContentElement> = resultExpander.expandResult(id, ResultExpander.Method.ZOOM_OUT, 1)
+        return expandedElements
+            .filter { it is Embeddable }
+            .joinToString("\n") { contentElement ->
+                "${contentElement.javaClass.simpleName}: id=${contentElement.id}\nContent: ${(contentElement as Embeddable).embeddableValue()}\n"
+            }
     }
 
     // TODO related chunk expansion based on vector similarity

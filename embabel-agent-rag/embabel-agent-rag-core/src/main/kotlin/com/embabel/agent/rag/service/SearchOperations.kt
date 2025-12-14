@@ -15,7 +15,7 @@
  */
 package com.embabel.agent.rag.service
 
-import com.embabel.agent.rag.model.Chunk
+import com.embabel.agent.rag.model.ContentElement
 import com.embabel.agent.rag.model.Retrievable
 import com.embabel.common.core.types.SimilarityResult
 import com.embabel.common.core.types.TextSimilaritySearchRequest
@@ -100,26 +100,34 @@ interface TextSearch : SearchOperations {
     val luceneSyntaxNotes: String
 }
 
-interface ChunkExpander : SearchOperations {
+/**
+ * Interface to be implemented by stores that can expand search results
+ * to find earlier and later content elements in sequence, or enclosing sections.
+ * Works with HierarchicalContentElement types and supporting stores.
+ */
+interface ResultExpander : SearchOperations {
 
     enum class Method {
         /** Expand to previous and next chunks in sequence */
-        SEQUENCE
+        SEQUENCE,
+
+        /** Expand to enclosing section */
+        ZOOM_OUT,
     }
 
     /**
-     * Expand the given chunk by finding related chunks.
+     * Expand the given ContentElement by finding related ContentElements.
      * Could be based on vector similarity, text similarity, or other relationships.
-     * @param chunkId the ID of the chunk to expand
+     * @param id the ID of the chunk to expand
      * @param method the expansion method to use
-     * @param chunksToAdd number of chunks to add
-     * @return list of related chunks
+     * @param elementsToAdd number of elements to add
+     * @return list of related elements
      */
-    fun expandChunk(
-        chunkId: String,
+    fun expandResult(
+        id: String,
         method: Method,
-        chunksToAdd: Int,
-    ): List<Chunk>
+        elementsToAdd: Int,
+    ): List<ContentElement>
 }
 
 /**
