@@ -31,40 +31,6 @@ import org.springframework.ai.tool.annotation.ToolParam
 
 
 /**
- * Hypothetical Document Embedding hint
- * Used to generate a synthetic document for embedding to use a vector search query.
- * The hypothetical document will be embedded
- * @param context the context to use for generating the synthetic document:
- * @param maxWords the number of words to generate for the synthetic document (default is 50)
- * what the answer should relate to.
- * For example: "The history of the Roman Empire."
- */
-data class TryHyDE @JvmOverloads constructor(
-    val context: String,
-    val maxWords: Int = 50,
-) : PromptContributor {
-
-    override fun contribution(): String {
-        return """
-            If you're having a problem with vector search result relevance, try generating a hypothetical document
-            to use as the query.
-            Use at most $maxWords words to generate a hypothetical answer given the following context:
-            $context
-           """.trimIndent()
-    }
-
-    fun withMaxWords(wordCount: Int): TryHyDE =
-        copy(maxWords = wordCount)
-
-    companion object {
-
-        @JvmStatic
-        fun withContext(context: String): TryHyDE = TryHyDE(context)
-    }
-}
-
-
-/**
  * Reference for fine-grained RAG tools, allowing the LLM to
  * control individual search operations directly.
  * Add hints as relevant.
