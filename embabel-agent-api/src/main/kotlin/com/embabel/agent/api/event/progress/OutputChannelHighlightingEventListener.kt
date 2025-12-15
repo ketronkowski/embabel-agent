@@ -23,7 +23,7 @@ import com.embabel.agent.api.event.LlmRequestEvent
 import com.embabel.agent.api.event.ToolCallRequestEvent
 
 /**
- * Event listener that highlights important events in the output channel.
+ * Convenient event listener that highlights important events in the output channel.
  */
 class OutputChannelHighlightingEventListener(
     private val outputChannel: OutputChannel,
@@ -33,7 +33,7 @@ class OutputChannelHighlightingEventListener(
     override fun onProcessEvent(event: AgentProcessEvent) {
         when (event) {
             is ToolCallRequestEvent -> {
-                var message = "🔧  ${event.tool}"
+                var message = "🔧 ${event.tool}"
                 if (verbose) {
                     message += " with input `${event.toolInput}`"
                 }
@@ -46,7 +46,7 @@ class OutputChannelHighlightingEventListener(
             }
 
             is LlmRequestEvent<*> -> {
-                val message = "Calling LLM `${event.llm.name}`"
+                val message = "Calling LLM ${event.llm.name}"
                 outputChannel.send(
                     ProgressOutputChannelEvent(
                         processId = event.processId,
