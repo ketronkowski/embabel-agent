@@ -20,6 +20,7 @@ import com.embabel.agent.rag.model.Chunk
 import com.embabel.agent.rag.model.ContentElement
 import com.embabel.agent.rag.model.Embeddable
 import com.embabel.agent.rag.service.*
+import com.embabel.common.ai.prompt.PromptContributor
 import com.embabel.common.core.types.TextSimilaritySearchRequest
 import com.embabel.common.core.types.ZeroToOne
 import com.embabel.common.util.loggerFor
@@ -28,25 +29,72 @@ import org.slf4j.LoggerFactory
 import org.springframework.ai.tool.annotation.Tool
 import org.springframework.ai.tool.annotation.ToolParam
 
+
+/**
+ * Hypothetical Document Embedding hint
+ * Used to generate a synthetic document for embedding to use a vector search query.
+ * The hypothetical document will be embedded
+ * @param context the context to use for generating the synthetic document:
+ * @param maxWords the number of words to generate for the synthetic document (default is 50)
+ * what the answer should relate to.
+ * For example: "The history of the Roman Empire."
+ */
+data class TryHyDE @JvmOverloads constructor(
+    val context: String,
+    val maxWords: Int = 50,
+) : PromptContributor {
+
+    override fun contribution(): String {
+        return """
+            If you're having a problem with vector search result relevance, try generating a hypothetical document
+            to use as the query.
+            Use at most $maxWords words to generate a hypothetical answer given the following context:
+            $context
+           """.trimIndent()
+    }
+
+    fun withMaxWords(wordCount: Int): TryHyDE =
+        copy(maxWords = wordCount)
+
+    companion object {
+
+        @JvmStatic
+        fun withContext(context: String): TryHyDE = TryHyDE(context)
+    }
+}
+
+
 /**
  * Reference for fine-grained RAG tools, allowing the LLM to
  * control individual search operations directly.
+ * Add hints as relevant.
  */
-class ToolishRag @JvmOverloads constructor(
+data class ToolishRag @JvmOverloads constructor(
     override val name: String,
     override val description: String,
     private val searchOperations: SearchOperations,
     val goal: String = DEFAULT_GOAL,
     val formatter: RetrievableResultsFormatter = SimpleRetrievableResultsFormatter,
+    val hints: List<PromptContributor> = listOf(),
 ) : LlmReference {
 
     private val logger = LoggerFactory.getLogger(javaClass)
+
+    private val validHints = hints.toMutableList()
 
     private val toolInstances: List<Any> = run {
         buildList {
             if (searchOperations is VectorSearch) {
                 logger.info("Adding VectorSearchTools to ToolishRag tools {}", name)
                 add(VectorSearchTools(searchOperations))
+            } else {
+                if (hints.any { it is TryHyDE }) {
+                    logger.warn(
+                        "HyDE hint provided but no VectorSearch available in ToolishRag: Removing this hint {}",
+                        name
+                    )
+                    validHints.removeIf { it is TryHyDE }
+                }
             }
             if (searchOperations is TextSearch) {
                 logger.info("Adding TextSearchTools to ToolishRag tools {}", name)
@@ -63,6 +111,12 @@ class ToolishRag @JvmOverloads constructor(
         }
     }
 
+    /**
+     * Add a hint to the RAG reference
+     */
+    fun withHint(hint: PromptContributor): ToolishRag =
+        copy(hints = hints + hint)
+
     override fun toolInstances() = toolInstances
 
     override fun notes() = """
@@ -71,6 +125,7 @@ class ToolishRag @JvmOverloads constructor(
             "Lucene search syntax support: ${searchOperations.luceneSyntaxNotes}\n"
         }
     }
+        Hints: ${validHints.joinToString("\n") { it.contribution() }}
         Search acceptance criteria:
         $goal
       """.trimIndent()

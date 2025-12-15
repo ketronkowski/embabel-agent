@@ -29,6 +29,103 @@ import org.junit.jupiter.api.Test
 
 class ToolishRagTest {
 
+    @Nested
+    inner class TryHyDETests {
+
+        @Test
+        fun `contribution should include context and word count`() {
+            val hyde = TryHyDE(context = "The history of the Roman Empire", maxWords = 100)
+
+            val contribution = hyde.contribution()
+
+            assertTrue(contribution.contains("The history of the Roman Empire"))
+            assertTrue(contribution.contains("100 words"))
+        }
+
+        @Test
+        fun `should use default word count of 50`() {
+            val hyde = TryHyDE(context = "Test context")
+
+            assertEquals(50, hyde.maxWords)
+            assertTrue(hyde.contribution().contains("50 words"))
+        }
+
+        @Test
+        fun `contribution should include HyDE instructions`() {
+            val hyde = TryHyDE(context = "Quantum computing basics")
+
+            val contribution = hyde.contribution()
+
+            assertTrue(contribution.contains("hypothetical document"))
+            assertTrue(contribution.contains("vector search"))
+        }
+    }
+
+    @Nested
+    inner class HintsTests {
+
+        @Test
+        fun `withHint should add hint to ToolishRag`() {
+            val vectorSearch = mockk<VectorSearch>()
+            val hint = TryHyDE(context = "Test context")
+
+            val toolishRag = ToolishRag(
+                name = "test-rag",
+                description = "Test RAG",
+                searchOperations = vectorSearch
+            ).withHint(hint)
+
+            assertEquals(1, toolishRag.hints.size)
+            assertTrue(toolishRag.hints[0] is TryHyDE)
+        }
+
+        @Test
+        fun `withHint should accumulate multiple hints`() {
+            val vectorSearch = mockk<VectorSearch>()
+            val hint1 = TryHyDE(context = "Context 1")
+            val hint2 = TryHyDE(context = "Context 2")
+
+            val toolishRag = ToolishRag(
+                name = "test-rag",
+                description = "Test RAG",
+                searchOperations = vectorSearch
+            ).withHint(hint1).withHint(hint2)
+
+            assertEquals(2, toolishRag.hints.size)
+        }
+
+        @Test
+        fun `notes should include hint contributions`() {
+            val vectorSearch = mockk<VectorSearch>()
+            val hint = TryHyDE(context = "Roman Empire history", maxWords = 75)
+
+            val toolishRag = ToolishRag(
+                name = "test-rag",
+                description = "Test RAG",
+                searchOperations = vectorSearch,
+                hints = listOf(hint)
+            )
+
+            val notes = toolishRag.notes()
+
+            assertTrue(notes.contains("Roman Empire history"))
+            assertTrue(notes.contains("75 words"))
+        }
+
+        @Test
+        fun `should have empty hints by default`() {
+            val vectorSearch = mockk<VectorSearch>()
+
+            val toolishRag = ToolishRag(
+                name = "test-rag",
+                description = "Test RAG",
+                searchOperations = vectorSearch
+            )
+
+            assertTrue(toolishRag.hints.isEmpty())
+        }
+    }
+
     private fun createChunk(
         id: String,
         text: String,
