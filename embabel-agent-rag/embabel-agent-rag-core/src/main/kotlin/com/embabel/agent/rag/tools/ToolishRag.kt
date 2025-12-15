@@ -20,6 +20,7 @@ import com.embabel.agent.rag.model.Chunk
 import com.embabel.agent.rag.model.ContentElement
 import com.embabel.agent.rag.model.Embeddable
 import com.embabel.agent.rag.service.*
+import com.embabel.common.core.types.TextSimilaritySearchRequest
 import com.embabel.common.core.types.ZeroToOne
 import com.embabel.common.util.loggerFor
 import org.slf4j.Logger
@@ -36,7 +37,7 @@ class ToolishRag @JvmOverloads constructor(
     override val description: String,
     private val searchOperations: SearchOperations,
     val goal: String = DEFAULT_GOAL,
-    val formatter: RagResponseFormatter = SimpleRagResponseFormatter,
+    val formatter: RetrievableResultsFormatter = SimpleRetrievableResultsFormatter,
 ) : LlmReference {
 
     private val logger = LoggerFactory.getLogger(javaClass)
@@ -101,10 +102,10 @@ class VectorSearchTools(
     ): String {
         logger.info("Performing vector search with query='{}', topK={}, threshold={}", query, topK, threshold)
         val results = vectorSearch.vectorSearch(
-            RagRequest.query(query).withTopK(topK).withSimilarityThreshold(threshold),
+            SimpleSearchRequest(query, threshold, topK),
             Chunk::class.java
         )
-        return SimpleRagResponseFormatter.formatResults(SimilarityResults.fromList(results))
+        return SimpleRetrievableResultsFormatter.formatResults(SimilarityResults.fromList(results))
     }
 }
 
@@ -173,10 +174,10 @@ class TextSearchTools(
     ): String {
         logger.info("Performing text search with query='{}', topK={}, threshold={}", query, topK, threshold)
         val results = textSearch.textSearch(
-            RagRequest.query(query).withTopK(topK).withSimilarityThreshold(threshold),
+            SimpleSearchRequest(query, threshold, topK),
             Chunk::class.java
         )
-        return SimpleRagResponseFormatter.formatResults(SimilarityResults.fromList(results))
+        return SimpleRetrievableResultsFormatter.formatResults(SimilarityResults.fromList(results))
     }
 }
 
@@ -191,12 +192,16 @@ class RegexSearchTools(
     ): String {
         loggerFor<RegexSearchTools>().info("Performing regex search with regex='{}', topK={}", regex, topK)
         val results = textSearch.regexSearch(Regex(regex), topK, Chunk::class.java)
-        return SimpleRagResponseFormatter.formatResults(SimilarityResults.Companion.fromList(results))
+        return SimpleRetrievableResultsFormatter.formatResults(SimilarityResults.Companion.fromList(results))
     }
 }
 
-// entity search
-
-// get entity
-
+/**
+ * Simple implementation of TextSimilaritySearchRequest for use in ToolishRag tools.
+ */
+private data class SimpleSearchRequest(
+    override val query: String,
+    override val similarityThreshold: ZeroToOne,
+    override val topK: Int,
+) : TextSimilaritySearchRequest
 // expand entity
