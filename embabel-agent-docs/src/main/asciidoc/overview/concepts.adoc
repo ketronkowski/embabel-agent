@@ -74,12 +74,20 @@ public class StarNewsFinder {
         var llm = LlmOptions.fromCriteria(ModelSelectionCriteria.getAuto())
             .withTemperature(0.9);  // <15>
 
-        var prompt = """
-            Write something amusing for %s based on their horoscope and these news stories.
-            Format as Markdown with links.
-            """.formatted(person.name());
+        var storiesFormatted = stories.items().stream()
+            .map(s -> "- " + s.url() + ": " + s.summary())
+            .collect(Collectors.joining("\n"));
 
-        return context.ai().withLlm(llm).createObject(prompt, Writeup.class);  // <16>
+        var prompt = """
+            Write something amusing for %s based on their horoscope and news stories.
+            Format as Markdown with links.
+            <horoscope>%s</horoscope>
+            <news_stories>
+            %s
+            </news_stories>
+            """.formatted(person.name(), horoscope.summary(), storiesFormatted);  // <16>
+
+        return context.ai().withLlm(llm).createObject(prompt, Writeup.class);  // <17>
     }
 }
 ----
@@ -124,7 +132,10 @@ Each action represents a capability.
 
 <15> **Creative Configuration**: High temperature (0.9) optimizes for creative, entertaining output - appropriate for amusing writeups.
 
-<16> **Final Output**: Returns `Writeup`, completing the agent's goal with personalized content.
+<16> **Structured Prompt with Data**: The prompt includes both the horoscope summary and formatted news stories using XML-style tags.
+This ensures the LLM has all the context it needs from earlier actions.
+
+<17> **Final Output**: Returns `Writeup`, completing the agent's goal with personalized content.
 
 State is managed by the framework, through the process blackboard
 
