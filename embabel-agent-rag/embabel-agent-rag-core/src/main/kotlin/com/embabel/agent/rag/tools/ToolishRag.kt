@@ -21,6 +21,7 @@ import com.embabel.agent.rag.model.ContentElement
 import com.embabel.agent.rag.model.Embeddable
 import com.embabel.agent.rag.service.*
 import com.embabel.common.core.types.ZeroToOne
+import com.embabel.common.util.loggerFor
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.ai.tool.annotation.Tool
@@ -40,7 +41,7 @@ class ToolishRag @JvmOverloads constructor(
 
     private val logger = LoggerFactory.getLogger(javaClass)
 
-    override fun toolInstances(): List<Any> =
+    private val toolInstances: List<Any> = run {
         buildList {
             if (searchOperations is VectorSearch) {
                 logger.info("Adding VectorSearchTools to ToolishRag tools {}", name)
@@ -54,7 +55,14 @@ class ToolishRag @JvmOverloads constructor(
                 logger.info("Adding ResultExpanderTools to ToolishRag tools {}", name)
                 add(ResultExpanderTools(searchOperations))
             }
+            if (searchOperations is RegexSearchOperations) {
+                logger.info("Adding RegexSearchTools to ToolishRag tools {}", name)
+                add(RegexSearchTools(searchOperations))
+            }
         }
+    }
+
+    override fun toolInstances() = toolInstances
 
     override fun notes() = """
         ${
@@ -170,21 +178,25 @@ class TextSearchTools(
         )
         return SimpleRagResponseFormatter.formatResults(SimilarityResults.fromList(results))
     }
+}
 
-    @Tool(description = "Perform regex search across chunks. Specify topK")
+class RegexSearchTools(
+    private val textSearch: RegexSearchOperations,
+) {
+
+    @Tool(description = "Perform regex search across content elements. Specify topK")
     fun regexSearch(
         regex: String,
         topK: Int,
     ): String {
-        logger.info("Performing regex search with regex='{}', topK={}", regex, topK)
+        loggerFor<RegexSearchTools>().info("Performing regex search with regex='{}', topK={}", regex, topK)
         val results = textSearch.regexSearch(Regex(regex), topK, Chunk::class.java)
         return SimpleRagResponseFormatter.formatResults(SimilarityResults.Companion.fromList(results))
     }
-
-    // entity search
-
-    // get entity
-
-    // expand entity
-
 }
+
+// entity search
+
+// get entity
+
+// expand entity
