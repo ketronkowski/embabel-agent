@@ -47,8 +47,9 @@ fun interface ResultsListener {
  * Reference for fine-grained RAG tools, allowing the LLM to
  * control individual search operations directly.
  * Add hints as relevant.
- * If a ResultQualityListener is provided, a tool to report result quality
- * will be added automatically, with instructions for the LLM to call it
+ * If a ResultListener is provided, results will be sent to it as they are retrieved.
+ * This enables logging, monitoring, or putting results on a blackboard for later use,
+ * versus relying on the LLM to remember them.
  */
 data class ToolishRag @JvmOverloads constructor(
     override val name: String,
