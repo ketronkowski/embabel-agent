@@ -885,10 +885,19 @@ class LuceneSearchOperations @JvmOverloads constructor(
             }
 
             if (embeddingModel != null) {
-                val embedding = embeddingModel.embed(retrievable.embeddableValue())
-                val embeddingBytes = floatArrayToBytes(embedding)
-                add(StoredField("embedding", embeddingBytes))
-                logger.info("Added embedding for retrievable with id {}", retrievable.id)
+                try {
+                    val embedding = embeddingModel.embed(retrievable.embeddableValue())
+                    val embeddingBytes = floatArrayToBytes(embedding)
+                    add(StoredField("embedding", embeddingBytes))
+                    logger.info("Added embedding for retrievable with id {}", retrievable.id)
+                } catch (e: Exception) {
+                    logger.warn(
+                        "Unable to generate embedding for retrievable id='{}': {}",
+                        retrievable.id,
+                        e.message,
+                        e
+                    )
+                }
             }
 
             retrievable.metadata.forEach { (key, value) ->

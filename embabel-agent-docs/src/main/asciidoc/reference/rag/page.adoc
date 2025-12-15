@@ -1,18 +1,21 @@
 [[reference.rag]]
 === RAG (Retrieval-Augmented Generation)
 
-Retrieval-Augmented Generation (RAG) is a technique that enhances LLM responses by retrieving relevant information from a knowledge base before generating answers. This grounds LLM outputs in specific, verifiable sources rather than relying solely on training data.
+Retrieval-Augmented Generation (RAG) is a technique that enhances LLM responses by retrieving relevant information from a knowledge base before generating answers.
+This grounds LLM outputs in specific, verifiable sources rather than relying solely on training data.
 
 For more background on RAG concepts, see:
 
 - https://en.wikipedia.org/wiki/Retrieval-augmented_generation[Wikipedia: Retrieval-Augmented Generation]
 - https://aws.amazon.com/what-is/retrieval-augmented-generation/[AWS: What is RAG?]
 
-Embabel Agent provides RAG support through the `LlmReference` interface, which allows you to attach references (including RAG stores) to LLM calls. The key classes are `ToolishRag` for exposing search operations as LLM tools, and `SearchOperations` for the underlying search functionality.
+Embabel Agent provides RAG support through the `LlmReference` interface, which allows you to attach references (including RAG stores) to LLM calls.
+The key classes are `ToolishRag` for exposing search operations as LLM tools, and `SearchOperations` for the underlying search functionality.
 
 ==== Agentic RAG Architecture
 
-Unlike traditional RAG implementations that perform a single retrieval step, Embabel Agent's RAG is **entirely agentic and tool-based**. The LLM has full control over the retrieval process:
+Unlike traditional RAG implementations that perform a single retrieval step, Embabel Agent's RAG is **entirely agentic and tool-based**.
+The LLM has full control over the retrieval process:
 
 - **Autonomous Search**: The LLM decides when to search, what queries to use, and how many results to retrieve
 - **Iterative Refinement**: The LLM can perform multiple searches with different queries until it finds relevant information
@@ -28,7 +31,8 @@ This agentic approach produces better results than single-shot RAG because the L
 
 ==== Facade Pattern for Safe Tool Exposure
 
-Embabel Agent uses a facade pattern to expose RAG capabilities safely and consistently across different store implementations. The `ToolishRag` class acts as a facade that:
+Embabel Agent uses a facade pattern to expose RAG capabilities safely and consistently across different store implementations.
+The `ToolishRag` class acts as a facade that:
 
 1. **Inspects Store Capabilities**: Examines which `SearchOperations` subinterfaces the store implements
 2. **Exposes Appropriate Tools**: Only creates tool wrappers for supported operations
@@ -81,7 +85,8 @@ To use RAG in your Embabel Agent application, add the `rag-core` module and a st
 </dependency>
 ----
 
-The `embabel-agent-rag-lucene` module provides Lucene-based vector and text search. The `embabel-agent-rag-tika` module provides Apache Tika integration for parsing various document formats.
+The `embabel-agent-rag-lucene` module provides Lucene-based vector and text search.
+The `embabel-agent-rag-tika` module provides Apache Tika integration for parsing various document formats.
 
 ==== Our Model
 
@@ -89,17 +94,19 @@ Embabel Agent uses a hierarchical content model that goes beyond traditional fla
 
 ===== Content Elements
 
-The `ContentElement` interface is the supertype for all content in the RAG system. Key subtypes include:
+The `ContentElement` interface is the supertype for all content in the RAG system.
+Key subtypes include:
 
 - **`ContentRoot`** / **`NavigableDocument`**: The root of a document hierarchy, with a required URI and title
 - **`Section`**: A hierarchical division of content with a title
-  - **`ContainerSection`**: A section containing other sections
-  - **`LeafSection`**: A section containing actual text content
+- **`ContainerSection`**: A section containing other sections
+- **`LeafSection`**: A section containing actual text content
 - **`Chunk`**: Traditional RAG text chunks, created by splitting `LeafSection` content
 
 ===== Chunks
 
-`Chunk` is the primary unit for vector search. Each chunk:
+`Chunk` is the primary unit for vector search.
+Each chunk:
 
 - Contains a `text` field with the content
 - Has a `parentId` linking to its source section
@@ -110,7 +117,9 @@ This hierarchical model enables advanced RAG capabilities like "zoom out" to par
 
 ==== SearchOperations
 
-`SearchOperations` is the tag interface for search functionality. Concrete implementations implement one or more subinterfaces based on their capabilities. This design allows stores to implement only what's natural and efficient for them—a vector database need not pretend to support full-text search, and a text search engine need not fake vector similarity.
+`SearchOperations` is the tag interface for search functionality.
+Concrete implementations implement one or more subinterfaces based on their capabilities.
+This design allows stores to implement only what's natural and efficient for them—a vector database need not pretend to support full-text search, and a text search engine need not fake vector similarity.
 
 ===== VectorSearch
 
@@ -198,7 +207,8 @@ Stores that support both vector and text search can implement this single interf
 
 ==== ToolishRag
 
-`ToolishRag` is an `LlmReference` that exposes `SearchOperations` as LLM tools. This gives the LLM fine-grained control over RAG searches.
+`ToolishRag` is an `LlmReference` that exposes `SearchOperations` as LLM tools.
+This gives the LLM fine-grained control over RAG searches.
 
 ===== Configuration
 
@@ -242,6 +252,18 @@ Based on the capabilities of the underlying `SearchOperations`, `ToolishRag` exp
 - **ResultExpanderTools**: `broadenChunk(chunkId, chunksToAdd)` - expand to adjacent chunks, `zoomOut(id)` - expand to parent section
 
 The LLM autonomously decides when to use these tools based on user queries.
+
+===== ToolishRag lifecycle
+
+It is safe to create a `ToolishRag` instance and reuse across many LLM calls.
+However, instances are not expensive to create, so you can create a new instance per LLM call.
+You might choose to do this if you provide a `ResultListener`
+that will collect queries and results for logging or analysis: for example, to track which queries were most useful for answering user questions and the complexity in terms of number of searches performed.
+This can be useful for implementing a learning feedback loop, for example to discern which queries performed badly, indicating that content such as documentation needs to be enhanced.
+
+****
+Some content here
+****
 
 ==== Ingestion
 
@@ -305,7 +327,8 @@ Embabel Agent provides several RAG store implementations:
 
 ===== Lucene (embabel-agent-rag-lucene)
 
-Full-featured store with vector search, text search, and result expansion. Supports both in-memory and file-based persistence:
+Full-featured store with vector search, text search, and result expansion.
+Supports both in-memory and file-based persistence:
 
 [source,java]
 ----
@@ -328,7 +351,8 @@ Omit `.withIndexPath()` for in-memory only storage.
 
 ===== Neo4j
 
-Graph database store for RAG (available in separate modules `embabel-agent-rag-neo-drivine` and `embabel-agent-rag-neo-ogm`). Ideal when you need graph relationships between content elements.
+Graph database store for RAG (available in separate modules `embabel-agent-rag-neo-drivine` and `embabel-agent-rag-neo-ogm`).
+Ideal when you need graph relationships between content elements.
 
 ===== Spring AI VectorStore (SpringVectorStoreVectorSearch)
 
@@ -359,7 +383,8 @@ This allows integration with Pinecone, Weaviate, Milvus, Chroma, and other store
 
 ==== Implementing Your Own RAG Store
 
-To implement a custom RAG store, implement only the `SearchOperations` subinterfaces that are natural and efficient for your store. This is a key design principle: **stores should only implement what they can do well**.
+To implement a custom RAG store, implement only the `SearchOperations` subinterfaces that are natural and efficient for your store.
+This is a key design principle: **stores should only implement what they can do well**.
 
 For example:
 
@@ -368,7 +393,8 @@ For example:
 - A **hierarchical document store** might add `ResultExpander` for context expansion
 - A **full-featured store** like Lucene can implement all interfaces
 
-The `ToolishRag` facade automatically exposes only the tools that your store supports. This means you don't need to provide stub implementations or throw "not supported" exceptions—simply don't implement interfaces that don't fit your store's capabilities.
+The `ToolishRag` facade automatically exposes only the tools that your store supports.
+This means you don't need to provide stub implementations or throw "not supported" exceptions—simply don't implement interfaces that don't fit your store's capabilities.
 
 [source,kotlin]
 ----

@@ -36,11 +36,21 @@ abstract class AbstractChunkingContentElementRepository(
      * rather than otherwise consider the entire structure.
      */
     final override fun writeAndChunkDocument(root: NavigableDocument): List<String> {
-        logger.info("Writing and chunking document ${root.id} with uri ${root.uri} and title '${root.title}'")
+        logger.info(
+            "Writing and chunking document {} with uri {} and title '{}' using config {}",
+            root.id,
+            root.uri,
+            root.title,
+            chunkerConfig
+        )
         val chunker = ContentChunker(chunkerConfig)
         val chunks = chunker.chunk(root)
             .map { enhance(it) }
-        logger.info("Chunked document ${root.id} into ${chunks.size} chunks")
+        logger.info(
+            "Chunked document {} into {} chunks",
+            root.id,
+            chunks.size,
+        )
         save(root)
         root.descendants().forEach { save(it) }
         onNewRetrievables(root.descendants().filterIsInstance<Retrievable>())
@@ -48,7 +58,11 @@ abstract class AbstractChunkingContentElementRepository(
         onNewRetrievables(chunks)
         createInternalRelationships(root)
         commit()
-        logger.info("Wrote and chunked document ${root.id} with ${chunks.size} chunks")
+        logger.info(
+            "Wrote and chunked document {} with {} chunks",
+            root.id,
+            chunks.size,
+        )
         return chunks.map { it.id }
     }
 
