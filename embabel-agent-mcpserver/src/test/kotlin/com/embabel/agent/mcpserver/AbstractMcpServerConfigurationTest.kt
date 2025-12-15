@@ -176,17 +176,6 @@ class AbstractMcpServerConfigurationTest {
     }
 
     @Test
-    fun `createLogSeparator should return formatted separator`() {
-        configuration.mockExecutionMode = "SYNC"
-
-        val separator = configuration.testCreateLogSeparator()
-
-        assertTrue(separator.startsWith("~ MCP SYNC"))
-        assertTrue(separator.contains("~"))
-        assertTrue(separator.length > 10)
-    }
-
-    @Test
     fun `shouldPreserveTool should preserve helloBanner by default`() {
         assertTrue(configuration.testShouldPreserveTool("helloBanner"))
         assertFalse(configuration.testShouldPreserveTool("otherTool"))
@@ -239,7 +228,6 @@ class AbstractMcpServerConfigurationTest {
         override fun getExecutionMode(): String = mockExecutionMode
 
         // Expose protected methods for testing
-        fun testCreateLogSeparator(): String = createLogSeparator()
         fun testShouldPreserveTool(toolName: String): Boolean = shouldPreserveTool(toolName)
     }
 }

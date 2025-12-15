@@ -52,14 +52,13 @@ abstract class AbstractMcpServerConfiguration(
     @EventListener(AgentScanningBeanPostProcessorEvent::class)
     fun exposeMcpFunctionality() {
         val strategy = createServerStrategy()
-        val separator = createLogSeparator()
 
-        logger.info("\n$separator\nInitializing ${strategy.executionMode} MCP Server\n$separator")
+        logger.info("Initializing {} MCP Server", strategy.executionMode)
 
         try {
             initializeServer(strategy)
                 .doOnSuccess {
-                    logger.info("${strategy.executionMode} MCP Server initialization completed successfully")
+                    logger.info("{} MCP Server initialization completed successfully", strategy.executionMode)
                 }
                 .doOnError { error ->
                     logger.error("${strategy.executionMode} MCP Server initialization failed", error)
@@ -251,13 +250,6 @@ abstract class AbstractMcpServerConfiguration(
      * @return `true` if the tool should be preserved, otherwise `false`
      */
     protected open fun shouldPreserveTool(toolName: String): Boolean = toolName == "helloBanner"
-
-    /**
-     * Creates a log separator string for initialization logs.
-     *
-     * @return a separator string
-     */
-    protected open fun createLogSeparator(): String = "~ MCP ${getExecutionMode()} " + "~".repeat(40)
 
     /**
      * Returns the execution mode for this configuration.
