@@ -37,7 +37,7 @@ data class TryHyDE @JvmOverloads constructor(
             If you're having a problem with vector search result relevance, try generating a hypothetical document
             to use as the query.
             Use at most $maxWords words to generate a hypothetical answer
-            ${context.let { "based on the following context:\n$it" } ?: ""}
+            ${context?.let { "based on the following context:\n${it}" } ?: "Based on the current conversation context."}
            """.trimIndent()
     }
 

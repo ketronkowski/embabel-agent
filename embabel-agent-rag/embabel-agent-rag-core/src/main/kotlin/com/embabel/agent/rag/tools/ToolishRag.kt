@@ -19,8 +19,10 @@ import com.embabel.agent.api.common.LlmReference
 import com.embabel.agent.rag.model.Chunk
 import com.embabel.agent.rag.model.ContentElement
 import com.embabel.agent.rag.model.Embeddable
+import com.embabel.agent.rag.model.Retrievable
 import com.embabel.agent.rag.service.*
 import com.embabel.common.ai.prompt.PromptContributor
+import com.embabel.common.core.types.SimilarityResult
 import com.embabel.common.core.types.TextSimilaritySearchRequest
 import com.embabel.common.core.types.ZeroToOne
 import com.embabel.common.util.loggerFor
@@ -29,11 +31,24 @@ import org.slf4j.LoggerFactory
 import org.springframework.ai.tool.annotation.Tool
 import org.springframework.ai.tool.annotation.ToolParam
 
+data class ResultsEvent(
+    val source: Any,
+    val query: String,
+    val results: List<SimilarityResult<out Retrievable>>,
+)
+
+fun interface ResultsListener {
+
+    fun onResultsEvent(event: ResultsEvent)
+
+}
 
 /**
  * Reference for fine-grained RAG tools, allowing the LLM to
  * control individual search operations directly.
  * Add hints as relevant.
+ * If a ResultQualityListener is provided, a tool to report result quality
+ * will be added automatically, with instructions for the LLM to call it
  */
 data class ToolishRag @JvmOverloads constructor(
     override val name: String,
@@ -42,6 +57,7 @@ data class ToolishRag @JvmOverloads constructor(
     val goal: String = DEFAULT_GOAL,
     val formatter: RetrievableResultsFormatter = SimpleRetrievableResultsFormatter,
     val hints: List<PromptContributor> = listOf(),
+    val listener: ResultsListener? = null,
 ) : LlmReference {
 
     private val logger = LoggerFactory.getLogger(javaClass)
@@ -52,7 +68,7 @@ data class ToolishRag @JvmOverloads constructor(
         buildList {
             if (searchOperations is VectorSearch) {
                 logger.info("Adding VectorSearchTools to ToolishRag tools {}", name)
-                add(VectorSearchTools(searchOperations))
+                add(VectorSearchTools(searchOperations, listener))
             } else {
                 if (hints.any { it is TryHyDE }) {
                     logger.warn(
@@ -64,7 +80,7 @@ data class ToolishRag @JvmOverloads constructor(
             }
             if (searchOperations is TextSearch) {
                 logger.info("Adding TextSearchTools to ToolishRag tools {}", name)
-                add(TextSearchTools(searchOperations))
+                add(TextSearchTools(searchOperations, listener))
             }
             if (searchOperations is ResultExpander) {
                 logger.info("Adding ResultExpanderTools to ToolishRag tools {}", name)
@@ -72,7 +88,7 @@ data class ToolishRag @JvmOverloads constructor(
             }
             if (searchOperations is RegexSearchOperations) {
                 logger.info("Adding RegexSearchTools to ToolishRag tools {}", name)
-                add(RegexSearchTools(searchOperations))
+                add(RegexSearchTools(searchOperations, listener))
             }
         }
     }
@@ -82,6 +98,20 @@ data class ToolishRag @JvmOverloads constructor(
      */
     fun withHint(hint: PromptContributor): ToolishRag =
         copy(hints = hints + hint)
+
+    /**
+     * Set a custom goal for acceptance criteria
+     */
+    fun withGoal(goal: String): ToolishRag =
+        copy(goal = goal)
+
+    /**
+     * With a listener that sees the raw (structured) results rather than strings.
+     * This can be useful for logging, monitoring, gathering data to improve quality
+     * or putting results in the blackboard
+     */
+    fun withListener(listener: ResultsListener): ToolishRag =
+        copy(listener = listener)
 
     override fun toolInstances() = toolInstances
 
@@ -99,7 +129,7 @@ data class ToolishRag @JvmOverloads constructor(
     companion object {
         val DEFAULT_GOAL = """
             Continue search until the question is answered, or you have to give up.
-            Be creative, try different types of queries. Generate HyDE queries if needed.
+            Be creative, try different types of queries.
             Be thorough and try different approaches.
             If nothing works, report that you could not find the answer.
         """.trimIndent()
@@ -111,6 +141,7 @@ data class ToolishRag @JvmOverloads constructor(
  */
 class VectorSearchTools(
     private val vectorSearch: VectorSearch,
+    private val resultsListener: ResultsListener? = null,
 ) {
 
     private val logger: Logger = LoggerFactory.getLogger(javaClass)
@@ -126,6 +157,7 @@ class VectorSearchTools(
             SimpleSearchRequest(query, threshold, topK),
             Chunk::class.java
         )
+        resultsListener?.onResultsEvent(ResultsEvent(this, query, results))
         return SimpleRetrievableResultsFormatter.formatResults(SimilarityResults.fromList(results))
     }
 }
@@ -162,8 +194,6 @@ class ResultExpanderTools(
             }
     }
 
-    // TODO related chunk expansion based on vector similarity
-
 }
 
 /**
@@ -171,6 +201,7 @@ class ResultExpanderTools(
  */
 class TextSearchTools(
     private val textSearch: TextSearch,
+    private val resultsListener: ResultsListener? = null,
 ) {
     private val logger: Logger = LoggerFactory.getLogger(javaClass)
 
@@ -198,12 +229,14 @@ class TextSearchTools(
             SimpleSearchRequest(query, threshold, topK),
             Chunk::class.java
         )
+        resultsListener?.onResultsEvent(ResultsEvent(this, query, results))
         return SimpleRetrievableResultsFormatter.formatResults(SimilarityResults.fromList(results))
     }
 }
 
 class RegexSearchTools(
     private val textSearch: RegexSearchOperations,
+    private val resultsListener: ResultsListener? = null,
 ) {
 
     @Tool(description = "Perform regex search across content elements. Specify topK")
@@ -213,6 +246,7 @@ class RegexSearchTools(
     ): String {
         loggerFor<RegexSearchTools>().info("Performing regex search with regex='{}', topK={}", regex, topK)
         val results = textSearch.regexSearch(Regex(regex), topK, Chunk::class.java)
+        resultsListener?.onResultsEvent(ResultsEvent(this, regex, results))
         return SimpleRetrievableResultsFormatter.formatResults(SimilarityResults.Companion.fromList(results))
     }
 }
@@ -225,4 +259,3 @@ private data class SimpleSearchRequest(
     override val similarityThreshold: ZeroToOne,
     override val topK: Int,
 ) : TextSimilaritySearchRequest
-// expand entity
