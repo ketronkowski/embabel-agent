@@ -36,7 +36,7 @@ class SpringToolCallbackAdapterTest {
                 inputSchema = Tool.InputSchema.of(
                     Tool.Parameter("input", Tool.ParameterType.STRING, "Input value"),
                 ),
-            ) { _, _ ->
+            ) { _ ->
                 Tool.Result.text("result")
             }
 
@@ -55,7 +55,7 @@ class SpringToolCallbackAdapterTest {
                 name = "direct_tool",
                 description = "Returns directly",
                 metadata = Tool.Metadata(returnDirect = true),
-            ) { _, _ ->
+            ) { _ ->
                 Tool.Result.text("result")
             }
 
@@ -70,7 +70,7 @@ class SpringToolCallbackAdapterTest {
             val tool = Tool.of(
                 name = "echo",
                 description = "Echo",
-            ) { input, _ ->
+            ) { input ->
                 Tool.Result.text("Received: $input")
             }
 
@@ -85,7 +85,7 @@ class SpringToolCallbackAdapterTest {
             val tool = Tool.of(
                 name = "failing",
                 description = "Fails",
-            ) { _, _ ->
+            ) { _ ->
                 Tool.Result.error("Something went wrong")
             }
 
@@ -101,7 +101,7 @@ class SpringToolCallbackAdapterTest {
             val tool = Tool.of(
                 name = "artifact_tool",
                 description = "Returns artifact",
-            ) { _, _ ->
+            ) { _ ->
                 Tool.Result.withArtifact("Generated content", byteArrayOf(1, 2, 3))
             }
 
@@ -116,7 +116,7 @@ class SpringToolCallbackAdapterTest {
             val tool = Tool.of(
                 name = "throwing",
                 description = "Throws",
-            ) { _, _ ->
+            ) { _ ->
                 throw RuntimeException("Unexpected error")
             }
 
@@ -132,7 +132,7 @@ class SpringToolCallbackAdapterTest {
             val tool = Tool.of(
                 name = "ext_test",
                 description = "Extension test",
-            ) { _, _ ->
+            ) { _ ->
                 Tool.Result.text("ok")
             }
 
@@ -145,8 +145,8 @@ class SpringToolCallbackAdapterTest {
         @Test
         fun `extension function toSpringToolCallbacks works for list`() {
             val tools = listOf(
-                Tool.of("tool1", "First") { _, _ -> Tool.Result.text("1") },
-                Tool.of("tool2", "Second") { _, _ -> Tool.Result.text("2") },
+                Tool.of("tool1", "First") { _ -> Tool.Result.text("1") },
+                Tool.of("tool2", "Second") { _ -> Tool.Result.text("2") },
             )
 
             val callbacks = tools.toSpringToolCallbacks()
@@ -277,7 +277,7 @@ class SpringToolCallbackAdapterTest {
                 inputSchema = Tool.InputSchema.of(
                     Tool.Parameter("value", Tool.ParameterType.INTEGER, "A value"),
                 ),
-            ) { input, _ ->
+            ) { input ->
                 Tool.Result.text("Processed: $input")
             }
 

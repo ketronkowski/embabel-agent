@@ -34,14 +34,14 @@ class ToolJavaTest {
             Tool tool = Tool.create(
                 "greet",
                 "Greets a person by name",
-                (input, ctx) -> Tool.Result.text("Hello!")
+                (input) -> Tool.Result.text("Hello!")
             );
 
             assertNotNull(tool);
             assertEquals("greet", tool.getDefinition().getName());
             assertEquals("Greets a person by name", tool.getDefinition().getDescription());
 
-            Tool.Result result = tool.call("{}", null);
+            Tool.Result result = tool.call("{}");
             assertInstanceOf(Tool.Result.Text.class, result);
             assertEquals("Hello!", ((Tool.Result.Text) result).getContent());
         }
@@ -55,7 +55,7 @@ class ToolJavaTest {
                     new Tool.Parameter("a", Tool.ParameterType.INTEGER, "First number", true, null),
                     new Tool.Parameter("b", Tool.ParameterType.INTEGER, "Second number", true, null)
                 ),
-                (input, ctx) -> Tool.Result.text("Result: 42")
+                (input) -> Tool.Result.text("Result: 42")
             );
 
             assertNotNull(tool);
@@ -74,7 +74,7 @@ class ToolJavaTest {
                 "direct_tool",
                 "Returns result directly",
                 Tool.Metadata.create(true),
-                (input, ctx) -> Tool.Result.text("Direct result")
+                (input) -> Tool.Result.text("Direct result")
             );
 
             assertTrue(tool.getMetadata().getReturnDirect());
@@ -89,7 +89,7 @@ class ToolJavaTest {
                     new Tool.Parameter("query", Tool.ParameterType.STRING, "Search query", true, null)
                 ),
                 Tool.Metadata.create(false),
-                (input, ctx) -> Tool.Result.text("Search results")
+                (input) -> Tool.Result.text("Search results")
             );
 
             assertNotNull(tool);
@@ -103,36 +103,14 @@ class ToolJavaTest {
     class ToolExecution {
 
         @Test
-        void executeToolWithContext() {
-            Tool tool = Tool.create(
-                "context_tool",
-                "Uses context",
-                (input, ctx) -> {
-                    if (ctx != null && ctx.get("userId") != null) {
-                        return Tool.Result.text("User: " + ctx.get("userId"));
-                    }
-                    return Tool.Result.text("No user");
-                }
-            );
-
-            Tool.Context context = Tool.Context.of(
-                java.util.Map.of("userId", "user123")
-            );
-
-            Tool.Result result = tool.call("{}", context);
-            assertInstanceOf(Tool.Result.Text.class, result);
-            assertEquals("User: user123", ((Tool.Result.Text) result).getContent());
-        }
-
-        @Test
         void executeToolReturnsError() {
             Tool tool = Tool.create(
                 "error_tool",
                 "Always fails",
-                (input, ctx) -> Tool.Result.error("Something went wrong", null)
+                (input) -> Tool.Result.error("Something went wrong", null)
             );
 
-            Tool.Result result = tool.call("{}", null);
+            Tool.Result result = tool.call("{}");
             assertInstanceOf(Tool.Result.Error.class, result);
             assertEquals("Something went wrong", ((Tool.Result.Error) result).getMessage());
         }
@@ -142,13 +120,13 @@ class ToolJavaTest {
             Tool tool = Tool.create(
                 "artifact_tool",
                 "Returns an artifact",
-                (input, ctx) -> Tool.Result.withArtifact(
+                (input) -> Tool.Result.withArtifact(
                     "Generated file",
                     new byte[]{1, 2, 3}
                 )
             );
 
-            Tool.Result result = tool.call("{}", null);
+            Tool.Result result = tool.call("{}");
             assertInstanceOf(Tool.Result.WithArtifact.class, result);
             Tool.Result.WithArtifact artifactResult = (Tool.Result.WithArtifact) result;
             assertEquals("Generated file", artifactResult.getContent());
@@ -203,31 +181,4 @@ class ToolJavaTest {
         }
     }
 
-    @Nested
-    class ContextUsage {
-
-        @Test
-        void createContextFromMap() {
-            Tool.Context context = Tool.Context.of(
-                java.util.Map.of(
-                    "key1", "value1",
-                    "key2", 42
-                )
-            );
-
-            assertEquals("value1", context.get("key1"));
-            assertEquals(42, context.get("key2"));
-            assertNull(context.get("nonexistent"));
-            assertTrue(context.getKeys().contains("key1"));
-            assertTrue(context.getKeys().contains("key2"));
-        }
-
-        @Test
-        void createEmptyContext() {
-            Tool.Context context = Tool.Context.empty();
-
-            assertTrue(context.getKeys().isEmpty());
-            assertNull(context.get("any"));
-        }
-    }
 }

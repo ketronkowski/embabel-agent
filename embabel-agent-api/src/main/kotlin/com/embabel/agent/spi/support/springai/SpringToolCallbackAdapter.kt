@@ -54,8 +54,7 @@ class SpringToolCallbackAdapter(
         logger.debug("Executing tool '{}' with input: {}", tool.definition.name, toolInput)
 
         return try {
-            val context = Tool.Context.empty()
-            when (val result = tool.call(toolInput, context)) {
+            when (val result = tool.call(toolInput)) {
                 is Tool.Result.Text -> result.content
                 is Tool.Result.WithArtifact -> result.content
                 is Tool.Result.Error -> {
@@ -101,7 +100,7 @@ class SpringToolCallbackWrapper(
         override val providerMetadata: Map<String, Any> = emptyMap()
     }
 
-    override fun call(input: String, context: Tool.Context?): Tool.Result {
+    override fun call(input: String): Tool.Result {
         return try {
             val result = callback.call(input)
             Tool.Result.text(result)

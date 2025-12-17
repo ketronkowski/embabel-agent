@@ -318,7 +318,6 @@ The `Tool` interface includes nested types to avoid naming conflicts with framew
 - `Tool.InputSchema` - Defines the parameters the tool accepts
 - `Tool.Parameter` - A single parameter with name, type, and description
 - `Tool.Result` - The result returned by a tool (text, artifact, or error)
-- `Tool.Context` - Optional execution context
 - `Tool.Handler` - Functional interface for implementing tool logic
 
 ===== Creating Tools Programmatically
@@ -335,7 +334,7 @@ Java::
 Tool greetTool = Tool.create(
     "greet",
     "Greets the user",
-    (input, ctx) -> Tool.Result.text("Hello!")
+    (input) -> Tool.Result.text("Hello!")
 );
 
 // Tool with parameters
@@ -346,7 +345,7 @@ Tool addTool = Tool.create(
         new Tool.Parameter("a", Tool.ParameterType.INTEGER, "First number", true, null),
         new Tool.Parameter("b", Tool.ParameterType.INTEGER, "Second number", true, null)
     ),
-    (input, ctx) -> {
+    (input) -> {
         // Parse input JSON and compute result
         return Tool.Result.text("42");
     }
@@ -357,7 +356,7 @@ Tool directTool = Tool.create(
     "lookup",
     "Looks up data directly",
     Tool.Metadata.create(true), // returnDirect = true
-    (input, ctx) -> Tool.Result.text("Direct result")
+    (input) -> Tool.Result.text("Direct result")
 );
 ----
 
@@ -369,7 +368,7 @@ Kotlin::
 val greetTool = Tool.of(
     name = "greet",
     description = "Greets the user"
-) { _, _ ->
+) { _ ->
     Tool.Result.text("Hello!")
 }
 
@@ -381,7 +380,7 @@ val addTool = Tool.of(
         Tool.Parameter("a", Tool.ParameterType.INTEGER, "First number", true, null),
         Tool.Parameter("b", Tool.ParameterType.INTEGER, "Second number", true, null)
     )
-) { input, _ ->
+) { input ->
     // Parse input JSON and compute result
     Tool.Result.text("42")
 }
@@ -391,7 +390,7 @@ val directTool = Tool.of(
     name = "lookup",
     description = "Looks up data directly",
     metadata = Tool.Metadata(returnDirect = true)
-) { _, _ ->
+) { _ ->
     Tool.Result.text("Direct result")
 }
 ----
@@ -482,7 +481,7 @@ Java::
 ----
 // Add a single tool
 Tool calculatorTool = Tool.create("calculate", "Performs calculations",
-    (input, ctx) -> Tool.Result.text("Result: 42"));
+    (input) -> Tool.Result.text("Result: 42"));
 
 context.ai()
     .withDefaultLlm()
@@ -511,7 +510,7 @@ Kotlin::
 [source,kotlin]
 ----
 // Add a single tool
-val calculatorTool = Tool.of("calculate", "Performs calculations") { _, _ ->
+val calculatorTool = Tool.of("calculate", "Performs calculations") { _ ->
     Tool.Result.text("Result: 42")
 }
 

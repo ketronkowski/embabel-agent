@@ -493,7 +493,7 @@ class OperationContextPromptRunnerTest {
             val referenceTool = Tool.of(
                 name = "reference_tool",
                 description = "A tool from the reference",
-            ) { _, _ ->
+            ) { _ ->
                 Tool.Result.text("reference result")
             }
 
@@ -522,8 +522,8 @@ class OperationContextPromptRunnerTest {
 
         @Test
         fun `test withReference picks up multiple tools from LlmReference`() {
-            val tool1 = Tool.of("ref_tool1", "First reference tool") { _, _ -> Tool.Result.text("1") }
-            val tool2 = Tool.of("ref_tool2", "Second reference tool") { _, _ -> Tool.Result.text("2") }
+            val tool1 = Tool.of("ref_tool1", "First reference tool") { _ -> Tool.Result.text("1") }
+            val tool2 = Tool.of("ref_tool2", "Second reference tool") { _ -> Tool.Result.text("2") }
 
             val mockReference = mockk<LlmReference>()
             every { mockReference.name } returns "MultiToolAPI"
@@ -550,8 +550,8 @@ class OperationContextPromptRunnerTest {
 
         @Test
         fun `test withReferences aggregates tools from multiple references`() {
-            val tool1 = Tool.of("api1_tool", "Tool from API1") { _, _ -> Tool.Result.text("1") }
-            val tool2 = Tool.of("api2_tool", "Tool from API2") { _, _ -> Tool.Result.text("2") }
+            val tool1 = Tool.of("api1_tool", "Tool from API1") { _ -> Tool.Result.text("1") }
+            val tool2 = Tool.of("api2_tool", "Tool from API2") { _ -> Tool.Result.text("2") }
 
             val mockReference1 = mockk<LlmReference>()
             every { mockReference1.name } returns "API1"
@@ -594,7 +594,7 @@ class OperationContextPromptRunnerTest {
             val tool = Tool.of(
                 name = "test_tool",
                 description = "A test tool",
-            ) { _, _ ->
+            ) { _ ->
                 Tool.Result.text("result")
             }
 
@@ -619,7 +619,7 @@ class OperationContextPromptRunnerTest {
             val tool = Tool.of(
                 name = "executable_tool",
                 description = "An executable tool",
-            ) { _, _ ->
+            ) { _ ->
                 toolWasExecuted = true
                 Tool.Result.text("executed!")
             }
@@ -641,8 +641,8 @@ class OperationContextPromptRunnerTest {
 
         @Test
         fun `test withTools list adds multiple tools`() {
-            val tool1 = Tool.of("tool1", "First tool") { _, _ -> Tool.Result.text("1") }
-            val tool2 = Tool.of("tool2", "Second tool") { _, _ -> Tool.Result.text("2") }
+            val tool1 = Tool.of("tool1", "First tool") { _ -> Tool.Result.text("1") }
+            val tool2 = Tool.of("tool2", "Second tool") { _ -> Tool.Result.text("2") }
 
             val ocpr = createOperationContextPromptRunnerWithDefaults(mockk<OperationContext>())
                 .withTools(listOf(tool1, tool2)) as OperationContextPromptRunner
@@ -659,9 +659,9 @@ class OperationContextPromptRunnerTest {
 
         @Test
         fun `test withFunctionTools varargs adds multiple tools`() {
-            val tool1 = Tool.of("vararg_tool1", "First") { _, _ -> Tool.Result.text("1") }
-            val tool2 = Tool.of("vararg_tool2", "Second") { _, _ -> Tool.Result.text("2") }
-            val tool3 = Tool.of("vararg_tool3", "Third") { _, _ -> Tool.Result.text("3") }
+            val tool1 = Tool.of("vararg_tool1", "First") { _ -> Tool.Result.text("1") }
+            val tool2 = Tool.of("vararg_tool2", "Second") { _ -> Tool.Result.text("2") }
+            val tool3 = Tool.of("vararg_tool3", "Third") { _ -> Tool.Result.text("3") }
 
             val ocpr = createOperationContextPromptRunnerWithDefaults(mockk<OperationContext>())
                 .withFunctionTools(tool1, tool2, tool3) as OperationContextPromptRunner

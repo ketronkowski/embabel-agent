@@ -86,7 +86,7 @@ class ToolTest {
                     Tool.Parameter("city", Tool.ParameterType.STRING, "City name"),
                     Tool.Parameter("units", Tool.ParameterType.STRING, "celsius or fahrenheit", required = false),
                 ),
-            ) { input, _ ->
+            ) { input ->
                 Tool.Result.text("Sunny, 22C")
             }
 
@@ -100,7 +100,7 @@ class ToolTest {
             val tool = Tool.of(
                 name = "get_time",
                 description = "Get current time",
-            ) { _, _ ->
+            ) { _ ->
                 Tool.Result.text("12:00 PM")
             }
 
@@ -114,7 +114,7 @@ class ToolTest {
                 name = "calculator",
                 description = "Perform calculations",
                 metadata = Tool.Metadata(returnDirect = true),
-            ) { _, _ ->
+            ) { _ ->
                 Tool.Result.text("42")
             }
 
@@ -130,7 +130,7 @@ class ToolTest {
             val tool = Tool.of(
                 name = "echo",
                 description = "Echo input",
-            ) { input, _ ->
+            ) { input ->
                 Tool.Result.text("Echo: $input")
             }
 
@@ -145,7 +145,7 @@ class ToolTest {
             val tool = Tool.of(
                 name = "failing_tool",
                 description = "Always fails",
-            ) { _, _ ->
+            ) { _ ->
                 Tool.Result.error("Something went wrong")
             }
 
@@ -160,7 +160,7 @@ class ToolTest {
             val tool = Tool.of(
                 name = "generate_image",
                 description = "Generate an image",
-            ) { _, _ ->
+            ) { _ ->
                 Tool.Result.withArtifact("Image generated", byteArrayOf(1, 2, 3))
             }
 
@@ -172,25 +172,6 @@ class ToolTest {
             assertTrue(artifactResult.artifact is ByteArray)
         }
 
-        @Test
-        fun `tool receives context`() {
-            var receivedContext: Tool.Context? = null
-
-            val tool = Tool.of(
-                name = "context_aware",
-                description = "Uses context",
-            ) { _, context ->
-                receivedContext = context
-                Tool.Result.text("done")
-            }
-
-            val context = Tool.Context.of(mapOf("userId" to "123"))
-            tool.call("{}", context)
-
-            assertNotNull(receivedContext)
-            assertEquals("123", receivedContext!!["userId"])
-            assertTrue(receivedContext!!.keys.contains("userId"))
-        }
     }
 
     @Nested
@@ -299,28 +280,6 @@ class ToolTest {
 
             assertTrue(metadata.returnDirect)
             assertEquals("value", metadata.providerMetadata["key"])
-        }
-    }
-
-    @Nested
-    inner class ContextCreation {
-
-        @Test
-        fun `create empty context`() {
-            val context = Tool.Context.empty()
-
-            assertTrue(context.keys.isEmpty())
-            assertNull(context["anything"])
-        }
-
-        @Test
-        fun `create context from map`() {
-            val context = Tool.Context.of(mapOf("a" to 1, "b" to "two"))
-
-            assertEquals(1, context["a"])
-            assertEquals("two", context["b"])
-            assertNull(context["c"])
-            assertEquals(setOf("a", "b"), context.keys)
         }
     }
 
