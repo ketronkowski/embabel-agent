@@ -257,6 +257,7 @@ interface PromptRunner : LlmUse, PromptRunnerOperations {
      */
     fun withReference(reference: LlmReference): PromptRunner {
         return withToolObject(reference.toolObject())
+            .withTools(reference.tools())
             .withPromptContributor(reference)
     }
 

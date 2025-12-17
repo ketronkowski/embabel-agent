@@ -303,3 +303,271 @@ context.ai()
 - `withTools(vararg String)`: Convenient method to add multiple tool groups
 - `withToolObject(Any)`: Add domain object with @Tool methods
 - `withToolObject(ToolObject)`: Add ToolObject with custom configuration
+- `withTool(Tool)`: Add a framework-agnostic Tool instance
+- `withTools(List<Tool>)`: Add multiple framework-agnostic Tool instances
+
+[[reference.tools__framework-agnostic]]
+==== Framework-Agnostic Tool Interface
+
+In addition to Spring AI's `@Tool` annotation, Embabel provides its own framework-agnostic `Tool` interface in the `com.embabel.agent.api.tool` package.
+This allows you to create tools that are not tied to any specific LLM framework, making your code more portable and testable.
+
+The `Tool` interface includes nested types to avoid naming conflicts with framework-specific types:
+
+- `Tool.Definition` - Describes the tool (name, description, input schema)
+- `Tool.InputSchema` - Defines the parameters the tool accepts
+- `Tool.Parameter` - A single parameter with name, type, and description
+- `Tool.Result` - The result returned by a tool (text, artifact, or error)
+- `Tool.Context` - Optional execution context
+- `Tool.Handler` - Functional interface for implementing tool logic
+
+===== Creating Tools Programmatically
+
+You can create tools using the `Tool.create()` factory methods:
+
+[tabs]
+====
+Java::
++
+[source,java]
+----
+// Simple tool with no parameters
+Tool greetTool = Tool.create(
+    "greet",
+    "Greets the user",
+    (input, ctx) -> Tool.Result.text("Hello!")
+);
+
+// Tool with parameters
+Tool addTool = Tool.create(
+    "add",
+    "Adds two numbers together",
+    Tool.InputSchema.of(
+        new Tool.Parameter("a", Tool.ParameterType.INTEGER, "First number", true, null),
+        new Tool.Parameter("b", Tool.ParameterType.INTEGER, "Second number", true, null)
+    ),
+    (input, ctx) -> {
+        // Parse input JSON and compute result
+        return Tool.Result.text("42");
+    }
+);
+
+// Tool with metadata (e.g., return directly without LLM processing)
+Tool directTool = Tool.create(
+    "lookup",
+    "Looks up data directly",
+    Tool.Metadata.create(true), // returnDirect = true
+    (input, ctx) -> Tool.Result.text("Direct result")
+);
+----
+
+Kotlin::
++
+[source,kotlin]
+----
+// Simple tool with no parameters
+val greetTool = Tool.of(
+    name = "greet",
+    description = "Greets the user"
+) { _, _ ->
+    Tool.Result.text("Hello!")
+}
+
+// Tool with parameters
+val addTool = Tool.of(
+    name = "add",
+    description = "Adds two numbers together",
+    inputSchema = Tool.InputSchema.of(
+        Tool.Parameter("a", Tool.ParameterType.INTEGER, "First number", true, null),
+        Tool.Parameter("b", Tool.ParameterType.INTEGER, "Second number", true, null)
+    )
+) { input, _ ->
+    // Parse input JSON and compute result
+    Tool.Result.text("42")
+}
+
+// Tool with metadata
+val directTool = Tool.of(
+    name = "lookup",
+    description = "Looks up data directly",
+    metadata = Tool.Metadata(returnDirect = true)
+) { _, _ ->
+    Tool.Result.text("Direct result")
+}
+----
+====
+
+===== Creating Tools from Annotated Methods
+
+Embabel provides `@Tool.Method` and `@Tool.Param` annotations for creating tools from annotated methods.
+This approach is similar to Spring AI's `@Tool` but uses Embabel's framework-agnostic abstractions.
+
+[tabs]
+====
+Java::
++
+[source,java]
+----
+public class MathService {
+
+    @Tool.Method(description = "Adds two numbers together")
+    public int add(
+            @Tool.Param(description = "First number") int a,
+            @Tool.Param(description = "Second number") int b) {
+        return a + b;
+    }
+
+    @Tool.Method(description = "Multiplies two numbers")
+    public int multiply(
+            @Tool.Param(description = "First number") int a,
+            @Tool.Param(description = "Second number") int b) {
+        return a * b;
+    }
+}
+
+// Create tools from all annotated methods on an instance
+List<Tool> mathTools = Tool.fromInstance(new MathService());
+
+// Or safely create tools (returns empty list if no annotations found)
+List<Tool> tools = Tool.safelyFromInstance(someObject);
+----
+
+Kotlin::
++
+[source,kotlin]
+----
+class MathService {
+
+    @Tool.Method(description = "Adds two numbers together")
+    fun add(
+        @Tool.Param(description = "First number") a: Int,
+        @Tool.Param(description = "Second number") b: Int,
+    ): Int = a + b
+
+    @Tool.Method(description = "Multiplies two numbers")
+    fun multiply(
+        @Tool.Param(description = "First number") a: Int,
+        @Tool.Param(description = "Second number") b: Int,
+    ): Int = a * b
+}
+
+// Create tools from all annotated methods on an instance
+val mathTools = Tool.fromInstance(MathService())
+
+// Or safely create tools (returns empty list if no annotations found)
+val tools = Tool.safelyFromInstance(someObject)
+----
+====
+
+The `@Tool.Method` annotation supports:
+
+- `name`: Tool name (defaults to method name if empty)
+- `description`: Description of what the tool does (required)
+- `returnDirect`: Whether to return the result directly without further LLM processing
+
+The `@Tool.Param` annotation supports:
+
+- `description`: Description of the parameter (helps the LLM understand what to provide)
+- `required`: Whether the parameter is required (defaults to true)
+
+===== Adding Framework-Agnostic Tools via PromptRunner
+
+Use `withTool()` or `withTools()` to add framework-agnostic tools to a `PromptRunner`:
+
+[tabs]
+====
+Java::
++
+[source,java]
+----
+// Add a single tool
+Tool calculatorTool = Tool.create("calculate", "Performs calculations",
+    (input, ctx) -> Tool.Result.text("Result: 42"));
+
+context.ai()
+    .withDefaultLlm()
+    .withTool(calculatorTool)
+    .createObject("Calculate 6 * 7", MathResult.class);
+
+// Add tools from annotated methods
+List<Tool> mathTools = Tool.fromInstance(new MathService());
+
+context.ai()
+    .withDefaultLlm()
+    .withTools(mathTools)
+    .createObject("Add 5 and 3", MathResult.class);
+
+// Combine with other tool sources
+context.ai()
+    .withDefaultLlm()
+    .withToolGroup(CoreToolGroups.WEB)  // Tool group
+    .withToolObject(domainObject)        // Spring AI @Tool methods
+    .withTools(mathTools)                // Framework-agnostic tools
+    .createObject("Research and calculate", Report.class);
+----
+
+Kotlin::
++
+[source,kotlin]
+----
+// Add a single tool
+val calculatorTool = Tool.of("calculate", "Performs calculations") { _, _ ->
+    Tool.Result.text("Result: 42")
+}
+
+context.ai()
+    .withDefaultLlm()
+    .withTool(calculatorTool)
+    .createObject("Calculate 6 * 7", MathResult::class.java)
+
+// Add tools from annotated methods
+val mathTools = Tool.fromInstance(MathService())
+
+context.ai()
+    .withDefaultLlm()
+    .withTools(mathTools)
+    .createObject("Add 5 and 3", MathResult::class.java)
+
+// Combine with other tool sources
+context.ai()
+    .withDefaultLlm()
+    .withToolGroup(CoreToolGroups.WEB)  // Tool group
+    .withToolObject(domainObject)        // Spring AI @Tool methods
+    .withTools(mathTools)                // Framework-agnostic tools
+    .createObject("Research and calculate", Report::class.java)
+----
+====
+
+===== Tool Results
+
+Tools return `Tool.Result` which can be one of three types:
+
+[source,kotlin]
+----
+// Text result (most common)
+Tool.Result.text("The answer is 42")
+
+// Result with an artifact (e.g., generated file, image)
+Tool.Result.withArtifact("Generated report", reportBytes)
+
+// Error result
+Tool.Result.error("Failed to process request", exception)
+----
+
+===== When to Use Each Approach
+
+|===
+|Approach |Use When
+
+|Spring AI `@Tool`
+|You're comfortable with Spring AI and want IDE support for tool annotations on domain objects
+
+|`Tool.create()` / `Tool.of()`
+|You need programmatic tool creation, want framework independence, or are creating tools dynamically
+
+|`@Tool.Method` / `@Tool.Param`
+|You prefer annotation-based tools but want Embabel's framework-agnostic abstractions
+
+|Tool Groups
+|You need to organize related tools, use MCP servers, or control tool availability at deployment time
+|===

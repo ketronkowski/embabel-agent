@@ -44,10 +44,9 @@ interface Tool {
     /**
      * Execute the tool with JSON input.
      * @param input JSON string matching inputSchema
-     * @param context Optional execution context
      * @return Result to send back to LLM
      */
-    fun call(input: String, context: Context? = null): Result
+    fun call(input: String): Result
 
     /**
      * Framework-agnostic tool definition.
@@ -82,9 +81,11 @@ interface Tool {
         val parameters: List<Parameter>
 
         companion object {
+            @JvmStatic
             fun of(vararg parameters: Parameter): InputSchema =
                 SimpleInputSchema(parameters.toList())
 
+            @JvmStatic
             fun empty(): InputSchema = SimpleInputSchema(emptyList())
         }
     }
@@ -118,30 +119,23 @@ interface Tool {
         val providerMetadata: Map<String, Any> get() = emptyMap()
 
         companion object {
+            @JvmField
             val DEFAULT: Metadata = object : Metadata {}
 
             operator fun invoke(
                 returnDirect: Boolean = false,
                 providerMetadata: Map<String, Any> = emptyMap(),
             ): Metadata = SimpleMetadata(returnDirect, providerMetadata)
-        }
-    }
 
-    /**
-     * Context passed to tool execution.
-     * Provides access to agent state without coupling to specific framework.
-     */
-    interface Context {
-        /** Get a value from context by key */
-        operator fun get(key: String): Any?
-
-        /** All available context keys */
-        val keys: Set<String>
-
-        companion object {
-            fun of(map: Map<String, Any>): Context = MapContext(map)
-
-            fun empty(): Context = MapContext(emptyMap())
+            /**
+             * Create metadata (Java-friendly).
+             */
+            @JvmStatic
+            @JvmOverloads
+            fun create(
+                returnDirect: Boolean = false,
+                providerMetadata: Map<String, Any> = emptyMap(),
+            ): Metadata = SimpleMetadata(returnDirect, providerMetadata)
         }
     }
 
@@ -165,8 +159,14 @@ interface Tool {
         ) : Result
 
         companion object {
+            @JvmStatic
             fun text(content: String): Result = Text(content)
+
+            @JvmStatic
             fun withArtifact(content: String, artifact: Any): Result = WithArtifact(content, artifact)
+
+            @JvmStatic
+            @JvmOverloads
             fun error(message: String, cause: Throwable? = null): Result = Error(message, cause)
         }
     }
@@ -175,7 +175,16 @@ interface Tool {
      * Functional interface for simple tool implementations.
      */
     fun interface Function {
-        fun invoke(input: String, context: Context?): Result
+        fun invoke(input: String): Result
+    }
+
+    /**
+     * Java-friendly functional interface for tool implementations.
+     * Uses `handle` method name which is more idiomatic in Java than `invoke`.
+     */
+    @FunctionalInterface
+    fun interface Handler {
+        fun handle(input: String): Result
     }
 
     /**
@@ -243,6 +252,98 @@ interface Tool {
             metadata: Metadata = Metadata.DEFAULT,
             function: Function,
         ): Tool = of(name, description, InputSchema.empty(), metadata, function)
+
+        // Java-friendly factory methods using Handler interface
+
+        /**
+         * Create a tool with no parameters (Java-friendly).
+         * This method is easier to call from Java as it uses the Handler interface.
+         *
+         * Example:
+         * ```java
+         * Tool tool = Tool.create("greet", "Greets user", input -> Tool.Result.text("Hello!"));
+         * ```
+         *
+         * @param name Tool name
+         * @param description Tool description
+         * @param handler Handler that processes input and returns a result
+         * @return A new Tool instance
+         */
+        @JvmStatic
+        fun create(
+            name: String,
+            description: String,
+            handler: Handler,
+        ): Tool = FunctionalTool(
+            definition = Definition(name, description, InputSchema.empty()),
+            metadata = Metadata.DEFAULT,
+            function = Function { input -> handler.handle(input) },
+        )
+
+        /**
+         * Create a tool with custom metadata (Java-friendly).
+         *
+         * @param name Tool name
+         * @param description Tool description
+         * @param metadata Tool metadata (e.g., returnDirect)
+         * @param handler Handler that processes input and returns a result
+         * @return A new Tool instance
+         */
+        @JvmStatic
+        fun create(
+            name: String,
+            description: String,
+            metadata: Metadata,
+            handler: Handler,
+        ): Tool = FunctionalTool(
+            definition = Definition(name, description, InputSchema.empty()),
+            metadata = metadata,
+            function = Function { input -> handler.handle(input) },
+        )
+
+        /**
+         * Create a tool with input schema (Java-friendly).
+         *
+         * @param name Tool name
+         * @param description Tool description
+         * @param inputSchema Schema describing the input parameters
+         * @param handler Handler that processes input and returns a result
+         * @return A new Tool instance
+         */
+        @JvmStatic
+        fun create(
+            name: String,
+            description: String,
+            inputSchema: InputSchema,
+            handler: Handler,
+        ): Tool = FunctionalTool(
+            definition = Definition(name, description, inputSchema),
+            metadata = Metadata.DEFAULT,
+            function = Function { input -> handler.handle(input) },
+        )
+
+        /**
+         * Create a fully configured tool (Java-friendly).
+         *
+         * @param name Tool name
+         * @param description Tool description
+         * @param inputSchema Schema describing the input parameters
+         * @param metadata Tool metadata
+         * @param handler Handler that processes input and returns a result
+         * @return A new Tool instance
+         */
+        @JvmStatic
+        fun create(
+            name: String,
+            description: String,
+            inputSchema: InputSchema,
+            metadata: Metadata,
+            handler: Handler,
+        ): Tool = FunctionalTool(
+            definition = Definition(name, description, inputSchema),
+            metadata = metadata,
+            function = Function { input -> handler.handle(input) },
+        )
 
         /**
          * Create a Tool from a method annotated with [Tool.Method].
@@ -362,18 +463,13 @@ private data class SimpleMetadata(
     override val providerMetadata: Map<String, Any>,
 ) : Tool.Metadata
 
-private class MapContext(private val map: Map<String, Any>) : Tool.Context {
-    override fun get(key: String): Any? = map[key]
-    override val keys: Set<String> = map.keys
-}
-
 private class FunctionalTool(
     override val definition: Tool.Definition,
     override val metadata: Tool.Metadata,
     private val function: Tool.Function,
 ) : Tool {
-    override fun call(input: String, context: Tool.Context?): Tool.Result =
-        function.invoke(input, context)
+    override fun call(input: String): Tool.Result =
+        function.invoke(input)
 }
 
 /**
@@ -392,7 +488,7 @@ private class MethodTool(
 
     override val metadata: Tool.Metadata = Tool.Metadata(returnDirect = annotation.returnDirect)
 
-    override fun call(input: String, context: Tool.Context?): Tool.Result {
+    override fun call(input: String): Tool.Result {
         return try {
             val args = parseArguments(input)
             val result = invokeMethod(args)
